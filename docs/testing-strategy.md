@@ -193,11 +193,13 @@ A feature is not complete unless:
 
 ## CI Expectations
 
-Continuous integration should eventually run at least:
+Continuous integration currently runs:
 
 - backend unit and integration tests
 - frontend unit and integration tests
-- selected end-to-end smoke tests
-- linting and formatting checks
+- frontend linting
+- frontend production build
+
+End-to-end smoke tests should be added later once the first real vertical slice exists.
 
 CI should fail on broken tests. Test failures should be treated as release blockers unless explicitly waived for a documented reason.

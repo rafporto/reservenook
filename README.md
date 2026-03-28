@@ -38,8 +38,33 @@ The platform is planned as:
 - `npm run dev:web` to start the frontend locally once dependencies are installed
 - `npm run test:web` to run frontend tests
 - `npm run lint:web` to run frontend linting
+- `npm run build:web` to build the frontend for production
 - `docker compose up -d` to start PostgreSQL, Redis, and Mailpit
 - `./gradlew :apps:api:test` to run backend tests once the Gradle wrapper is present
+
+## Environment Templates
+
+Use the example files as the local baseline:
+
+- [/.env.example](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\.env.example) for shared local defaults
+- [apps/api/.env.example](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\apps\api\.env.example) for backend variables
+- [apps/web/.env.example](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\apps\web\.env.example) for frontend variables
+
+Recommended local setup:
+
+1. copy each example to a local `.env` file when needed
+2. start infrastructure with `docker compose up -d`
+3. run the backend with `.\gradlew.bat :apps:api:bootRun`
+4. run the frontend with `npm run dev:web`
+
+## CI Baseline
+
+GitHub Actions runs the Phase 0 verification baseline on pushes to `main` and on pull requests:
+
+- frontend tests
+- frontend lint
+- frontend production build
+- backend tests
 
 ## Documentation
 

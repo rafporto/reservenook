@@ -17,8 +17,17 @@ Use project-local commands from the repository root where possible:
 - `npm run dev:web` to start the frontend locally
 - `npm run test:web` to run frontend unit/integration tests
 - `npm run lint:web` to run frontend linting
+- `npm run build:web` to run the frontend production build
 - `./gradlew :apps:api:test` to run backend tests
 - `docker compose up` at the repo root to start local infrastructure
+
+These commands are also the current CI baseline and should stay green before changes are merged.
+
+Use the local environment templates before introducing new configuration:
+
+- `.env.example`
+- `apps/api/.env.example`
+- `apps/web/.env.example`
 
 ## Coding Style & Naming Conventions
 

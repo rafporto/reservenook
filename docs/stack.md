@@ -108,6 +108,8 @@ Docker Compose is the initial deployment and local development baseline because 
 - single-server production deployments
 - reproducible application startup
 
+The repository should provide example environment files so local configuration remains explicit and reproducible across frontend, backend, and infrastructure startup.
+
 Terraform is intentionally excluded from the initial stack because infrastructure complexity does not yet justify it.
 
 ## Licensing Position
