@@ -122,19 +122,15 @@ The selected stack is acceptable under that constraint with the following practi
 
 ## Initial Project Structure Direction
 
-The repository should be organized around a clear separation of frontend, backend, and documentation:
+The repository should be organized around a clear separation of frontend, backend, infrastructure, and documentation:
 
 - `apps/web` for the Next.js application
 - `apps/api` for the Spring Boot application
+- `packages` for shared frontend packages when justified
+- `infra` for container and environment-related assets
 - `docs` for architectural and planning documentation
 
-Optional shared packages may be introduced later if justified:
-
-- `packages/ui`
-- `packages/config`
-- `packages/types`
-
-These should only be added when there is real duplication or clear maintenance value.
+Initial placeholders such as `packages/ui` and `packages/config` may exist early, but they should only receive real implementation when there is clear reuse value.
 
 ## Initial Non-Goals
 

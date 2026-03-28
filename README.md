@@ -20,6 +20,14 @@ The platform is planned as:
 - Data: PostgreSQL
 - Infrastructure: Docker Compose
 
+## Repository Structure
+
+- `apps/web` for the frontend skeleton
+- `apps/api` for the backend skeleton
+- `packages` for shared packages
+- `infra` for infrastructure-related assets
+- `docs` for planning and architecture documentation
+
 ## Documentation
 
 Project decisions and planning are documented in:

@@ -1,0 +1,11 @@
+{
+  "name": "web",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "echo \"Web app scaffold pending\"",
+    "build": "echo \"Web build scaffold pending\"",
+    "lint": "echo \"Web lint scaffold pending\"",
+    "test": "echo \"Web test scaffold pending\""
+  }
+}
