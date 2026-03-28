@@ -28,6 +28,19 @@ The platform is planned as:
 - `infra` for infrastructure-related assets
 - `docs` for planning and architecture documentation
 
+## Current App Scaffolds
+
+- `apps/web` is now a real Next.js application scaffold with TypeScript, MUI, TanStack Query, and Vitest wiring
+- `apps/api` is now a real Kotlin and Spring Boot scaffold with Web, Security, JPA, Flyway, and test dependencies
+
+## Local Commands
+
+- `npm run dev:web` to start the frontend locally once dependencies are installed
+- `npm run test:web` to run frontend tests
+- `npm run lint:web` to run frontend linting
+- `docker compose up -d` to start PostgreSQL, Redis, and Mailpit
+- `./gradlew :apps:api:test` to run backend tests once the Gradle wrapper is present
+
 ## Documentation
 
 Project decisions and planning are documented in:

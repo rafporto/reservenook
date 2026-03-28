@@ -1,0 +1,23 @@
+spring:
+    application:
+        name: reservenook-api
+    datasource:
+        url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/reservenook}
+        username: ${DATABASE_USERNAME:reservenook}
+        password: ${DATABASE_PASSWORD:reservenook}
+    jpa:
+        open-in-view: false
+        hibernate:
+            ddl-auto: validate
+    flyway:
+        enabled: true
+        locations: classpath:db/migration
+
+management:
+    endpoints:
+        web:
+            exposure:
+                include: health,info
+
+server:
+    port: ${SERVER_PORT:8080}

@@ -1,13 +1,20 @@
-# Web App Skeleton
+# Web App
 
-This directory is reserved for the Next.js frontend.
+This is the real Next.js scaffold for the Reservenook frontend.
 
-Planned structure:
+Current baseline:
 
-- `src/app` for route segments and layouts
-- `src/components` for reusable UI pieces
-- `src/features` for business-oriented frontend modules
-- `src/lib` for shared frontend utilities and API helpers
-- `public` for static assets
+- App Router
+- TypeScript
+- MUI theme provider
+- TanStack Query provider
+- next-intl dependency reserved for i18n setup
+- Vitest baseline for frontend tests
 
-No implementation has been added yet.
+Primary directories:
+
+- `src/app`
+- `src/components`
+- `src/features`
+- `src/lib`
+- `public`

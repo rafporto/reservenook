@@ -12,13 +12,12 @@ Keep tests close to the code they verify where practical, with integration and e
 
 ## Build, Test, and Development Commands
 
-Application commands are not available yet because the apps have not been scaffolded. When implementation begins, standardize around project-local commands and document them in `README.md`.
+Use project-local commands from the repository root where possible:
 
-Expected examples:
-
-- `npm run dev` in `apps/web` to start the frontend locally
-- `npm test` in `apps/web` to run frontend unit/integration tests
-- `./gradlew test` in `apps/api` to run backend tests
+- `npm run dev:web` to start the frontend locally
+- `npm run test:web` to run frontend unit/integration tests
+- `npm run lint:web` to run frontend linting
+- `./gradlew :apps:api:test` to run backend tests
 - `docker compose up` at the repo root to start local infrastructure
 
 ## Coding Style & Naming Conventions

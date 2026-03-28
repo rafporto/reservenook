@@ -1,12 +1,21 @@
-# API Skeleton
+# API App
 
-This directory is reserved for the Kotlin and Spring Boot backend.
+This is the real Spring Boot scaffold for the Reservenook backend.
 
-Planned structure:
+Current baseline:
 
-- `src/main/kotlin/com/reservenook` for production code
-- `src/main/resources` for configuration and migration assets
-- `src/test/kotlin/com/reservenook` for automated tests
-- `src/test/resources` for test support files
+- Kotlin
+- Spring Boot
+- Spring Web
+- Spring Security
+- Spring Data JPA
+- Flyway
+- PostgreSQL driver
+- Testcontainers-ready test dependencies
 
-The backend will follow a modular monolith approach with shared core modules and booking-specific modules.
+Primary directories:
+
+- `src/main/kotlin/com/reservenook`
+- `src/main/resources`
+- `src/test/kotlin/com/reservenook`
+- `src/test/resources`
