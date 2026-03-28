@@ -67,3 +67,5 @@ PRs should include:
 ## Documentation Rule
 
 Documentation is part of the deliverable. Any code change that affects behavior, architecture, testing expectations, or operational assumptions must update the relevant files in [`docs/`](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs) in the same change.
+
+Use [`docs/conventions.md`](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\conventions.md) as the implementation baseline before adding new features.

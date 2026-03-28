@@ -75,6 +75,7 @@ Project decisions and planning are documented in:
 - [docs/roadmap.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\roadmap.md)
 - [docs/testing-strategy.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\testing-strategy.md)
 - [docs/domain-model.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\domain-model.md)
+- [docs/conventions.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\conventions.md)
 
 ## Working Rule
 
