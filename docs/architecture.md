@@ -45,6 +45,12 @@ This includes:
 - login entry points
 - legal pages
 
+The public main website is the page served at the main web root such as `http://localhost:3000` in local development. It is the product marketing and entry page for public users.
+
+Registration must be initiated from the public website.
+
+The platform admin area must be reachable through a separate URL path that is not linked from the public website navigation.
+
 ### Company Public Booking Page
 
 This includes:
@@ -180,6 +186,13 @@ Frontend responsibilities:
 - localization and formatting
 - progressive loading of booking flows
 - access control at the UI level in combination with backend enforcement
+
+Public-page localization rules:
+
+- the public site and related public flows should display a language selector in the top area
+- English is the default language
+- the selected language should persist when navigating to other public pages
+- URL-based language routing is the preferred baseline so the selected language remains explicit and shareable
 
 ## Widget Strategy
 

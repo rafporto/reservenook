@@ -40,6 +40,7 @@ Goals:
 - support company activation lifecycle
 - support login and password flows
 - establish tenant scoping
+- establish inactive-company lifecycle rules
 
 Deliverables:
 
@@ -52,6 +53,10 @@ Deliverables:
 - email verification flow
 - forgot password and reset password flow
 - protected sessions
+- inactive company detection baseline
+- platform-admin configuration for inactivity and deletion timing
+- warning notifications before scheduled company deletion
+- automated deletion scheduling for inactive companies
 
 This phase is a hard prerequisite for almost every later feature.
 

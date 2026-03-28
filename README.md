@@ -110,6 +110,8 @@ Project decisions and planning are documented in:
 - [docs/testing-strategy.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\testing-strategy.md)
 - [docs/domain-model.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\domain-model.md)
 - [docs/conventions.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\conventions.md)
+- [docs/phase-1-use-cases.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-1-use-cases.md)
+- [docs/phase-1-test-scenarios.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-1-test-scenarios.md)
 
 ## Working Rule
 
