@@ -108,6 +108,8 @@ Docker Compose is the initial deployment and local development baseline because 
 - single-server production deployments
 - reproducible application startup
 
+The Phase 0 baseline must be strong enough to start the frontend, backend, database, and local email sandbox through Docker Compose.
+
 The repository should provide example environment files so local configuration remains explicit and reproducible across frontend, backend, and infrastructure startup.
 
 Terraform is intentionally excluded from the initial stack because infrastructure complexity does not yet justify it.

@@ -1,29 +1,70 @@
 services:
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: reservenook-web
+    depends_on:
+      api:
+        condition: service_started
+    environment:
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8080}
+      NEXT_PUBLIC_DEFAULT_LOCALE: ${NEXT_PUBLIC_DEFAULT_LOCALE:-en}
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: reservenook-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    environment:
+      SERVER_PORT: ${API_PORT:-8080}
+      DATABASE_URL: ${DATABASE_URL:-jdbc:postgresql://postgres:5432/reservenook}
+      DATABASE_USERNAME: ${DATABASE_USERNAME:-reservenook}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-reservenook}
+      MAIL_HOST: ${MAIL_HOST:-mailpit}
+      MAIL_PORT: ${MAIL_PORT:-1025}
+      MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-false}
+      MAIL_SMTP_STARTTLS: ${MAIL_SMTP_STARTTLS:-false}
+    ports:
+      - "${API_PORT:-8080}:8080"
+
   postgres:
     image: postgres:16
     container_name: reservenook-postgres
     environment:
-      POSTGRES_DB: reservenook
-      POSTGRES_USER: reservenook
-      POSTGRES_PASSWORD: reservenook
+      POSTGRES_DB: ${POSTGRES_DB:-reservenook}
+      POSTGRES_USER: ${POSTGRES_USER:-reservenook}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-reservenook}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U reservenook -d reservenook"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   redis:
     image: redis:7
     container_name: reservenook-redis
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
 
   mailpit:
     image: axllent/mailpit:latest
     container_name: reservenook-mailpit
     ports:
-      - "1025:1025"
-      - "8025:8025"
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "${MAILPIT_UI_PORT:-8025}:8025"
 
 volumes:
   postgres-data:
-

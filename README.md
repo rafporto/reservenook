@@ -39,7 +39,8 @@ The platform is planned as:
 - `npm run test:web` to run frontend tests
 - `npm run lint:web` to run frontend linting
 - `npm run build:web` to build the frontend for production
-- `docker compose up -d` to start PostgreSQL, Redis, and Mailpit
+- `docker compose up --build` to start the full Docker stack
+- `docker compose up -d postgres redis mailpit` to start infrastructure only
 - `./gradlew :apps:api:test` to run backend tests once the Gradle wrapper is present
 
 ## Environment Templates
@@ -53,9 +54,42 @@ Use the example files as the local baseline:
 Recommended local setup:
 
 1. copy each example to a local `.env` file when needed
-2. start infrastructure with `docker compose up -d`
+2. start the full stack with `docker compose up --build`
+3. open the frontend at `http://localhost:3000`
+4. open the API health endpoint at `http://localhost:8080/api/public/ping`
+5. open Mailpit at `http://localhost:8025`
+
+Alternative local setup:
+
+1. copy each example to a local `.env` file when needed
+2. start infrastructure with `docker compose up -d postgres redis mailpit`
 3. run the backend with `.\gradlew.bat :apps:api:bootRun`
 4. run the frontend with `npm run dev:web`
+
+## Docker Setup
+
+The repository can run the full baseline stack through Docker Compose.
+
+Services started by [docker-compose.yml](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docker-compose.yml):
+
+- `web` on `http://localhost:3000`
+- `api` on `http://localhost:8080`
+- `postgres` on port `5432`
+- `redis` on port `6379`
+- `mailpit` UI on `http://localhost:8025` and SMTP on port `1025`
+
+Main commands:
+
+- `docker compose up --build` to build and start the full stack
+- `docker compose up -d` to start it in detached mode
+- `docker compose down` to stop the stack
+- `docker compose logs -f` to follow container logs
+
+Useful checks:
+
+- frontend: `http://localhost:3000`
+- API health: `http://localhost:8080/api/public/ping`
+- Mailpit UI: `http://localhost:8025`
 
 ## CI Baseline
 

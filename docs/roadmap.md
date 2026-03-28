@@ -21,11 +21,13 @@ Goals:
 - establish architecture rules
 - establish testing strategy
 - establish Docker-based local environment
+- ensure the full baseline stack can run through Docker
 
 Deliverables:
 
 - frontend and backend application skeletons
-- PostgreSQL container setup
+- Dockerfiles for frontend and backend
+- Docker Compose startup for frontend, backend, database, and email sandbox
 - development profiles and environment strategy
 - CI baseline
 - documentation baseline

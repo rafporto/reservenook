@@ -1,0 +1,13 @@
+.git
+.idea
+.gradle
+.kotlin
+node_modules
+**/node_modules
+**/.next
+**/build
+**/out
+coverage
+npm-debug.log*
+.env
+**/.env
