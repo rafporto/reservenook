@@ -1,0 +1,167 @@
+package com.reservenook.companybackoffice.api
+
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.ninjasquad.springmockk.MockkBean
+import com.reservenook.auth.application.PasswordResetMailSender
+import com.reservenook.auth.api.LoginRequest
+import com.reservenook.registration.application.RegistrationMailSender
+import com.reservenook.registration.domain.BusinessType
+import com.reservenook.registration.domain.Company
+import com.reservenook.registration.domain.CompanyMembership
+import com.reservenook.registration.domain.CompanyRole
+import com.reservenook.registration.domain.CompanyStatus
+import com.reservenook.registration.domain.CompanySubscription
+import com.reservenook.registration.domain.PlanType
+import com.reservenook.registration.domain.UserAccount
+import com.reservenook.registration.domain.UserStatus
+import com.reservenook.registration.infrastructure.CompanyMembershipRepository
+import com.reservenook.registration.infrastructure.CompanyRepository
+import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
+import com.reservenook.registration.infrastructure.UserAccountRepository
+import io.mockk.justRun
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.http.MediaType
+import org.springframework.mock.web.MockHttpSession
+import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.post
+import java.time.Instant
+
+@SpringBootTest
+@AutoConfigureMockMvc
+class CompanyBackofficeControllerTest(
+    @Autowired private val mockMvc: MockMvc,
+    @Autowired private val objectMapper: ObjectMapper,
+    @Autowired private val companyRepository: CompanyRepository,
+    @Autowired private val userAccountRepository: UserAccountRepository,
+    @Autowired private val membershipRepository: CompanyMembershipRepository,
+    @Autowired private val subscriptionRepository: CompanySubscriptionRepository,
+    @Autowired private val passwordEncoder: PasswordEncoder
+) {
+
+    @MockkBean
+    private lateinit var registrationMailSender: RegistrationMailSender
+
+    @MockkBean
+    private lateinit var passwordResetMailSender: PasswordResetMailSender
+
+    @BeforeEach
+    fun cleanDatabase() {
+        justRun { registrationMailSender.sendActivationEmail(any(), any()) }
+        justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any()) }
+        membershipRepository.deleteAll()
+        subscriptionRepository.deleteAll()
+        userAccountRepository.deleteAll()
+        companyRepository.deleteAll()
+    }
+
+    @Test
+    fun `company admin can access own tenant backoffice`() {
+        seedCompanyAdmin(
+            slug = "acme-wellness",
+            email = "admin@acme.com",
+            password = "SecurePass123"
+        )
+
+        val session = login("admin@acme.com", "SecurePass123")
+
+        mockMvc.get("/api/app/company/acme-wellness/backoffice") {
+            this.session = session
+        }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.companySlug") { value("acme-wellness") }
+                jsonPath("$.companyName") { value("Acme Wellness") }
+                jsonPath("$.role") { value("COMPANY_ADMIN") }
+                jsonPath("$.currentUserEmail") { value("admin@acme.com") }
+            }
+    }
+
+    @Test
+    fun `company admin cannot access another tenant backoffice`() {
+        seedCompanyAdmin(
+            slug = "acme-wellness",
+            email = "admin@acme.com",
+            password = "SecurePass123"
+        )
+        seedCompanyAdmin(
+            slug = "other-company",
+            email = "other@acme.com",
+            password = "SecurePass123"
+        )
+
+        val session = login("admin@acme.com", "SecurePass123")
+
+        mockMvc.get("/api/app/company/other-company/backoffice") {
+            this.session = session
+        }
+            .andExpect {
+                status { isForbidden() }
+            }
+    }
+
+    @Test
+    fun `company backoffice endpoint requires authentication`() {
+        mockMvc.get("/api/app/company/acme-wellness/backoffice")
+            .andExpect {
+                status { isUnauthorized() }
+            }
+    }
+
+    private fun login(email: String, password: String): MockHttpSession {
+        val loginResult = mockMvc.post("/api/public/auth/login") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(LoginRequest(email = email, password = password))
+        }
+            .andExpect {
+                status { isOk() }
+            }
+            .andReturn()
+
+        return loginResult.request.session as MockHttpSession
+    }
+
+    private fun seedCompanyAdmin(slug: String, email: String, password: String) {
+        val company = companyRepository.save(
+            Company(
+                name = slug.split("-").joinToString(" ") { part -> part.replaceFirstChar(Char::titlecase) },
+                businessType = BusinessType.APPOINTMENT,
+                slug = slug,
+                status = CompanyStatus.ACTIVE,
+                defaultLanguage = "en",
+                defaultLocale = "en-US"
+            )
+        )
+
+        val user = userAccountRepository.save(
+            UserAccount(
+                email = email,
+                passwordHash = passwordEncoder.encode(password),
+                status = UserStatus.ACTIVE,
+                emailVerified = true
+            )
+        )
+
+        membershipRepository.save(
+            CompanyMembership(
+                company = company,
+                user = user,
+                role = CompanyRole.COMPANY_ADMIN
+            )
+        )
+
+        subscriptionRepository.save(
+            CompanySubscription(
+                company = company,
+                planType = PlanType.TRIAL,
+                startsAt = Instant.now(),
+                expiresAt = Instant.now().plusSeconds(604800)
+            )
+        )
+    }
+}

@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository
 interface CompanyMembershipRepository : JpaRepository<CompanyMembership, Long>
 {
     fun findFirstByUserId(userId: Long): CompanyMembership?
+    fun findFirstByUserIdAndCompanySlug(userId: Long, companySlug: String): CompanyMembership?
 }
