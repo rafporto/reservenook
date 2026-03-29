@@ -8,3 +8,9 @@ node_modules/
 .next/
 coverage/
 gradle-8.13-bin.zip
+.env
+.env.*
+!.env.example
+apps/*/.env
+apps/*/.env.*
+!apps/*/.env.example
