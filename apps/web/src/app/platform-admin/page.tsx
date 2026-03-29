@@ -1,4 +1,5 @@
 import { Box, Paper, Stack, Typography } from "@mui/material";
+import { LogoutButton } from "@/components/app/logout-button";
 
 export default function PlatformAdminPage() {
   return (
@@ -11,6 +12,7 @@ export default function PlatformAdminPage() {
           <Typography color="text.secondary">
             UC-04 routes authenticated platform admins here. UC-09 will implement the actual company list.
           </Typography>
+          <LogoutButton />
         </Stack>
       </Paper>
     </Box>

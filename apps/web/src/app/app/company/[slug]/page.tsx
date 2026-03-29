@@ -1,4 +1,5 @@
 import { Box, Paper, Stack, Typography } from "@mui/material";
+import { LogoutButton } from "@/components/app/logout-button";
 
 type CompanyBackofficePageProps = {
   params: Promise<{ slug: string }>;
@@ -18,6 +19,7 @@ export default async function CompanyBackofficePage({ params }: CompanyBackoffic
             UC-04 routes authenticated company admins to their tenant space.
           </Typography>
           <Typography>Resolved company slug: <strong>{slug}</strong></Typography>
+          <LogoutButton />
         </Stack>
       </Paper>
     </Box>

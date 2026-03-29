@@ -99,6 +99,8 @@ Useful checks:
 - activation endpoint: `POST http://localhost:8080/api/public/companies/activation/confirm`
 - resend activation endpoint: `POST http://localhost:8080/api/public/companies/activation/resend`
 - login endpoint: `POST http://localhost:8080/api/public/auth/login`
+- session endpoint: `GET http://localhost:8080/api/auth/session`
+- logout endpoint: `POST http://localhost:8080/api/auth/logout`
 - Mailpit UI: `http://localhost:8025`
 
 ## CI Baseline

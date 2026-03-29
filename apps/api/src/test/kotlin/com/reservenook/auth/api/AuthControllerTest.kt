@@ -27,7 +27,9 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
+import org.springframework.mock.web.MockHttpSession
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import java.time.Instant
 import java.util.UUID
@@ -78,6 +80,50 @@ class AuthControllerTest(
             .andReturn()
 
         (result.request.session!!.getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY) != null) shouldBe true
+    }
+
+    @Test
+    fun `logout invalidates current session and protected session endpoint fails afterwards`() {
+        seedCompanyAdmin(email = "admin@acme.com", password = "SecurePass123")
+
+        val loginResult = mockMvc.post("/api/public/auth/login") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(
+                LoginRequest(
+                    email = "admin@acme.com",
+                    password = "SecurePass123"
+                )
+            )
+        }
+            .andExpect {
+                status { isOk() }
+            }
+            .andReturn()
+
+        val session = loginResult.request.session as MockHttpSession
+
+        mockMvc.get("/api/auth/session") {
+            this.session = session
+        }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.email") { value("admin@acme.com") }
+            }
+
+        mockMvc.post("/api/auth/logout") {
+            this.session = session
+        }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.redirectTo") { value("/en/login") }
+            }
+
+        mockMvc.get("/api/auth/session") {
+            this.session = session
+        }
+            .andExpect {
+                status { isUnauthorized() }
+            }
     }
 
     @Test
