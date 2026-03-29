@@ -90,7 +90,12 @@ export function ActivationStatus({ locale, token }: ActivationStatusProps) {
     <Stack spacing={2}>
       <Alert severity={alertConfig.severity}>{alertConfig.message}</Alert>
       {(state.status === "ACTIVATED" || state.status === "ALREADY_ACTIVE") ? (
-        <Typography color="text.secondary">{messages.activationNextStep}</Typography>
+        <>
+          <Typography color="text.secondary">{messages.activationNextStep}</Typography>
+          <Button component={Link} href={`/${locale}/login`} variant="contained">
+            {messages.navLogin}
+          </Button>
+        </>
       ) : null}
       {(state.status === "EXPIRED" || state.status === "INVALID") ? (
         <Button component={Link} href={`/${locale}/resend-activation`} variant="outlined">

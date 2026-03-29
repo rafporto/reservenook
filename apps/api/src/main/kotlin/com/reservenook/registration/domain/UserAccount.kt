@@ -30,6 +30,9 @@ class UserAccount(
     @Column(name = "email_verified", nullable = false)
     var emailVerified: Boolean = false,
 
+    @Column(name = "is_platform_admin", nullable = false)
+    var isPlatformAdmin: Boolean = false,
+
     @Column(name = "created_at", nullable = false)
     var createdAt: Instant = Instant.now()
 )

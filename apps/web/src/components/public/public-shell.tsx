@@ -38,7 +38,7 @@ export function PublicShell({ children, locale, navigation }: PublicShellProps) 
             </Stack>
             <Stack direction="row" spacing={2} alignItems="center">
               <LanguageSelector locale={locale} label={navigation.localeLabel} />
-              <Button variant="outlined" color="primary" disabled>
+              <Button component={Link} href={`/${locale}/login`} variant="outlined" color="primary">
                 {navigation.login}
               </Button>
             </Stack>

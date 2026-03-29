@@ -28,6 +28,18 @@ type PublicMessages = {
   resendActivationSubmit: string;
   resendActivationSubmitting: string;
   resendActivationNeutralSuccess: string;
+  loginTitle: string;
+  loginDescription: string;
+  loginEmailLabel: string;
+  loginPasswordLabel: string;
+  loginSubmit: string;
+  loginSubmitting: string;
+  loginInvalidCredentials: string;
+  loginActivationRequired: string;
+  loginInactiveCompany: string;
+  loginResendActivationCta: string;
+  loginNextStepCompany: string;
+  loginNextStepPlatform: string;
   formCompanyName: string;
   formBusinessType: string;
   formSlug: string;
@@ -78,7 +90,7 @@ const messages: Record<SupportedLocale, PublicMessages> = {
     activationAlreadyActive: "This company account is already active.",
     activationExpired: "This activation link has expired. Request a new activation email.",
     activationInvalid: "This activation link is invalid.",
-    activationNextStep: "Login will be implemented in a later use case. For now, your account state is ready.",
+    activationNextStep: "Your account state is ready. Continue to login to enter the platform.",
     activationResendCta: "Request a new activation email",
     resendActivationTitle: "Resend activation email",
     resendActivationDescription:
@@ -88,6 +100,18 @@ const messages: Record<SupportedLocale, PublicMessages> = {
     resendActivationSubmitting: "Sending activation email...",
     resendActivationNeutralSuccess:
       "If the account is pending activation, a new activation email will be sent.",
+    loginTitle: "Login",
+    loginDescription: "Sign in with the company admin or platform admin account.",
+    loginEmailLabel: "Email",
+    loginPasswordLabel: "Password",
+    loginSubmit: "Login",
+    loginSubmitting: "Logging in...",
+    loginInvalidCredentials: "Invalid email or password.",
+    loginActivationRequired: "Your account is not active yet. Request a new activation email.",
+    loginInactiveCompany: "The company account is not active.",
+    loginResendActivationCta: "Resend activation email",
+    loginNextStepCompany: "You will be redirected to the company backoffice.",
+    loginNextStepPlatform: "You will be redirected to the platform admin area.",
     formCompanyName: "Company name",
     formBusinessType: "Business type",
     formSlug: "Public slug",
@@ -136,7 +160,7 @@ const messages: Record<SupportedLocale, PublicMessages> = {
     activationAlreadyActive: "Dieses Firmenkonto ist bereits aktiv.",
     activationExpired: "Dieser Aktivierungslink ist abgelaufen. Fordern Sie eine neue Aktivierungs-E-Mail an.",
     activationInvalid: "Dieser Aktivierungslink ist ungültig.",
-    activationNextStep: "Die Anmeldung wird in einem späteren Use Case umgesetzt. Der Kontostatus ist jetzt vorbereitet.",
+    activationNextStep: "Ihr Kontostatus ist bereit. Fahren Sie mit der Anmeldung fort, um die Plattform zu betreten.",
     activationResendCta: "Neue Aktivierungs-E-Mail anfordern",
     resendActivationTitle: "Aktivierungs-E-Mail erneut senden",
     resendActivationDescription:
@@ -146,6 +170,18 @@ const messages: Record<SupportedLocale, PublicMessages> = {
     resendActivationSubmitting: "Aktivierungs-E-Mail wird gesendet...",
     resendActivationNeutralSuccess:
       "Wenn das Konto noch auf Aktivierung wartet, wird eine neue Aktivierungs-E-Mail gesendet.",
+    loginTitle: "Anmelden",
+    loginDescription: "Melden Sie sich mit dem Firmenadministrator- oder Plattformadministratorkonto an.",
+    loginEmailLabel: "E-Mail",
+    loginPasswordLabel: "Passwort",
+    loginSubmit: "Anmelden",
+    loginSubmitting: "Anmeldung läuft...",
+    loginInvalidCredentials: "Ungültige E-Mail oder ungültiges Passwort.",
+    loginActivationRequired: "Ihr Konto ist noch nicht aktiv. Fordern Sie eine neue Aktivierungs-E-Mail an.",
+    loginInactiveCompany: "Das Firmenkonto ist nicht aktiv.",
+    loginResendActivationCta: "Aktivierungs-E-Mail erneut senden",
+    loginNextStepCompany: "Sie werden in das Firmen-Backoffice weitergeleitet.",
+    loginNextStepPlatform: "Sie werden in den Plattform-Adminbereich weitergeleitet.",
     formCompanyName: "Firmenname",
     formBusinessType: "Geschäftstyp",
     formSlug: "Öffentlicher Slug",
@@ -194,7 +230,7 @@ const messages: Record<SupportedLocale, PublicMessages> = {
     activationAlreadyActive: "Esta conta da empresa já está ativa.",
     activationExpired: "Este link de ativação expirou. Peça um novo email de ativação.",
     activationInvalid: "Este link de ativação é inválido.",
-    activationNextStep: "O login será implementado num caso de uso posterior. Por agora, o estado da conta já está preparado.",
+    activationNextStep: "O estado da sua conta já está preparado. Continue para o login para entrar na plataforma.",
     activationResendCta: "Pedir novo email de ativação",
     resendActivationTitle: "Reenviar email de ativação",
     resendActivationDescription:
@@ -204,6 +240,18 @@ const messages: Record<SupportedLocale, PublicMessages> = {
     resendActivationSubmitting: "A enviar email de ativação...",
     resendActivationNeutralSuccess:
       "Se a conta ainda estiver pendente, será enviado um novo email de ativação.",
+    loginTitle: "Iniciar sessão",
+    loginDescription: "Entre com a conta de administrador da empresa ou de administrador da plataforma.",
+    loginEmailLabel: "Email",
+    loginPasswordLabel: "Palavra-passe",
+    loginSubmit: "Iniciar sessão",
+    loginSubmitting: "A iniciar sessão...",
+    loginInvalidCredentials: "Email ou palavra-passe inválidos.",
+    loginActivationRequired: "A sua conta ainda não está ativa. Peça um novo email de ativação.",
+    loginInactiveCompany: "A conta da empresa não está ativa.",
+    loginResendActivationCta: "Reenviar email de ativação",
+    loginNextStepCompany: "Será redirecionado para o backoffice da empresa.",
+    loginNextStepPlatform: "Será redirecionado para a área de administração da plataforma.",
     formCompanyName: "Nome da empresa",
     formBusinessType: "Tipo de negócio",
     formSlug: "Slug público",

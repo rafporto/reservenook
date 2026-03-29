@@ -1,5 +1,7 @@
 package com.reservenook.registration.api
 
+import com.reservenook.auth.api.LoginErrorResponse
+import com.reservenook.auth.application.LoginFailedException
 import com.reservenook.registration.application.RegistrationConflictException
 import jakarta.validation.ConstraintViolationException
 import org.springframework.http.HttpStatus
@@ -11,6 +13,17 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 
 @RestControllerAdvice
 class ApiExceptionHandler {
+
+    @ExceptionHandler(LoginFailedException::class)
+    fun handleLoginFailure(exception: LoginFailedException): ResponseEntity<LoginErrorResponse> {
+        val status = when (exception.code) {
+            com.reservenook.auth.application.LoginFailureCode.INVALID_CREDENTIALS -> HttpStatus.UNAUTHORIZED
+            com.reservenook.auth.application.LoginFailureCode.ACTIVATION_REQUIRED -> HttpStatus.FORBIDDEN
+            com.reservenook.auth.application.LoginFailureCode.INACTIVE_COMPANY -> HttpStatus.FORBIDDEN
+        }
+
+        return ResponseEntity.status(status).body(LoginErrorResponse(exception.message, exception.code))
+    }
 
     @ExceptionHandler(RegistrationConflictException::class)
     fun handleRegistrationConflict(exception: RegistrationConflictException): ResponseEntity<ApiErrorResponse> =

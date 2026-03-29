@@ -10,6 +10,7 @@ import { getPublicMessages } from "@/lib/i18n/messages";
 
 type ResendActivationFormProps = {
   locale: SupportedLocale;
+  initialEmail?: string;
 };
 
 type ResendActivationValues = {
@@ -24,7 +25,7 @@ function buildSchema(locale: SupportedLocale) {
   });
 }
 
-export function ResendActivationForm({ locale }: ResendActivationFormProps) {
+export function ResendActivationForm({ locale, initialEmail = "" }: ResendActivationFormProps) {
   const messages = getPublicMessages(locale);
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -32,7 +33,7 @@ export function ResendActivationForm({ locale }: ResendActivationFormProps) {
   const form = useForm<ResendActivationValues>({
     resolver: zodResolver(buildSchema(locale)),
     defaultValues: {
-      email: ""
+      email: initialEmail
     }
   });
 

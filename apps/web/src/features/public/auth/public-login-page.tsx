@@ -1,14 +1,13 @@
 import { Paper, Stack, Typography } from "@mui/material";
 import type { SupportedLocale } from "@/lib/i18n/locales";
 import { getPublicMessages } from "@/lib/i18n/messages";
-import { ResendActivationForm } from "@/features/public/activation/resend-activation-form";
+import { LoginForm } from "@/features/public/auth/login-form";
 
-type PublicResendActivationPageProps = {
+type PublicLoginPageProps = {
   locale: SupportedLocale;
-  initialEmail?: string;
 };
 
-export function PublicResendActivationPage({ locale, initialEmail }: PublicResendActivationPageProps) {
+export function PublicLoginPage({ locale }: PublicLoginPageProps) {
   const messages = getPublicMessages(locale);
 
   return (
@@ -27,11 +26,11 @@ export function PublicResendActivationPage({ locale, initialEmail }: PublicResen
       <Stack spacing={3}>
         <Stack spacing={1}>
           <Typography variant="h3" component="h1">
-            {messages.resendActivationTitle}
+            {messages.loginTitle}
           </Typography>
-          <Typography color="text.secondary">{messages.resendActivationDescription}</Typography>
+          <Typography color="text.secondary">{messages.loginDescription}</Typography>
         </Stack>
-        <ResendActivationForm locale={locale} initialEmail={initialEmail} />
+        <LoginForm locale={locale} />
       </Stack>
     </Paper>
   );
