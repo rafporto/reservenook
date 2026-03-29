@@ -30,8 +30,8 @@ The platform is planned as:
 
 ## Current App Scaffolds
 
-- `apps/web` is now a real Next.js application scaffold with TypeScript, MUI, TanStack Query, and Vitest wiring
-- `apps/api` is now a real Kotlin and Spring Boot scaffold with Web, Security, JPA, Flyway, and test dependencies
+- `apps/web` now includes the localized public product page and the Phase 1 company registration UI
+- `apps/api` now includes the Phase 1 company registration endpoint with persistence, activation-token creation, and activation email dispatch wiring
 
 ## Local Commands
 
@@ -87,8 +87,10 @@ Main commands:
 
 Useful checks:
 
-- frontend: `http://localhost:3000`
+- frontend: `http://localhost:3000` redirects to `http://localhost:3000/en`
+- registration page: `http://localhost:3000/en/register`
 - API health: `http://localhost:8080/api/public/ping`
+- registration endpoint: `POST http://localhost:8080/api/public/companies/registration`
 - Mailpit UI: `http://localhost:8025`
 
 ## CI Baseline
