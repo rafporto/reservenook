@@ -90,9 +90,11 @@ Useful checks:
 - frontend: `http://localhost:3000` redirects to `http://localhost:3000/en`
 - registration page: `http://localhost:3000/en/register`
 - activation page: `http://localhost:3000/en/activate?token=...`
+- resend activation page: `http://localhost:3000/en/resend-activation`
 - API health: `http://localhost:8080/api/public/ping`
 - registration endpoint: `POST http://localhost:8080/api/public/companies/registration`
 - activation endpoint: `POST http://localhost:8080/api/public/companies/activation/confirm`
+- resend activation endpoint: `POST http://localhost:8080/api/public/companies/activation/resend`
 - Mailpit UI: `http://localhost:8025`
 
 ## CI Baseline

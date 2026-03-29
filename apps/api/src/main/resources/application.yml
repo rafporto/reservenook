@@ -37,3 +37,4 @@ app:
     registration:
         public-base-url: ${PUBLIC_APP_BASE_URL:http://localhost:3000}
         activation-token-hours: ${ACTIVATION_TOKEN_HOURS:48}
+        resend-cooldown-minutes: ${RESEND_COOLDOWN_MINUTES:5}

@@ -50,6 +50,9 @@ describe("ActivationStatus", () => {
     expect(
       await screen.findByText("This activation link has expired. Request a new activation email.")
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Request a new activation email" })
+    ).toHaveAttribute("href", "/en/resend-activation");
   });
 
   it("renders invalid state when there is no token", async () => {

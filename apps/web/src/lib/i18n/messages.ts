@@ -21,6 +21,13 @@ type PublicMessages = {
   activationExpired: string;
   activationInvalid: string;
   activationNextStep: string;
+  activationResendCta: string;
+  resendActivationTitle: string;
+  resendActivationDescription: string;
+  resendActivationEmailLabel: string;
+  resendActivationSubmit: string;
+  resendActivationSubmitting: string;
+  resendActivationNeutralSuccess: string;
   formCompanyName: string;
   formBusinessType: string;
   formSlug: string;
@@ -72,6 +79,15 @@ const messages: Record<SupportedLocale, PublicMessages> = {
     activationExpired: "This activation link has expired. Request a new activation email.",
     activationInvalid: "This activation link is invalid.",
     activationNextStep: "Login will be implemented in a later use case. For now, your account state is ready.",
+    activationResendCta: "Request a new activation email",
+    resendActivationTitle: "Resend activation email",
+    resendActivationDescription:
+      "Enter the registration email. If the account is still pending activation, a new activation email will be sent.",
+    resendActivationEmailLabel: "Registration email",
+    resendActivationSubmit: "Send activation email",
+    resendActivationSubmitting: "Sending activation email...",
+    resendActivationNeutralSuccess:
+      "If the account is pending activation, a new activation email will be sent.",
     formCompanyName: "Company name",
     formBusinessType: "Business type",
     formSlug: "Public slug",
@@ -121,6 +137,15 @@ const messages: Record<SupportedLocale, PublicMessages> = {
     activationExpired: "Dieser Aktivierungslink ist abgelaufen. Fordern Sie eine neue Aktivierungs-E-Mail an.",
     activationInvalid: "Dieser Aktivierungslink ist ungültig.",
     activationNextStep: "Die Anmeldung wird in einem späteren Use Case umgesetzt. Der Kontostatus ist jetzt vorbereitet.",
+    activationResendCta: "Neue Aktivierungs-E-Mail anfordern",
+    resendActivationTitle: "Aktivierungs-E-Mail erneut senden",
+    resendActivationDescription:
+      "Geben Sie die Registrierungs-E-Mail ein. Wenn das Konto noch auf Aktivierung wartet, wird eine neue Aktivierungs-E-Mail gesendet.",
+    resendActivationEmailLabel: "Registrierungs-E-Mail",
+    resendActivationSubmit: "Aktivierungs-E-Mail senden",
+    resendActivationSubmitting: "Aktivierungs-E-Mail wird gesendet...",
+    resendActivationNeutralSuccess:
+      "Wenn das Konto noch auf Aktivierung wartet, wird eine neue Aktivierungs-E-Mail gesendet.",
     formCompanyName: "Firmenname",
     formBusinessType: "Geschäftstyp",
     formSlug: "Öffentlicher Slug",
@@ -170,6 +195,15 @@ const messages: Record<SupportedLocale, PublicMessages> = {
     activationExpired: "Este link de ativação expirou. Peça um novo email de ativação.",
     activationInvalid: "Este link de ativação é inválido.",
     activationNextStep: "O login será implementado num caso de uso posterior. Por agora, o estado da conta já está preparado.",
+    activationResendCta: "Pedir novo email de ativação",
+    resendActivationTitle: "Reenviar email de ativação",
+    resendActivationDescription:
+      "Introduza o email de registo. Se a conta ainda estiver pendente, será enviado um novo email de ativação.",
+    resendActivationEmailLabel: "Email de registo",
+    resendActivationSubmit: "Enviar email de ativação",
+    resendActivationSubmitting: "A enviar email de ativação...",
+    resendActivationNeutralSuccess:
+      "Se a conta ainda estiver pendente, será enviado um novo email de ativação.",
     formCompanyName: "Nome da empresa",
     formBusinessType: "Tipo de negócio",
     formSlug: "Slug público",

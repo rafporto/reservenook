@@ -1,6 +1,7 @@
 "use client";
 
-import { Alert, CircularProgress, Stack, Typography } from "@mui/material";
+import Link from "next/link";
+import { Alert, Button, CircularProgress, Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import type { SupportedLocale } from "@/lib/i18n/locales";
 import { getPublicMessages } from "@/lib/i18n/messages";
@@ -90,6 +91,11 @@ export function ActivationStatus({ locale, token }: ActivationStatusProps) {
       <Alert severity={alertConfig.severity}>{alertConfig.message}</Alert>
       {(state.status === "ACTIVATED" || state.status === "ALREADY_ACTIVE") ? (
         <Typography color="text.secondary">{messages.activationNextStep}</Typography>
+      ) : null}
+      {(state.status === "EXPIRED" || state.status === "INVALID") ? (
+        <Button component={Link} href={`/${locale}/resend-activation`} variant="outlined">
+          {messages.activationResendCta}
+        </Button>
       ) : null}
     </Stack>
   );
