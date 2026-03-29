@@ -6,5 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 data class RegistrationProperties(
     val publicBaseUrl: String = "http://localhost:3000",
     val activationTokenHours: Long = 48,
-    val resendCooldownMinutes: Long = 5
+    val resendCooldownMinutes: Long = 5,
+    val passwordResetTokenHours: Long = 2,
+    val passwordResetCooldownMinutes: Long = 5
 )

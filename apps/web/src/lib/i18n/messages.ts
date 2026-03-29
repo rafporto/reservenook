@@ -38,8 +38,17 @@ type PublicMessages = {
   loginActivationRequired: string;
   loginInactiveCompany: string;
   loginResendActivationCta: string;
+  loginForgotPasswordCta: string;
   loginNextStepCompany: string;
   loginNextStepPlatform: string;
+  forgotPasswordTitle: string;
+  forgotPasswordDescription: string;
+  forgotPasswordEmailLabel: string;
+  forgotPasswordSubmit: string;
+  forgotPasswordSubmitting: string;
+  forgotPasswordNeutralSuccess: string;
+  resetPasswordTitle: string;
+  resetPasswordDescription: string;
   formCompanyName: string;
   formBusinessType: string;
   formSlug: string;
@@ -110,8 +119,20 @@ const messages: Record<SupportedLocale, PublicMessages> = {
     loginActivationRequired: "Your account is not active yet. Request a new activation email.",
     loginInactiveCompany: "The company account is not active.",
     loginResendActivationCta: "Resend activation email",
+    loginForgotPasswordCta: "Forgot password?",
     loginNextStepCompany: "You will be redirected to the company backoffice.",
     loginNextStepPlatform: "You will be redirected to the platform admin area.",
+    forgotPasswordTitle: "Forgot password",
+    forgotPasswordDescription:
+      "Enter the account email. If the account is eligible, a password reset email will be sent.",
+    forgotPasswordEmailLabel: "Account email",
+    forgotPasswordSubmit: "Send password reset email",
+    forgotPasswordSubmitting: "Sending password reset email...",
+    forgotPasswordNeutralSuccess:
+      "If the account is eligible, a password reset email will be sent.",
+    resetPasswordTitle: "Reset password",
+    resetPasswordDescription:
+      "UC-07 will validate the reset token and allow the user to set a new password on this page.",
     formCompanyName: "Company name",
     formBusinessType: "Business type",
     formSlug: "Public slug",
@@ -180,8 +201,20 @@ const messages: Record<SupportedLocale, PublicMessages> = {
     loginActivationRequired: "Ihr Konto ist noch nicht aktiv. Fordern Sie eine neue Aktivierungs-E-Mail an.",
     loginInactiveCompany: "Das Firmenkonto ist nicht aktiv.",
     loginResendActivationCta: "Aktivierungs-E-Mail erneut senden",
+    loginForgotPasswordCta: "Passwort vergessen?",
     loginNextStepCompany: "Sie werden in das Firmen-Backoffice weitergeleitet.",
     loginNextStepPlatform: "Sie werden in den Plattform-Adminbereich weitergeleitet.",
+    forgotPasswordTitle: "Passwort vergessen",
+    forgotPasswordDescription:
+      "Geben Sie die Konto-E-Mail ein. Wenn das Konto berechtigt ist, wird eine E-Mail zum Zurücksetzen des Passworts gesendet.",
+    forgotPasswordEmailLabel: "Konto-E-Mail",
+    forgotPasswordSubmit: "E-Mail zum Zurücksetzen senden",
+    forgotPasswordSubmitting: "E-Mail zum Zurücksetzen wird gesendet...",
+    forgotPasswordNeutralSuccess:
+      "Wenn das Konto berechtigt ist, wird eine E-Mail zum Zurücksetzen des Passworts gesendet.",
+    resetPasswordTitle: "Passwort zurücksetzen",
+    resetPasswordDescription:
+      "UC-07 wird auf dieser Seite das Reset-Token prüfen und dem Benutzer erlauben, ein neues Passwort zu setzen.",
     formCompanyName: "Firmenname",
     formBusinessType: "Geschäftstyp",
     formSlug: "Öffentlicher Slug",
@@ -250,8 +283,20 @@ const messages: Record<SupportedLocale, PublicMessages> = {
     loginActivationRequired: "A sua conta ainda não está ativa. Peça um novo email de ativação.",
     loginInactiveCompany: "A conta da empresa não está ativa.",
     loginResendActivationCta: "Reenviar email de ativação",
+    loginForgotPasswordCta: "Esqueceu-se da palavra-passe?",
     loginNextStepCompany: "Será redirecionado para o backoffice da empresa.",
     loginNextStepPlatform: "Será redirecionado para a área de administração da plataforma.",
+    forgotPasswordTitle: "Recuperar palavra-passe",
+    forgotPasswordDescription:
+      "Introduza o email da conta. Se a conta for elegível, será enviado um email para redefinir a palavra-passe.",
+    forgotPasswordEmailLabel: "Email da conta",
+    forgotPasswordSubmit: "Enviar email de redefinição",
+    forgotPasswordSubmitting: "A enviar email de redefinição...",
+    forgotPasswordNeutralSuccess:
+      "Se a conta for elegível, será enviado um email para redefinir a palavra-passe.",
+    resetPasswordTitle: "Redefinir palavra-passe",
+    resetPasswordDescription:
+      "O UC-07 validará o token de redefinição e permitirá ao utilizador definir uma nova palavra-passe nesta página.",
     formCompanyName: "Nome da empresa",
     formBusinessType: "Tipo de negócio",
     formSlug: "Slug público",

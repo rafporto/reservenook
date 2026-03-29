@@ -1,0 +1,59 @@
+package com.reservenook.auth.application
+
+import com.reservenook.registration.application.RegistrationProperties
+import com.reservenook.registration.domain.UserStatus
+import com.reservenook.registration.infrastructure.UserAccountRepository
+import com.reservenook.auth.domain.PasswordResetToken
+import com.reservenook.auth.infrastructure.PasswordResetTokenRepository
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import java.util.UUID
+
+@Service
+class RequestPasswordResetService(
+    private val userAccountRepository: UserAccountRepository,
+    private val passwordResetTokenRepository: PasswordResetTokenRepository,
+    private val passwordResetMailSender: PasswordResetMailSender,
+    private val registrationProperties: RegistrationProperties
+) {
+
+    @Transactional
+    fun request(email: String): RequestPasswordResetResult {
+        val normalizedEmail = email.trim().lowercase()
+        val neutralResult = RequestPasswordResetResult(
+            message = "If the account is eligible, a password reset email will be sent."
+        )
+
+        val user = userAccountRepository.findByEmail(normalizedEmail) ?: return neutralResult
+        if (user.status != UserStatus.ACTIVE || !user.emailVerified) {
+            return neutralResult
+        }
+
+        val now = Instant.now()
+        val lastToken = passwordResetTokenRepository.findFirstByUserIdOrderByCreatedAtDesc(requireNotNull(user.id))
+        if (lastToken != null && lastToken.createdAt.isAfter(now.minus(registrationProperties.passwordResetCooldownMinutes, ChronoUnit.MINUTES))) {
+            return neutralResult
+        }
+
+        passwordResetTokenRepository.findAllByUserIdAndUsedAtIsNull(requireNotNull(user.id)).forEach { token ->
+            token.usedAt = now
+        }
+
+        val nextToken = passwordResetTokenRepository.save(
+            PasswordResetToken(
+                token = UUID.randomUUID().toString(),
+                user = user,
+                expiresAt = now.plus(registrationProperties.passwordResetTokenHours, ChronoUnit.HOURS)
+            )
+        )
+
+        passwordResetMailSender.sendPasswordResetEmail(
+            normalizedEmail,
+            "${registrationProperties.publicBaseUrl.trimEnd('/')}/en/reset-password?token=${nextToken.token}"
+        )
+
+        return neutralResult
+    }
+}

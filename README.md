@@ -92,6 +92,8 @@ Useful checks:
 - activation page: `http://localhost:3000/en/activate?token=...`
 - resend activation page: `http://localhost:3000/en/resend-activation`
 - login page: `http://localhost:3000/en/login`
+- forgot password page: `http://localhost:3000/en/forgot-password`
+- reset password placeholder: `http://localhost:3000/en/reset-password?token=...`
 - company backoffice placeholder: `http://localhost:3000/app/company/<company-slug>`
 - platform admin placeholder: `http://localhost:3000/platform-admin`
 - API health: `http://localhost:8080/api/public/ping`
@@ -99,6 +101,7 @@ Useful checks:
 - activation endpoint: `POST http://localhost:8080/api/public/companies/activation/confirm`
 - resend activation endpoint: `POST http://localhost:8080/api/public/companies/activation/resend`
 - login endpoint: `POST http://localhost:8080/api/public/auth/login`
+- forgot password endpoint: `POST http://localhost:8080/api/public/auth/forgot-password`
 - session endpoint: `GET http://localhost:8080/api/auth/session`
 - logout endpoint: `POST http://localhost:8080/api/auth/logout`
 - Mailpit UI: `http://localhost:8025`

@@ -38,3 +38,5 @@ app:
         public-base-url: ${PUBLIC_APP_BASE_URL:http://localhost:3000}
         activation-token-hours: ${ACTIVATION_TOKEN_HOURS:48}
         resend-cooldown-minutes: ${RESEND_COOLDOWN_MINUTES:5}
+        password-reset-token-hours: ${PASSWORD_RESET_TOKEN_HOURS:2}
+        password-reset-cooldown-minutes: ${PASSWORD_RESET_COOLDOWN_MINUTES:5}

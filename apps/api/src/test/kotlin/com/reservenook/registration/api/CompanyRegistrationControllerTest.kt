@@ -2,6 +2,7 @@ package com.reservenook.registration.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.ninjasquad.springmockk.MockkBean
+import com.reservenook.auth.application.PasswordResetMailSender
 import com.reservenook.registration.application.RegistrationMailSender
 import com.reservenook.registration.domain.ActivationToken
 import com.reservenook.registration.domain.BusinessType
@@ -50,8 +51,12 @@ class CompanyRegistrationControllerTest(
     @MockkBean
     private lateinit var registrationMailSender: RegistrationMailSender
 
+    @MockkBean
+    private lateinit var passwordResetMailSender: PasswordResetMailSender
+
     @BeforeEach
     fun cleanDatabase() {
+        justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any()) }
         activationTokenRepository.deleteAll()
         membershipRepository.deleteAll()
         subscriptionRepository.deleteAll()

@@ -96,6 +96,10 @@ export function LoginForm({ locale }: LoginFormProps) {
         </Typography>
       ) : null}
 
+      <Typography variant="body2">
+        <Link href={`/${locale}/forgot-password`}>{messages.loginForgotPasswordCta}</Link>
+      </Typography>
+
       <Controller
         control={form.control}
         name="email"
