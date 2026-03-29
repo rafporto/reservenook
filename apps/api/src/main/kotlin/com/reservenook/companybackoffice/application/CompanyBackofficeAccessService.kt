@@ -18,7 +18,7 @@ class CompanyBackofficeAccessService(
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied.")
         }
 
-        val membership = companyMembershipRepository.findFirstByUserIdAndCompanySlug(principal.userId, requestedSlug)
+        val membership = companyMembershipRepository.findFirstByUserEmailAndCompanySlug(principal.email, requestedSlug)
             ?: throw ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied.")
 
         if (membership.role != CompanyRole.COMPANY_ADMIN) {

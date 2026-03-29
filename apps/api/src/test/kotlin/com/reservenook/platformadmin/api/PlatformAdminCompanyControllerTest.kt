@@ -1,4 +1,4 @@
-package com.reservenook.companybackoffice.api
+package com.reservenook.platformadmin.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.ninjasquad.springmockk.MockkBean
@@ -36,7 +36,7 @@ import java.time.Instant
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class CompanyBackofficeControllerTest(
+class PlatformAdminCompanyControllerTest(
     @Autowired private val mockMvc: MockMvc,
     @Autowired private val companyRepository: CompanyRepository,
     @Autowired private val userAccountRepository: UserAccountRepository,
@@ -62,43 +62,54 @@ class CompanyBackofficeControllerTest(
     }
 
     @Test
-    fun `company admin can access own tenant backoffice`() {
-        seedCompanyAdmin(
+    fun `platform admin receives company list`() {
+        seedCompany(
+            name = "Acme Wellness",
             slug = "acme-wellness",
-            email = "admin@acme.com",
-            password = "SecurePass123"
+            businessType = BusinessType.APPOINTMENT,
+            status = CompanyStatus.ACTIVE,
+            planType = PlanType.TRIAL,
+            expiresAt = Instant.parse("2026-04-05T00:00:00Z")
         )
+        seedCompany(
+            name = "Studio Norte",
+            slug = "studio-norte",
+            businessType = BusinessType.CLASS,
+            status = CompanyStatus.PENDING_ACTIVATION,
+            planType = PlanType.PAID,
+            expiresAt = Instant.parse("2027-03-20T00:00:00Z")
+        )
+        seedPlatformAdmin(email = "platform@reservenook.com", password = "SecurePass123")
 
-        val session = authenticatedCompanyAdminSession(userId = 1L, email = "admin@acme.com", companySlug = "acme-wellness")
+        val session = authenticatedPlatformAdminSession(userId = 1L, email = "platform@reservenook.com")
 
-        mockMvc.get("/api/app/company/acme-wellness/backoffice") {
+        mockMvc.get("/api/platform-admin/companies") {
             this.session = session
         }
             .andExpect {
                 status { isOk() }
-                jsonPath("$.companySlug") { value("acme-wellness") }
-                jsonPath("$.companyName") { value("Acme Wellness") }
-                jsonPath("$.role") { value("COMPANY_ADMIN") }
-                jsonPath("$.currentUserEmail") { value("admin@acme.com") }
+                jsonPath("$.companies.length()") { value(2) }
+                jsonPath("$.companies[0].companyName") { value("Studio Norte") }
+                jsonPath("$.companies[0].planType") { value("PAID") }
+                jsonPath("$.companies[1].companyName") { value("Acme Wellness") }
             }
     }
 
     @Test
-    fun `company admin cannot access another tenant backoffice`() {
-        seedCompanyAdmin(
+    fun `company admin is forbidden from company list`() {
+        seedCompany(
+            name = "Acme Wellness",
             slug = "acme-wellness",
-            email = "admin@acme.com",
-            password = "SecurePass123"
+            businessType = BusinessType.APPOINTMENT,
+            status = CompanyStatus.ACTIVE,
+            planType = PlanType.TRIAL,
+            expiresAt = Instant.parse("2026-04-05T00:00:00Z")
         )
-        seedCompanyAdmin(
-            slug = "other-company",
-            email = "other@acme.com",
-            password = "SecurePass123"
-        )
+        seedCompanyAdmin(email = "admin@acme.com", password = "SecurePass123", slug = "acme-wellness")
 
-        val session = authenticatedCompanyAdminSession(userId = 1L, email = "admin@acme.com", companySlug = "acme-wellness")
+        val session = authenticatedCompanyAdminSession(userId = 2L, email = "admin@acme.com", companySlug = "acme-wellness")
 
-        mockMvc.get("/api/app/company/other-company/backoffice") {
+        mockMvc.get("/api/platform-admin/companies") {
             this.session = session
         }
             .andExpect {
@@ -106,12 +117,23 @@ class CompanyBackofficeControllerTest(
             }
     }
 
-    @Test
-    fun `company backoffice endpoint requires authentication`() {
-        mockMvc.get("/api/app/company/acme-wellness/backoffice")
-            .andExpect {
-                status { isUnauthorized() }
-            }
+    private fun authenticatedPlatformAdminSession(userId: Long, email: String): MockHttpSession {
+        val principal = AppAuthenticatedUser(
+            userId = userId,
+            email = email,
+            isPlatformAdmin = true
+        )
+        val authentication = UsernamePasswordAuthenticationToken(
+            principal,
+            null,
+            listOf(SimpleGrantedAuthority("ROLE_PLATFORM_ADMIN"))
+        )
+        val context = SecurityContextHolder.createEmptyContext()
+        context.authentication = authentication
+
+        return MockHttpSession().apply {
+            setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context)
+        }
     }
 
     private fun authenticatedCompanyAdminSession(userId: Long, email: String, companySlug: String): MockHttpSession {
@@ -134,18 +156,20 @@ class CompanyBackofficeControllerTest(
         }
     }
 
-    private fun seedCompanyAdmin(slug: String, email: String, password: String) {
-        val company = companyRepository.save(
-            Company(
-                name = slug.split("-").joinToString(" ") { part -> part.replaceFirstChar(Char::titlecase) },
-                businessType = BusinessType.APPOINTMENT,
-                slug = slug,
-                status = CompanyStatus.ACTIVE,
-                defaultLanguage = "en",
-                defaultLocale = "en-US"
+    private fun seedPlatformAdmin(email: String, password: String) {
+        userAccountRepository.save(
+            UserAccount(
+                email = email,
+                passwordHash = passwordEncoder.encode(password),
+                status = UserStatus.ACTIVE,
+                emailVerified = true,
+                isPlatformAdmin = true
             )
         )
+    }
 
+    private fun seedCompanyAdmin(email: String, password: String, slug: String) {
+        val company = companyRepository.findAll().first { it.slug == slug }
         val user = userAccountRepository.save(
             UserAccount(
                 email = email,
@@ -162,13 +186,33 @@ class CompanyBackofficeControllerTest(
                 role = CompanyRole.COMPANY_ADMIN
             )
         )
+    }
+
+    private fun seedCompany(
+        name: String,
+        slug: String,
+        businessType: BusinessType,
+        status: CompanyStatus,
+        planType: PlanType,
+        expiresAt: Instant
+    ) {
+        val company = companyRepository.save(
+            Company(
+                name = name,
+                businessType = businessType,
+                slug = slug,
+                status = status,
+                defaultLanguage = "en",
+                defaultLocale = "en-US"
+            )
+        )
 
         subscriptionRepository.save(
             CompanySubscription(
                 company = company,
-                planType = PlanType.TRIAL,
-                startsAt = Instant.now(),
-                expiresAt = Instant.now().plusSeconds(604800)
+                planType = planType,
+                startsAt = Instant.parse("2026-03-20T00:00:00Z"),
+                expiresAt = expiresAt
             )
         )
     }

@@ -95,6 +95,7 @@ Useful checks:
 - forgot password page: `http://localhost:3000/en/forgot-password`
 - reset password placeholder: `http://localhost:3000/en/reset-password?token=...`
 - company backoffice route: `http://localhost:3000/app/company/{slug}`
+- platform admin route: `http://localhost:3000/platform-admin`
 - company backoffice placeholder: `http://localhost:3000/app/company/<company-slug>`
 - platform admin placeholder: `http://localhost:3000/platform-admin`
 - API health: `http://localhost:8080/api/public/ping`
@@ -104,6 +105,7 @@ Useful checks:
 - login endpoint: `POST http://localhost:8080/api/public/auth/login`
 - forgot password endpoint: `POST http://localhost:8080/api/public/auth/forgot-password`
 - company backoffice endpoint: `GET http://localhost:8080/api/app/company/{slug}/backoffice`
+- platform admin companies endpoint: `GET http://localhost:8080/api/platform-admin/companies`
 - session endpoint: `GET http://localhost:8080/api/auth/session`
 - logout endpoint: `POST http://localhost:8080/api/auth/logout`
 - Mailpit UI: `http://localhost:8025`
