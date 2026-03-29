@@ -14,6 +14,13 @@ type PublicMessages = {
   spotlightItems: string[];
   registrationTitle: string;
   registrationDescription: string;
+  activationTitle: string;
+  activationLoading: string;
+  activationSuccess: string;
+  activationAlreadyActive: string;
+  activationExpired: string;
+  activationInvalid: string;
+  activationNextStep: string;
   formCompanyName: string;
   formBusinessType: string;
   formSlug: string;
@@ -58,6 +65,13 @@ const messages: Record<SupportedLocale, PublicMessages> = {
     registrationTitle: "Register your company",
     registrationDescription:
       "Create the company account and initial company admin. The company stays pending until the activation email is confirmed.",
+    activationTitle: "Account activation",
+    activationLoading: "Validating your activation link...",
+    activationSuccess: "Your company account is active. The initial admin account is now verified.",
+    activationAlreadyActive: "This company account is already active.",
+    activationExpired: "This activation link has expired. Request a new activation email.",
+    activationInvalid: "This activation link is invalid.",
+    activationNextStep: "Login will be implemented in a later use case. For now, your account state is ready.",
     formCompanyName: "Company name",
     formBusinessType: "Business type",
     formSlug: "Public slug",
@@ -100,6 +114,13 @@ const messages: Record<SupportedLocale, PublicMessages> = {
     registrationTitle: "Firma registrieren",
     registrationDescription:
       "Erstellen Sie das Firmenkonto und den ersten Firmenadministrator. Die Firma bleibt ausstehend, bis die Aktivierungs-E-Mail bestätigt wurde.",
+    activationTitle: "Kontoaktivierung",
+    activationLoading: "Ihr Aktivierungslink wird geprüft...",
+    activationSuccess: "Ihr Firmenkonto ist aktiv. Das erste Administratorkonto ist jetzt verifiziert.",
+    activationAlreadyActive: "Dieses Firmenkonto ist bereits aktiv.",
+    activationExpired: "Dieser Aktivierungslink ist abgelaufen. Fordern Sie eine neue Aktivierungs-E-Mail an.",
+    activationInvalid: "Dieser Aktivierungslink ist ungültig.",
+    activationNextStep: "Die Anmeldung wird in einem späteren Use Case umgesetzt. Der Kontostatus ist jetzt vorbereitet.",
     formCompanyName: "Firmenname",
     formBusinessType: "Geschäftstyp",
     formSlug: "Öffentlicher Slug",
@@ -142,6 +163,13 @@ const messages: Record<SupportedLocale, PublicMessages> = {
     registrationTitle: "Registar a sua empresa",
     registrationDescription:
       "Crie a conta da empresa e o administrador inicial. A empresa permanece pendente até a confirmação do email de ativação.",
+    activationTitle: "Ativação da conta",
+    activationLoading: "A validar o seu link de ativação...",
+    activationSuccess: "A conta da empresa está ativa. O administrador inicial já está verificado.",
+    activationAlreadyActive: "Esta conta da empresa já está ativa.",
+    activationExpired: "Este link de ativação expirou. Peça um novo email de ativação.",
+    activationInvalid: "Este link de ativação é inválido.",
+    activationNextStep: "O login será implementado num caso de uso posterior. Por agora, o estado da conta já está preparado.",
     formCompanyName: "Nome da empresa",
     formBusinessType: "Tipo de negócio",
     formSlug: "Slug público",

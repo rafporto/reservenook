@@ -1,5 +1,7 @@
-import { Alert, Paper, Stack, Typography } from "@mui/material";
+import { Paper, Stack, Typography } from "@mui/material";
+import { ActivationStatus } from "@/features/public/activation/activation-status";
 import { requireSupportedLocale } from "@/lib/i18n/locales";
+import { getPublicMessages } from "@/lib/i18n/messages";
 
 type ActivatePageProps = {
   params: Promise<{ locale: string }>;
@@ -10,6 +12,7 @@ export default async function ActivatePage({ params, searchParams }: ActivatePag
   const { locale } = await params;
   const safeLocale = requireSupportedLocale(locale);
   const { token } = await searchParams;
+  const messages = getPublicMessages(safeLocale);
 
   return (
     <Paper
@@ -25,16 +28,8 @@ export default async function ActivatePage({ params, searchParams }: ActivatePag
       }}
     >
       <Stack spacing={3}>
-        <Typography variant="h3" component="h1">
-          Account activation
-        </Typography>
-        <Alert severity="info">
-          UC-02 will implement token validation and account activation on this page. The selected
-          language route is already preserved for <strong>{safeLocale.toUpperCase()}</strong>.
-        </Alert>
-        <Typography color="text.secondary">
-          Received token: {token ? `${token.slice(0, 8)}...` : "no token provided"}
-        </Typography>
+        <Typography variant="h3" component="h1">{messages.activationTitle}</Typography>
+        <ActivationStatus locale={safeLocale} token={token} />
       </Stack>
     </Paper>
   );
