@@ -2,6 +2,7 @@ package com.reservenook.registration.api
 
 import com.reservenook.auth.api.LoginErrorResponse
 import com.reservenook.auth.application.LoginFailedException
+import com.reservenook.auth.application.ResetPasswordFailedException
 import com.reservenook.registration.application.RegistrationConflictException
 import jakarta.validation.ConstraintViolationException
 import org.springframework.http.HttpStatus
@@ -22,8 +23,12 @@ class ApiExceptionHandler {
             com.reservenook.auth.application.LoginFailureCode.INACTIVE_COMPANY -> HttpStatus.FORBIDDEN
         }
 
-        return ResponseEntity.status(status).body(LoginErrorResponse(exception.message, exception.code))
+        return ResponseEntity.status(status).body(LoginErrorResponse(exception.message, exception.code.name))
     }
+
+    @ExceptionHandler(ResetPasswordFailedException::class)
+    fun handleResetPasswordFailure(exception: ResetPasswordFailedException): ResponseEntity<LoginErrorResponse> =
+        ResponseEntity.status(HttpStatus.BAD_REQUEST).body(LoginErrorResponse(exception.message, exception.code.name))
 
     @ExceptionHandler(RegistrationConflictException::class)
     fun handleRegistrationConflict(exception: RegistrationConflictException): ResponseEntity<ApiErrorResponse> =

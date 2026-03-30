@@ -1,6 +1,6 @@
 package com.reservenook.auth.api
 
-data class LoginErrorResponse(
+data class ResetPasswordResponse(
     val message: String,
-    val code: String
+    val redirectTo: String
 )

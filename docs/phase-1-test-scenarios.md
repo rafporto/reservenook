@@ -170,6 +170,7 @@ Use the following test layers by default:
 ### Frontend
 
 - reset form validates password rules
+- reset form blocks submission when token is missing
 - invalid or expired token state is shown correctly
 - successful reset redirects to login
 

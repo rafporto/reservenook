@@ -49,6 +49,13 @@ type PublicMessages = {
   forgotPasswordNeutralSuccess: string;
   resetPasswordTitle: string;
   resetPasswordDescription: string;
+  resetPasswordPasswordLabel: string;
+  resetPasswordSubmit: string;
+  resetPasswordSubmitting: string;
+  resetPasswordSuccess: string;
+  resetPasswordMissingToken: string;
+  resetPasswordInvalidToken: string;
+  resetPasswordExpiredToken: string;
   formCompanyName: string;
   formBusinessType: string;
   formSlug: string;
@@ -132,7 +139,14 @@ const messages: Record<SupportedLocale, PublicMessages> = {
       "If the account is eligible, a password reset email will be sent.",
     resetPasswordTitle: "Reset password",
     resetPasswordDescription:
-      "UC-07 will validate the reset token and allow the user to set a new password on this page.",
+      "Enter your new password to complete account recovery.",
+    resetPasswordPasswordLabel: "New password",
+    resetPasswordSubmit: "Update password",
+    resetPasswordSubmitting: "Updating password...",
+    resetPasswordSuccess: "Your password has been updated. Continue to login.",
+    resetPasswordMissingToken: "This password reset link is incomplete. Request a new password reset email.",
+    resetPasswordInvalidToken: "This password reset link is invalid. Request a new password reset email.",
+    resetPasswordExpiredToken: "This password reset link has expired. Request a new password reset email.",
     formCompanyName: "Company name",
     formBusinessType: "Business type",
     formSlug: "Public slug",
@@ -214,7 +228,17 @@ const messages: Record<SupportedLocale, PublicMessages> = {
       "Wenn das Konto berechtigt ist, wird eine E-Mail zum Zurücksetzen des Passworts gesendet.",
     resetPasswordTitle: "Passwort zurücksetzen",
     resetPasswordDescription:
-      "UC-07 wird auf dieser Seite das Reset-Token prüfen und dem Benutzer erlauben, ein neues Passwort zu setzen.",
+      "Geben Sie Ihr neues Passwort ein, um die Kontowiederherstellung abzuschließen.",
+    resetPasswordPasswordLabel: "Neues Passwort",
+    resetPasswordSubmit: "Passwort aktualisieren",
+    resetPasswordSubmitting: "Passwort wird aktualisiert...",
+    resetPasswordSuccess: "Ihr Passwort wurde aktualisiert. Fahren Sie mit der Anmeldung fort.",
+    resetPasswordMissingToken:
+      "Dieser Link zum Zurücksetzen des Passworts ist unvollständig. Fordern Sie eine neue E-Mail zum Zurücksetzen an.",
+    resetPasswordInvalidToken:
+      "Dieser Link zum Zurücksetzen des Passworts ist ungültig. Fordern Sie eine neue E-Mail zum Zurücksetzen an.",
+    resetPasswordExpiredToken:
+      "Dieser Link zum Zurücksetzen des Passworts ist abgelaufen. Fordern Sie eine neue E-Mail zum Zurücksetzen an.",
     formCompanyName: "Firmenname",
     formBusinessType: "Geschäftstyp",
     formSlug: "Öffentlicher Slug",
@@ -296,7 +320,17 @@ const messages: Record<SupportedLocale, PublicMessages> = {
       "Se a conta for elegível, será enviado um email para redefinir a palavra-passe.",
     resetPasswordTitle: "Redefinir palavra-passe",
     resetPasswordDescription:
-      "O UC-07 validará o token de redefinição e permitirá ao utilizador definir uma nova palavra-passe nesta página.",
+      "Introduza a nova palavra-passe para concluir a recuperação da conta.",
+    resetPasswordPasswordLabel: "Nova palavra-passe",
+    resetPasswordSubmit: "Atualizar palavra-passe",
+    resetPasswordSubmitting: "A atualizar palavra-passe...",
+    resetPasswordSuccess: "A sua palavra-passe foi atualizada. Continue para o login.",
+    resetPasswordMissingToken:
+      "Este link de redefinição de palavra-passe está incompleto. Peça um novo email de redefinição.",
+    resetPasswordInvalidToken:
+      "Este link de redefinição de palavra-passe é inválido. Peça um novo email de redefinição.",
+    resetPasswordExpiredToken:
+      "Este link de redefinição de palavra-passe expirou. Peça um novo email de redefinição.",
     formCompanyName: "Nome da empresa",
     formBusinessType: "Tipo de negócio",
     formSlug: "Slug público",
