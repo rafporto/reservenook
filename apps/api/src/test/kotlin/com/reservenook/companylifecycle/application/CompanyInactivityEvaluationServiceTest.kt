@@ -9,6 +9,7 @@ import com.reservenook.registration.infrastructure.CompanyRepository
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.util.Optional
@@ -17,7 +18,12 @@ class CompanyInactivityEvaluationServiceTest {
 
     private val companyRepository = mockk<CompanyRepository>(relaxed = true)
     private val inactivityPolicyRepository = mockk<InactivityPolicyRepository>()
-    private val service = CompanyInactivityEvaluationService(companyRepository, inactivityPolicyRepository)
+    private val companyInactivityNotificationService = mockk<CompanyInactivityNotificationService>(relaxed = true)
+    private val service = CompanyInactivityEvaluationService(
+        companyRepository,
+        inactivityPolicyRepository,
+        companyInactivityNotificationService
+    )
 
     @Test
     fun `company becomes inactive after configured threshold`() {
@@ -44,6 +50,7 @@ class CompanyInactivityEvaluationServiceTest {
         company.status shouldBe CompanyStatus.INACTIVE
         company.inactiveAt shouldBe now
         company.deletionScheduledAt shouldBe Instant.parse("2026-06-28T12:00:00Z")
+        verify(exactly = 1) { companyInactivityNotificationService.notifyCompanies(listOf(company), now) }
     }
 
     @Test
@@ -69,6 +76,7 @@ class CompanyInactivityEvaluationServiceTest {
 
         result.companiesMarkedInactive shouldBe 0
         company.status shouldBe CompanyStatus.ACTIVE
+        verify(exactly = 1) { companyInactivityNotificationService.notifyCompanies(emptyList(), now) }
     }
 
     @Test
@@ -95,5 +103,6 @@ class CompanyInactivityEvaluationServiceTest {
 
         result.companiesMarkedInactive shouldBe 0
         company.status shouldBe CompanyStatus.ACTIVE
+        verify(exactly = 1) { companyInactivityNotificationService.notifyCompanies(emptyList(), now) }
     }
 }

@@ -2,18 +2,26 @@ package com.reservenook.companylifecycle.application
 
 import com.ninjasquad.springmockk.MockkBean
 import com.reservenook.auth.application.PasswordResetMailSender
+import com.reservenook.companylifecycle.domain.InactivityNotificationStatus
+import com.reservenook.companylifecycle.infrastructure.InactivityNotificationEventRepository
 import com.reservenook.platformadmin.domain.InactivityPolicy
 import com.reservenook.platformadmin.infrastructure.InactivityPolicyRepository
 import com.reservenook.registration.application.RegistrationMailSender
 import com.reservenook.registration.domain.BusinessType
 import com.reservenook.registration.domain.Company
+import com.reservenook.registration.domain.CompanyMembership
+import com.reservenook.registration.domain.CompanyRole
 import com.reservenook.registration.domain.CompanyStatus
+import com.reservenook.registration.domain.UserAccount
+import com.reservenook.registration.domain.UserStatus
 import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.CompanyRepository
 import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.mockk.justRun
+import io.mockk.verify
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -21,13 +29,14 @@ import org.springframework.boot.test.context.SpringBootTest
 import java.time.Instant
 
 @SpringBootTest
-class CompanyInactivityEvaluationServiceIntegrationTest(
-    @Autowired private val service: CompanyInactivityEvaluationService,
+class CompanyInactivityNotificationServiceIntegrationTest(
+    @Autowired private val evaluationService: CompanyInactivityEvaluationService,
     @Autowired private val companyRepository: CompanyRepository,
-    @Autowired private val inactivityPolicyRepository: InactivityPolicyRepository,
+    @Autowired private val userAccountRepository: UserAccountRepository,
     @Autowired private val membershipRepository: CompanyMembershipRepository,
     @Autowired private val subscriptionRepository: CompanySubscriptionRepository,
-    @Autowired private val userAccountRepository: UserAccountRepository
+    @Autowired private val inactivityPolicyRepository: InactivityPolicyRepository,
+    @Autowired private val inactivityNotificationEventRepository: InactivityNotificationEventRepository
 ) {
 
     @MockkBean
@@ -44,6 +53,7 @@ class CompanyInactivityEvaluationServiceIntegrationTest(
         justRun { registrationMailSender.sendActivationEmail(any(), any()) }
         justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any()) }
         justRun { companyInactivityMailSender.sendInactivityEmail(any(), any()) }
+        inactivityNotificationEventRepository.deleteAll()
         membershipRepository.deleteAll()
         subscriptionRepository.deleteAll()
         userAccountRepository.deleteAll()
@@ -59,7 +69,7 @@ class CompanyInactivityEvaluationServiceIntegrationTest(
     }
 
     @Test
-    fun `scheduled inactivity evaluation updates company state and timestamps`() {
+    fun `notification dispatch occurs when inactivity state is entered`() {
         val company = companyRepository.save(
             Company(
                 name = "Acme Wellness",
@@ -71,14 +81,27 @@ class CompanyInactivityEvaluationServiceIntegrationTest(
                 lastActivityAt = Instant.parse("2025-12-01T00:00:00Z")
             )
         )
+        val user = userAccountRepository.save(
+            UserAccount(
+                email = "admin@acme.com",
+                passwordHash = "encoded",
+                status = UserStatus.ACTIVE,
+                emailVerified = true
+            )
+        )
+        membershipRepository.save(
+            CompanyMembership(
+                company = company,
+                user = user,
+                role = CompanyRole.COMPANY_ADMIN
+            )
+        )
 
-        val result = service.evaluate(Instant.parse("2026-03-30T12:00:00Z"))
+        val result = evaluationService.evaluate(Instant.parse("2026-03-30T12:00:00Z"))
 
         result.companiesMarkedInactive shouldBe 1
-
-        val updatedCompany = companyRepository.findById(requireNotNull(company.id)).orElseThrow()
-        updatedCompany.status shouldBe CompanyStatus.INACTIVE
-        updatedCompany.inactiveAt shouldBe Instant.parse("2026-03-30T12:00:00Z")
-        updatedCompany.deletionScheduledAt shouldBe Instant.parse("2026-06-28T12:00:00Z")
+        verify(exactly = 1) { companyInactivityMailSender.sendInactivityEmail("admin@acme.com", "Acme Wellness") }
+        inactivityNotificationEventRepository.findAllByCompanyId(requireNotNull(company.id)).shouldHaveSize(1)
+        inactivityNotificationEventRepository.findAllByCompanyId(requireNotNull(company.id)).single().status shouldBe InactivityNotificationStatus.SENT
     }
 }

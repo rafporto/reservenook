@@ -8,4 +8,5 @@ interface CompanyMembershipRepository : JpaRepository<CompanyMembership, Long>
     fun findFirstByUserId(userId: Long): CompanyMembership?
     fun findFirstByUserIdAndCompanySlug(userId: Long, companySlug: String): CompanyMembership?
     fun findFirstByUserEmailAndCompanySlug(userEmail: String, companySlug: String): CompanyMembership?
+    fun findAllByCompanyIdAndRole(companyId: Long, role: com.reservenook.registration.domain.CompanyRole): List<CompanyMembership>
 }

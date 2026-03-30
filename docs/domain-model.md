@@ -114,6 +114,7 @@ Core concepts:
 - NotificationTemplate
 - NotificationEvent
 - DeliveryRequest
+- InactivityNotificationEvent
 
 ### Customer Data and Questions
 

@@ -11,7 +11,8 @@ import java.time.temporal.ChronoUnit
 @Service
 class CompanyInactivityEvaluationService(
     private val companyRepository: CompanyRepository,
-    private val inactivityPolicyRepository: InactivityPolicyRepository
+    private val inactivityPolicyRepository: InactivityPolicyRepository,
+    private val companyInactivityNotificationService: CompanyInactivityNotificationService
 ) {
 
     @Transactional
@@ -28,6 +29,8 @@ class CompanyInactivityEvaluationService(
             company.inactiveAt = now
             company.deletionScheduledAt = now.plus(policy.inactivityThresholdDays.toLong(), ChronoUnit.DAYS)
         }
+
+        companyInactivityNotificationService.notifyCompanies(companiesToMarkInactive, now)
 
         return InactivityEvaluationResult(companiesMarkedInactive = companiesToMarkInactive.size)
     }

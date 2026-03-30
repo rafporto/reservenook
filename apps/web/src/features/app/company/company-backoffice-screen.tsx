@@ -30,34 +30,42 @@ export function CompanyBackofficeScreen({ slug }: CompanyBackofficeScreenProps) 
     let isMounted = true;
 
     async function loadBackoffice() {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080"}/api/app/company/${slug}/backoffice`,
-        {
-          credentials: "include"
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080"}/api/app/company/${slug}/backoffice`,
+          {
+            credentials: "include"
+          }
+        );
+
+        if (!isMounted) {
+          return;
         }
-      );
 
-      if (!isMounted) {
-        return;
-      }
+        if (response.status === 401) {
+          router.replace("/en/login");
+          return;
+        }
 
-      if (response.status === 401) {
-        router.replace("/en/login");
-        return;
-      }
+        if (response.status === 403) {
+          setState({ status: "forbidden" });
+          return;
+        }
 
-      if (response.status === 403) {
-        setState({ status: "forbidden" });
-        return;
-      }
+        if (!response.ok) {
+          setState({ status: "error", message: "The company backoffice could not be loaded." });
+          return;
+        }
 
-      if (!response.ok) {
+        const payload = (await response.json()) as CompanyBackofficeData;
+        setState({ status: "loaded", data: payload });
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+
         setState({ status: "error", message: "The company backoffice could not be loaded." });
-        return;
       }
-
-      const payload = (await response.json()) as CompanyBackofficeData;
-      setState({ status: "loaded", data: payload });
     }
 
     void loadBackoffice();

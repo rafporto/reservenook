@@ -57,38 +57,46 @@ export function PlatformAdminCompanyListScreen() {
     let isMounted = true;
 
     async function loadPlatformAdminData() {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
-      const [companyResponse, policyResponse] = await Promise.all([
-        fetch(`${apiBaseUrl}/api/platform-admin/companies`, { credentials: "include" }),
-        fetch(`${apiBaseUrl}/api/platform-admin/inactivity-policy`, { credentials: "include" })
-      ]);
+      try {
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
+        const [companyResponse, policyResponse] = await Promise.all([
+          fetch(`${apiBaseUrl}/api/platform-admin/companies`, { credentials: "include" }),
+          fetch(`${apiBaseUrl}/api/platform-admin/inactivity-policy`, { credentials: "include" })
+        ]);
 
-      if (!isMounted) {
-        return;
-      }
+        if (!isMounted) {
+          return;
+        }
 
-      if (companyResponse.status === 401 || policyResponse.status === 401) {
-        router.replace("/en/login");
-        return;
-      }
+        if (companyResponse.status === 401 || policyResponse.status === 401) {
+          router.replace("/en/login");
+          return;
+        }
 
-      if (companyResponse.status === 403 || policyResponse.status === 403) {
-        setState({ status: "forbidden" });
-        return;
-      }
+        if (companyResponse.status === 403 || policyResponse.status === 403) {
+          setState({ status: "forbidden" });
+          return;
+        }
 
-      if (!companyResponse.ok || !policyResponse.ok) {
+        if (!companyResponse.ok || !policyResponse.ok) {
+          setState({ status: "error", message: "The platform admin area could not be loaded." });
+          return;
+        }
+
+        const companyPayload = (await companyResponse.json()) as PlatformAdminCompanyListPayload;
+        const policyPayload = (await policyResponse.json()) as InactivityPolicy;
+        setPolicyDraft({
+          inactivityThresholdDays: String(policyPayload.inactivityThresholdDays),
+          deletionWarningLeadDays: String(policyPayload.deletionWarningLeadDays)
+        });
+        setState({ status: "loaded", companies: companyPayload.companies, policy: policyPayload });
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+
         setState({ status: "error", message: "The platform admin area could not be loaded." });
-        return;
       }
-
-      const companyPayload = (await companyResponse.json()) as PlatformAdminCompanyListPayload;
-      const policyPayload = (await policyResponse.json()) as InactivityPolicy;
-      setPolicyDraft({
-        inactivityThresholdDays: String(policyPayload.inactivityThresholdDays),
-        deletionWarningLeadDays: String(policyPayload.deletionWarningLeadDays)
-      });
-      setState({ status: "loaded", companies: companyPayload.companies, policy: policyPayload });
     }
 
     void loadPlatformAdminData();
@@ -125,64 +133,72 @@ export function PlatformAdminCompanyListScreen() {
 
     setIsSavingPolicy(true);
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080"}/api/platform-admin/inactivity-policy`,
-      {
-        method: "PUT",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          inactivityThresholdDays,
-          deletionWarningLeadDays
-        })
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080"}/api/platform-admin/inactivity-policy`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            inactivityThresholdDays,
+            deletionWarningLeadDays
+          })
+        }
+      );
+
+      const payload = (await response.json().catch(() => null)) as
+        | { message?: string; policy?: InactivityPolicy }
+        | { message?: string }
+        | null;
+
+      if (response.status === 401) {
+        router.replace("/en/login");
+        setIsSavingPolicy(false);
+        return;
       }
-    );
 
-    const payload = (await response.json().catch(() => null)) as
-      | { message?: string; policy?: InactivityPolicy }
-      | { message?: string }
-      | null;
+      if (response.status === 403) {
+        setState({ status: "forbidden" });
+        setIsSavingPolicy(false);
+        return;
+      }
 
-    if (response.status === 401) {
-      router.replace("/en/login");
-      setIsSavingPolicy(false);
-      return;
-    }
+      if (!response.ok || !("policy" in (payload ?? {}))) {
+        setPolicyFeedback({
+          type: "error",
+          message: payload?.message ?? "The inactivity policy could not be saved."
+        });
+        setIsSavingPolicy(false);
+        return;
+      }
 
-    if (response.status === 403) {
-      setState({ status: "forbidden" });
-      setIsSavingPolicy(false);
-      return;
-    }
+      if (state.status === "loaded") {
+        setState({
+          status: "loaded",
+          companies: state.companies,
+          policy: payload.policy
+        });
+        setPolicyDraft({
+          inactivityThresholdDays: String(payload.policy.inactivityThresholdDays),
+          deletionWarningLeadDays: String(payload.policy.deletionWarningLeadDays)
+        });
+      }
 
-    if (!response.ok || !("policy" in (payload ?? {}))) {
+      setPolicyFeedback({
+        type: "success",
+        message: payload.message ?? "Inactivity policy updated."
+      });
+    } catch {
       setPolicyFeedback({
         type: "error",
-        message: payload?.message ?? "The inactivity policy could not be saved."
+        message: "The inactivity policy could not be saved."
       });
+    } finally {
       setIsSavingPolicy(false);
-      return;
     }
-
-    if (state.status === "loaded") {
-      setState({
-        status: "loaded",
-        companies: state.companies,
-        policy: payload.policy
-      });
-      setPolicyDraft({
-        inactivityThresholdDays: String(payload.policy.inactivityThresholdDays),
-        deletionWarningLeadDays: String(payload.policy.deletionWarningLeadDays)
-      });
-    }
-
-    setPolicyFeedback({
-      type: "success",
-      message: payload.message ?? "Inactivity policy updated."
-    });
-    setIsSavingPolicy(false);
   }
 
   return (
