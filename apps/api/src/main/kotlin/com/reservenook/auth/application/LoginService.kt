@@ -12,6 +12,8 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
 
 @Service
 class LoginService(
@@ -21,6 +23,7 @@ class LoginService(
     private val securityContextRepository: HttpSessionSecurityContextRepository
 ) {
 
+    @Transactional
     fun login(
         email: String,
         password: String,
@@ -61,6 +64,8 @@ class LoginService(
                     LoginFailureCode.INACTIVE_COMPANY
                 )
             }
+
+            membership.company.lastActivityAt = Instant.now()
 
             LoginResult(
                 authenticatedUser = AppAuthenticatedUser(

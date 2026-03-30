@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.http.MediaType
 import org.springframework.mock.web.MockHttpSession
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -32,16 +33,19 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.put
 import java.time.Instant
 
 @SpringBootTest
 @AutoConfigureMockMvc
 class PlatformAdminCompanyControllerTest(
     @Autowired private val mockMvc: MockMvc,
+    @Autowired private val objectMapper: ObjectMapper,
     @Autowired private val companyRepository: CompanyRepository,
     @Autowired private val userAccountRepository: UserAccountRepository,
     @Autowired private val membershipRepository: CompanyMembershipRepository,
     @Autowired private val subscriptionRepository: CompanySubscriptionRepository,
+    @Autowired private val inactivityPolicyRepository: com.reservenook.platformadmin.infrastructure.InactivityPolicyRepository,
     @Autowired private val passwordEncoder: PasswordEncoder
 ) {
 
@@ -59,6 +63,14 @@ class PlatformAdminCompanyControllerTest(
         subscriptionRepository.deleteAll()
         userAccountRepository.deleteAll()
         companyRepository.deleteAll()
+        inactivityPolicyRepository.deleteAll()
+        inactivityPolicyRepository.save(
+            com.reservenook.platformadmin.domain.InactivityPolicy(
+                id = 1L,
+                inactivityThresholdDays = 90,
+                deletionWarningLeadDays = 14
+            )
+        )
     }
 
     @Test
@@ -114,6 +126,68 @@ class PlatformAdminCompanyControllerTest(
         }
             .andExpect {
                 status { isForbidden() }
+            }
+    }
+
+    @Test
+    fun `platform admin receives current inactivity policy`() {
+        seedPlatformAdmin(email = "platform@reservenook.com", password = "SecurePass123")
+
+        val session = authenticatedPlatformAdminSession(userId = 1L, email = "platform@reservenook.com")
+
+        mockMvc.get("/api/platform-admin/inactivity-policy") {
+            this.session = session
+        }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.inactivityThresholdDays") { value(90) }
+                jsonPath("$.deletionWarningLeadDays") { value(14) }
+            }
+    }
+
+    @Test
+    fun `platform admin updates inactivity policy`() {
+        seedPlatformAdmin(email = "platform@reservenook.com", password = "SecurePass123")
+
+        val session = authenticatedPlatformAdminSession(userId = 1L, email = "platform@reservenook.com")
+
+        mockMvc.put("/api/platform-admin/inactivity-policy") {
+            this.session = session
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(
+                UpdateInactivityPolicyRequest(
+                    inactivityThresholdDays = 120,
+                    deletionWarningLeadDays = 21
+                )
+            )
+        }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.message") { value("Inactivity policy updated.") }
+                jsonPath("$.policy.inactivityThresholdDays") { value(120) }
+                jsonPath("$.policy.deletionWarningLeadDays") { value(21) }
+            }
+    }
+
+    @Test
+    fun `invalid inactivity policy update is rejected`() {
+        seedPlatformAdmin(email = "platform@reservenook.com", password = "SecurePass123")
+
+        val session = authenticatedPlatformAdminSession(userId = 1L, email = "platform@reservenook.com")
+
+        mockMvc.put("/api/platform-admin/inactivity-policy") {
+            this.session = session
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(
+                UpdateInactivityPolicyRequest(
+                    inactivityThresholdDays = 30,
+                    deletionWarningLeadDays = 45
+                )
+            )
+        }
+            .andExpect {
+                status { isBadRequest() }
+                jsonPath("$.message") { value("Deletion warning lead time cannot be greater than the inactivity threshold.") }
             }
     }
 

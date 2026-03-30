@@ -37,6 +37,15 @@ class Company(
     @Column(name = "default_locale", nullable = false)
     var defaultLocale: String,
 
+    @Column(name = "last_activity_at", nullable = false)
+    var lastActivityAt: Instant = Instant.now(),
+
+    @Column(name = "inactive_at")
+    var inactiveAt: Instant? = null,
+
+    @Column(name = "deletion_scheduled_at")
+    var deletionScheduledAt: Instant? = null,
+
     @Column(name = "created_at", nullable = false)
     var createdAt: Instant = Instant.now()
 )

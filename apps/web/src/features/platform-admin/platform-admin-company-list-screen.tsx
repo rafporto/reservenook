@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   Alert,
   Box,
+  Button,
   CircularProgress,
   Paper,
   Stack,
@@ -12,6 +13,7 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  TextField,
   Typography
 } from "@mui/material";
 import { useRouter } from "next/navigation";
@@ -30,55 +32,158 @@ type PlatformAdminCompanyListPayload = {
   companies: PlatformAdminCompany[];
 };
 
+type InactivityPolicy = {
+  inactivityThresholdDays: number;
+  deletionWarningLeadDays: number;
+  updatedAt: string;
+};
+
 export function PlatformAdminCompanyListScreen() {
   const router = useRouter();
   const [state, setState] = useState<
     | { status: "loading" }
-    | { status: "loaded"; companies: PlatformAdminCompany[] }
+    | { status: "loaded"; companies: PlatformAdminCompany[]; policy: InactivityPolicy }
     | { status: "forbidden" }
     | { status: "error"; message: string }
   >({ status: "loading" });
+  const [policyDraft, setPolicyDraft] = useState({
+    inactivityThresholdDays: "",
+    deletionWarningLeadDays: ""
+  });
+  const [policyFeedback, setPolicyFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [isSavingPolicy, setIsSavingPolicy] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
 
-    async function loadCompanies() {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080"}/api/platform-admin/companies`,
-        {
-          credentials: "include"
-        }
-      );
+    async function loadPlatformAdminData() {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
+      const [companyResponse, policyResponse] = await Promise.all([
+        fetch(`${apiBaseUrl}/api/platform-admin/companies`, { credentials: "include" }),
+        fetch(`${apiBaseUrl}/api/platform-admin/inactivity-policy`, { credentials: "include" })
+      ]);
 
       if (!isMounted) {
         return;
       }
 
-      if (response.status === 401) {
+      if (companyResponse.status === 401 || policyResponse.status === 401) {
         router.replace("/en/login");
         return;
       }
 
-      if (response.status === 403) {
+      if (companyResponse.status === 403 || policyResponse.status === 403) {
         setState({ status: "forbidden" });
         return;
       }
 
-      if (!response.ok) {
-        setState({ status: "error", message: "The platform admin company list could not be loaded." });
+      if (!companyResponse.ok || !policyResponse.ok) {
+        setState({ status: "error", message: "The platform admin area could not be loaded." });
         return;
       }
 
-      const payload = (await response.json()) as PlatformAdminCompanyListPayload;
-      setState({ status: "loaded", companies: payload.companies });
+      const companyPayload = (await companyResponse.json()) as PlatformAdminCompanyListPayload;
+      const policyPayload = (await policyResponse.json()) as InactivityPolicy;
+      setPolicyDraft({
+        inactivityThresholdDays: String(policyPayload.inactivityThresholdDays),
+        deletionWarningLeadDays: String(policyPayload.deletionWarningLeadDays)
+      });
+      setState({ status: "loaded", companies: companyPayload.companies, policy: policyPayload });
     }
 
-    void loadCompanies();
+    void loadPlatformAdminData();
 
     return () => {
       isMounted = false;
     };
   }, [router]);
+
+  async function handlePolicySubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPolicyFeedback(null);
+
+    const inactivityThresholdDays = Number(policyDraft.inactivityThresholdDays);
+    const deletionWarningLeadDays = Number(policyDraft.deletionWarningLeadDays);
+
+    if (
+      !Number.isInteger(inactivityThresholdDays) ||
+      !Number.isInteger(deletionWarningLeadDays) ||
+      inactivityThresholdDays < 1 ||
+      deletionWarningLeadDays < 1
+    ) {
+      setPolicyFeedback({ type: "error", message: "Use whole-day values greater than zero." });
+      return;
+    }
+
+    if (deletionWarningLeadDays > inactivityThresholdDays) {
+      setPolicyFeedback({
+        type: "error",
+        message: "Deletion warning lead time cannot be greater than the inactivity threshold."
+      });
+      return;
+    }
+
+    setIsSavingPolicy(true);
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080"}/api/platform-admin/inactivity-policy`,
+      {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          inactivityThresholdDays,
+          deletionWarningLeadDays
+        })
+      }
+    );
+
+    const payload = (await response.json().catch(() => null)) as
+      | { message?: string; policy?: InactivityPolicy }
+      | { message?: string }
+      | null;
+
+    if (response.status === 401) {
+      router.replace("/en/login");
+      setIsSavingPolicy(false);
+      return;
+    }
+
+    if (response.status === 403) {
+      setState({ status: "forbidden" });
+      setIsSavingPolicy(false);
+      return;
+    }
+
+    if (!response.ok || !("policy" in (payload ?? {}))) {
+      setPolicyFeedback({
+        type: "error",
+        message: payload?.message ?? "The inactivity policy could not be saved."
+      });
+      setIsSavingPolicy(false);
+      return;
+    }
+
+    if (state.status === "loaded") {
+      setState({
+        status: "loaded",
+        companies: state.companies,
+        policy: payload.policy
+      });
+      setPolicyDraft({
+        inactivityThresholdDays: String(payload.policy.inactivityThresholdDays),
+        deletionWarningLeadDays: String(payload.policy.deletionWarningLeadDays)
+      });
+    }
+
+    setPolicyFeedback({
+      type: "success",
+      message: payload.message ?? "Inactivity policy updated."
+    });
+    setIsSavingPolicy(false);
+  }
 
   return (
     <Box sx={{ minHeight: "100vh", px: 3, py: 6 }}>
@@ -89,7 +194,7 @@ export function PlatformAdminCompanyListScreen() {
               Platform Admin
             </Typography>
             <Typography color="text.secondary">
-              UC-09 provides read-only visibility over registered companies without entering tenant operational flows.
+              Review registered companies and configure the inactivity lifecycle used for future deletion handling.
             </Typography>
           </Stack>
 
@@ -109,30 +214,83 @@ export function PlatformAdminCompanyListScreen() {
           ) : null}
 
           {state.status === "loaded" ? (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Company</TableCell>
-                  <TableCell>Slug</TableCell>
-                  <TableCell>Business Type</TableCell>
-                  <TableCell>Activation Status</TableCell>
-                  <TableCell>Plan</TableCell>
-                  <TableCell>Expires At</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {state.companies.map((company) => (
-                  <TableRow key={company.companySlug}>
-                    <TableCell>{company.companyName}</TableCell>
-                    <TableCell>{company.companySlug}</TableCell>
-                    <TableCell>{company.businessType}</TableCell>
-                    <TableCell>{company.activationStatus}</TableCell>
-                    <TableCell>{company.planType}</TableCell>
-                    <TableCell>{new Date(company.expiresAt).toLocaleString("en-GB", { timeZone: "UTC" })}</TableCell>
+            <Stack spacing={4}>
+              <Paper variant="outlined" sx={{ p: 3 }}>
+                <Stack spacing={2} component="form" onSubmit={handlePolicySubmit}>
+                  <Stack spacing={1}>
+                    <Typography variant="h5" component="h2">
+                      Inactivity Policy
+                    </Typography>
+                    <Typography color="text.secondary">
+                      Define when a company becomes inactive and when the deletion warning must be sent.
+                    </Typography>
+                    <Typography color="text.secondary">
+                      Last updated: {new Date(state.policy.updatedAt).toLocaleString("en-GB", { timeZone: "UTC" })}
+                    </Typography>
+                  </Stack>
+
+                  {policyFeedback ? <Alert severity={policyFeedback.type}>{policyFeedback.message}</Alert> : null}
+
+                  <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+                    <TextField
+                      label="Inactivity threshold (days)"
+                      type="number"
+                      value={policyDraft.inactivityThresholdDays}
+                      onChange={(event) => {
+                        setPolicyDraft((current) => ({
+                          ...current,
+                          inactivityThresholdDays: event.target.value
+                        }));
+                      }}
+                      fullWidth
+                    />
+                    <TextField
+                      label="Deletion warning lead time (days)"
+                      type="number"
+                      value={policyDraft.deletionWarningLeadDays}
+                      onChange={(event) => {
+                        setPolicyDraft((current) => ({
+                          ...current,
+                          deletionWarningLeadDays: event.target.value
+                        }));
+                      }}
+                      fullWidth
+                    />
+                  </Stack>
+
+                  <Box>
+                    <Button type="submit" variant="contained" disabled={isSavingPolicy}>
+                      {isSavingPolicy ? "Saving policy..." : "Save inactivity policy"}
+                    </Button>
+                  </Box>
+                </Stack>
+              </Paper>
+
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Company</TableCell>
+                    <TableCell>Slug</TableCell>
+                    <TableCell>Business Type</TableCell>
+                    <TableCell>Activation Status</TableCell>
+                    <TableCell>Plan</TableCell>
+                    <TableCell>Expires At</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHead>
+                <TableBody>
+                  {state.companies.map((company) => (
+                    <TableRow key={company.companySlug}>
+                      <TableCell>{company.companyName}</TableCell>
+                      <TableCell>{company.companySlug}</TableCell>
+                      <TableCell>{company.businessType}</TableCell>
+                      <TableCell>{company.activationStatus}</TableCell>
+                      <TableCell>{company.planType}</TableCell>
+                      <TableCell>{new Date(company.expiresAt).toLocaleString("en-GB", { timeZone: "UTC" })}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Stack>
           ) : null}
 
           <LogoutButton />

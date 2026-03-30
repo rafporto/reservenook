@@ -22,6 +22,7 @@ Responsibilities:
 
 - tenant identity
 - company lifecycle
+- activity timestamps for lifecycle evaluation
 - business type selection
 - slug ownership
 - activation status
@@ -34,6 +35,7 @@ Core concepts:
 - CompanySlug
 - BusinessType
 - CompanyStatus
+- CompanyActivityTimestamp
 - ActivationPeriod
 
 ### Users
@@ -135,12 +137,14 @@ Responsibilities:
 - relevant account action auditability
 - deletion workflow support
 - compliance-relevant activity tracking
+- platform lifecycle policy configuration
 
 Core concepts:
 
 - AuditEntry
 - DeletionRequest
 - DeletionExecution
+- InactivityPolicy
 
 ## Appointment Domain
 

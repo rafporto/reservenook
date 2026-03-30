@@ -31,7 +31,7 @@ The platform is planned as:
 ## Current App Scaffolds
 
 - `apps/web` now includes the localized public product page and the Phase 1 company registration UI
-- `apps/api` now includes the Phase 1 company registration endpoint with persistence, activation-token creation, and activation email dispatch wiring
+- `apps/api` now includes the Phase 1 registration, auth, platform-admin policy, and inactive-company lifecycle baseline
 
 ## Local Commands
 
@@ -107,6 +107,7 @@ Useful checks:
 - reset password endpoint: `POST http://localhost:8080/api/public/auth/reset-password`
 - company backoffice endpoint: `GET http://localhost:8080/api/app/company/{slug}/backoffice`
 - platform admin companies endpoint: `GET http://localhost:8080/api/platform-admin/companies`
+- inactivity policy endpoints: `GET` and `PUT http://localhost:8080/api/platform-admin/inactivity-policy`
 - session endpoint: `GET http://localhost:8080/api/auth/session`
 - logout endpoint: `POST http://localhost:8080/api/auth/logout`
 - Mailpit UI: `http://localhost:8025`

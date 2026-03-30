@@ -277,6 +277,7 @@ Use the following test layers by default:
 
 - scheduled inactivity job updates company state correctly
 - inactivity timestamps are recorded
+- deletion scheduling baseline is recorded when inactivity is detected
 
 ## UC-14 Notify Company About Inactivity
 

@@ -5,4 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 interface CompanyRepository : JpaRepository<Company, Long> {
     fun existsBySlug(slug: String): Boolean
+    fun findAllByStatus(status: com.reservenook.registration.domain.CompanyStatus): List<Company>
 }
