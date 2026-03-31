@@ -137,6 +137,8 @@ Project decisions and planning are documented in:
 - [docs/conventions.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\conventions.md)
 - [docs/phase-1-use-cases.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-1-use-cases.md)
 - [docs/phase-1-test-scenarios.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-1-test-scenarios.md)
+- [docs/phase-2-use-cases.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-2-use-cases.md)
+- [docs/phase-2-test-scenarios.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-2-test-scenarios.md)
 
 ## Working Rule
 
