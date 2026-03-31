@@ -61,7 +61,8 @@ class CompanyDeletionWarningServiceTest {
             companyDeletionWarningMailSender.sendDeletionWarningEmail(
                 "admin@acme.com",
                 "Acme Wellness",
-                Instant.parse("2026-04-12T12:00:00Z")
+                Instant.parse("2026-04-12T12:00:00Z"),
+                "en"
             )
         }
 
@@ -74,7 +75,8 @@ class CompanyDeletionWarningServiceTest {
             companyDeletionWarningMailSender.sendDeletionWarningEmail(
                 "admin@acme.com",
                 "Acme Wellness",
-                Instant.parse("2026-04-12T12:00:00Z")
+                Instant.parse("2026-04-12T12:00:00Z"),
+                "en"
             )
         }
     }
@@ -131,7 +133,7 @@ class CompanyDeletionWarningServiceTest {
         val result = service.warnPendingDeletionCompanies(Instant.parse("2026-03-29T12:00:00Z"))
 
         result.warningsSent shouldBe 0
-        verify(exactly = 0) { companyDeletionWarningMailSender.sendDeletionWarningEmail(any(), any(), any()) }
+        verify(exactly = 0) { companyDeletionWarningMailSender.sendDeletionWarningEmail(any(), any(), any(), any()) }
     }
 
     @Test
@@ -156,7 +158,8 @@ class CompanyDeletionWarningServiceTest {
             companyDeletionWarningMailSender.sendDeletionWarningEmail(
                 "admin@acme.com",
                 "Acme Wellness",
-                Instant.parse("2026-04-12T12:00:00Z")
+                Instant.parse("2026-04-12T12:00:00Z"),
+                "en"
             )
         } throws MailSendException("SMTP unavailable")
 

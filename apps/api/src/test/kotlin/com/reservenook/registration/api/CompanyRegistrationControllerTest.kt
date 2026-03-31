@@ -56,7 +56,7 @@ class CompanyRegistrationControllerTest(
 
     @BeforeEach
     fun cleanDatabase() {
-        justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any()) }
+        justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
         activationTokenRepository.deleteAll()
         membershipRepository.deleteAll()
         subscriptionRepository.deleteAll()
@@ -66,7 +66,7 @@ class CompanyRegistrationControllerTest(
 
     @Test
     fun `registers company and creates activation state`() {
-        justRun { registrationMailSender.sendActivationEmail(any(), any()) }
+        justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
 
         val response = mockMvc.post("/api/public/companies/registration") {
             contentType = MediaType.APPLICATION_JSON
@@ -118,12 +118,12 @@ class CompanyRegistrationControllerTest(
         token.company.id shouldBe company.id
         token.user.id shouldBe user.id
 
-        verify(exactly = 1) { registrationMailSender.sendActivationEmail("admin@acme.com", any()) }
+        verify(exactly = 1) { registrationMailSender.sendActivationEmail("admin@acme.com", any(), "en") }
     }
 
     @Test
     fun `rejects duplicate slug`() {
-        justRun { registrationMailSender.sendActivationEmail(any(), any()) }
+        justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
         seedExistingCompany(slug = "duplicate-slug", email = "existing@company.com")
 
         mockMvc.post("/api/public/companies/registration") {
@@ -148,7 +148,7 @@ class CompanyRegistrationControllerTest(
 
     @Test
     fun `rejects duplicate email`() {
-        justRun { registrationMailSender.sendActivationEmail(any(), any()) }
+        justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
         seedExistingCompany(slug = "existing-slug", email = "existing@company.com")
 
         mockMvc.post("/api/public/companies/registration") {
@@ -173,7 +173,7 @@ class CompanyRegistrationControllerTest(
 
     @Test
     fun `returns service unavailable when activation email cannot be sent`() {
-        every { registrationMailSender.sendActivationEmail(any(), any()) } throws MailSendException("SMTP unavailable")
+        every { registrationMailSender.sendActivationEmail(any(), any(), any()) } throws MailSendException("SMTP unavailable")
 
         mockMvc.post("/api/public/companies/registration") {
             contentType = MediaType.APPLICATION_JSON

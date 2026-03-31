@@ -57,8 +57,8 @@ class CompanyDeletionServiceIntegrationTest(
 
     @BeforeEach
     fun cleanDatabase() {
-        justRun { registrationMailSender.sendActivationEmail(any(), any()) }
-        justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any()) }
+        justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
+        justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
         inactivityNotificationEventRepository.deleteAll()
         companyDeletionEventRepository.deleteAll()
         activationTokenRepository.deleteAll()

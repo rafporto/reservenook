@@ -51,9 +51,9 @@ class CompanyInactivityNotificationServiceIntegrationTest(
 
     @BeforeEach
     fun cleanDatabase() {
-        justRun { registrationMailSender.sendActivationEmail(any(), any()) }
-        justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any()) }
-        justRun { companyInactivityMailSender.sendInactivityEmail(any(), any()) }
+        justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
+        justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
+        justRun { companyInactivityMailSender.sendInactivityEmail(any(), any(), any()) }
         inactivityNotificationEventRepository.deleteAll()
         membershipRepository.deleteAll()
         subscriptionRepository.deleteAll()
@@ -101,7 +101,7 @@ class CompanyInactivityNotificationServiceIntegrationTest(
         val result = evaluationService.evaluate(Instant.parse("2026-03-30T12:00:00Z"))
 
         result.companiesMarkedInactive shouldBe 1
-        verify(exactly = 1) { companyInactivityMailSender.sendInactivityEmail("admin@acme.com", "Acme Wellness") }
+        verify(exactly = 1) { companyInactivityMailSender.sendInactivityEmail("admin@acme.com", "Acme Wellness", "en") }
         inactivityNotificationEventRepository.findAllByCompanyId(requireNotNull(company.id)).shouldHaveSize(1)
         inactivityNotificationEventRepository.findAllByCompanyId(requireNotNull(company.id)).single().status shouldBe InactivityNotificationStatus.SENT
         inactivityNotificationEventRepository.findAllByCompanyId(requireNotNull(company.id)).single().notificationType shouldBe CompanyLifecycleNotificationType.INACTIVITY_NOTICE

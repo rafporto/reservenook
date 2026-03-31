@@ -106,7 +106,8 @@ class CompanyRegistrationService(
 
         registrationMailSender.sendActivationEmail(
             normalizedEmail,
-            "${registrationProperties.publicBaseUrl.trimEnd('/')}/${company.defaultLanguage}/activate?token=${activationToken.token}"
+            "${registrationProperties.publicBaseUrl.trimEnd('/')}/${company.defaultLanguage}/activate?token=${activationToken.token}",
+            company.defaultLanguage
         )
 
         return RegisterCompanyResult(

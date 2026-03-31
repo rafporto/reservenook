@@ -51,9 +51,9 @@ class CompanyDeletionWarningServiceIntegrationTest(
 
     @BeforeEach
     fun cleanDatabase() {
-        justRun { registrationMailSender.sendActivationEmail(any(), any()) }
-        justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any()) }
-        justRun { companyDeletionWarningMailSender.sendDeletionWarningEmail(any(), any(), any()) }
+        justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
+        justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
+        justRun { companyDeletionWarningMailSender.sendDeletionWarningEmail(any(), any(), any(), any()) }
         inactivityNotificationEventRepository.deleteAll()
         membershipRepository.deleteAll()
         subscriptionRepository.deleteAll()
@@ -108,7 +108,8 @@ class CompanyDeletionWarningServiceIntegrationTest(
             companyDeletionWarningMailSender.sendDeletionWarningEmail(
                 "admin@acme.com",
                 "Acme Wellness",
-                Instant.parse("2026-04-12T12:00:00Z")
+                Instant.parse("2026-04-12T12:00:00Z"),
+                "en"
             )
         }
 

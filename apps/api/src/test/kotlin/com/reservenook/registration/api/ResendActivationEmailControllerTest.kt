@@ -53,7 +53,7 @@ class ResendActivationEmailControllerTest(
 
     @BeforeEach
     fun cleanDatabase() {
-        justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any()) }
+        justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
         activationTokenRepository.deleteAll()
         membershipRepository.deleteAll()
         subscriptionRepository.deleteAll()
@@ -63,7 +63,7 @@ class ResendActivationEmailControllerTest(
 
     @Test
     fun `resend endpoint dispatches activation email for eligible account`() {
-        justRun { registrationMailSender.sendActivationEmail(any(), any()) }
+        justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
         seedPendingCompany(email = "admin@acme.com", tokenCreatedAt = Instant.now().minusSeconds(900))
 
         mockMvc.post("/api/public/companies/activation/resend") {
@@ -76,12 +76,12 @@ class ResendActivationEmailControllerTest(
             }
 
         activationTokenRepository.findAll() shouldHaveSize 2
-        verify(exactly = 1) { registrationMailSender.sendActivationEmail("admin@acme.com", any()) }
+        verify(exactly = 1) { registrationMailSender.sendActivationEmail("admin@acme.com", any(), "en") }
     }
 
     @Test
     fun `resend endpoint returns neutral response for unknown email`() {
-        justRun { registrationMailSender.sendActivationEmail(any(), any()) }
+        justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
 
         mockMvc.post("/api/public/companies/activation/resend") {
             contentType = MediaType.APPLICATION_JSON
@@ -92,7 +92,7 @@ class ResendActivationEmailControllerTest(
                 jsonPath("$.message") { value("If the account is pending activation, a new activation email will be sent.") }
             }
 
-        verify(exactly = 0) { registrationMailSender.sendActivationEmail(any(), any()) }
+        verify(exactly = 0) { registrationMailSender.sendActivationEmail(any(), any(), any()) }
     }
 
     private fun seedPendingCompany(email: String, tokenCreatedAt: Instant) {

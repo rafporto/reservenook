@@ -5,7 +5,7 @@ import java.time.Instant
 
 class NoopCompanyDeletionWarningMailSender : CompanyDeletionWarningMailSender {
 
-    override fun sendDeletionWarningEmail(email: String, companyName: String, deletionScheduledAt: Instant) {
+    override fun sendDeletionWarningEmail(email: String, companyName: String, deletionScheduledAt: Instant, language: String) {
         // Intentionally no-op when SMTP is not configured for the current environment.
     }
 }

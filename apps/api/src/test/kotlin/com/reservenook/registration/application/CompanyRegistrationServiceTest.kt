@@ -61,7 +61,7 @@ class CompanyRegistrationServiceTest {
         every { membershipRepository.save(capture(membershipSlot)) } answers { firstArg() }
         every { subscriptionRepository.save(capture(subscriptionSlot)) } answers { firstArg() }
         every { activationTokenRepository.save(any()) } answers { firstArg() }
-        justRun { mailSender.sendActivationEmail(any(), any()) }
+        justRun { mailSender.sendActivationEmail(any(), any(), any()) }
 
         service.register(
             RegisterCompanyCommand(
@@ -83,7 +83,8 @@ class CompanyRegistrationServiceTest {
         verify(exactly = 1) {
             mailSender.sendActivationEmail(
                 "admin@acme.com",
-                match { it.startsWith("http://localhost:3000/en/activate?token=") }
+                match { it.startsWith("http://localhost:3000/en/activate?token=") },
+                "en"
             )
         }
     }

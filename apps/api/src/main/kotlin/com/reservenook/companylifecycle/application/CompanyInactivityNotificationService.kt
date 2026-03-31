@@ -45,7 +45,7 @@ class CompanyInactivityNotificationService(
 
             recipients.forEach { email ->
                 try {
-                    companyInactivityMailSender.sendInactivityEmail(email, company.name)
+                    companyInactivityMailSender.sendInactivityEmail(email, company.name, company.defaultLanguage)
                     inactivityNotificationEventRepository.save(
                         InactivityNotificationEvent(
                             company = company,

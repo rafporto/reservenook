@@ -36,6 +36,7 @@ Use the following test layers by default:
 - duplicate email follows defined conflict behavior
 - registration failure does not leave partial tenant records
 - activation email dispatch is triggered
+- activation email is sent in the company default language
 
 ### Frontend
 
@@ -144,6 +145,7 @@ Use the following test layers by default:
 
 - forgot-password endpoint dispatches reset email
 - response does not reveal account existence
+- password reset email uses the company default language when company context exists
 
 ### Frontend
 
@@ -290,6 +292,7 @@ Use the following test layers by default:
 
 - notification dispatch occurs when inactivity state is entered
 - delivery failure is recorded for retry or review
+- inactivity email is sent in the company default language
 
 ## UC-15 Warn Company About Pending Data Deletion
 
@@ -305,6 +308,7 @@ Use the following test layers by default:
 - scheduled warning job dispatches warning email
 - warning event is persisted with deletion-warning type
 - company moves into pending-deletion state when warning window starts
+- deletion warning email is sent in the company default language
 
 ## UC-16 Delete Inactive Company After Retention Period
 

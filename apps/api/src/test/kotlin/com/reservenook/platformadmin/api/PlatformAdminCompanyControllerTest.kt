@@ -57,8 +57,8 @@ class PlatformAdminCompanyControllerTest(
 
     @BeforeEach
     fun cleanDatabase() {
-        justRun { registrationMailSender.sendActivationEmail(any(), any()) }
-        justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any()) }
+        justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
+        justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
         membershipRepository.deleteAll()
         subscriptionRepository.deleteAll()
         userAccountRepository.deleteAll()

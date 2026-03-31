@@ -2,6 +2,7 @@ package com.reservenook.auth.application
 
 import com.reservenook.registration.application.RegistrationProperties
 import com.reservenook.registration.domain.UserStatus
+import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
 import com.reservenook.auth.domain.PasswordResetToken
 import com.reservenook.auth.infrastructure.PasswordResetTokenRepository
@@ -14,6 +15,7 @@ import java.util.UUID
 @Service
 class RequestPasswordResetService(
     private val userAccountRepository: UserAccountRepository,
+    private val companyMembershipRepository: CompanyMembershipRepository,
     private val passwordResetTokenRepository: PasswordResetTokenRepository,
     private val passwordResetMailSender: PasswordResetMailSender,
     private val registrationProperties: RegistrationProperties
@@ -49,9 +51,16 @@ class RequestPasswordResetService(
             )
         )
 
+        val language = companyMembershipRepository.findFirstByUserId(requireNotNull(user.id))
+            ?.company
+            ?.defaultLanguage
+            ?.lowercase()
+            ?: "en"
+
         passwordResetMailSender.sendPasswordResetEmail(
             normalizedEmail,
-            "${registrationProperties.publicBaseUrl.trimEnd('/')}/en/reset-password?token=${nextToken.token}"
+            "${registrationProperties.publicBaseUrl.trimEnd('/')}/$language/reset-password?token=${nextToken.token}",
+            language
         )
 
         return neutralResult

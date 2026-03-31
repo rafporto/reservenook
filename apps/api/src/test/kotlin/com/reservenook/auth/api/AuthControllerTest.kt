@@ -56,8 +56,8 @@ class AuthControllerTest(
 
     @BeforeEach
     fun cleanDatabase() {
-        justRun { registrationMailSender.sendActivationEmail(any(), any()) }
-        justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any()) }
+        justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
+        justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
         activationTokenRepository.deleteAll()
         membershipRepository.deleteAll()
         subscriptionRepository.deleteAll()

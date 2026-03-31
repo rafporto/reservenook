@@ -52,7 +52,7 @@ class ResendActivationEmailServiceTest {
         every { activationTokenRepository.findFirstByUserIdOrderByCreatedAtDesc(2L) } returns existingToken
         every { activationTokenRepository.findAllByUserIdAndUsedAtIsNull(2L) } returns listOf(existingToken)
         every { activationTokenRepository.save(capture(newTokenSlot)) } answers { firstArg() }
-        justRun { registrationMailSender.sendActivationEmail(any(), any()) }
+        justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
 
         val result = service.resend("Admin@Acme.com")
 
@@ -61,7 +61,8 @@ class ResendActivationEmailServiceTest {
         verify(exactly = 1) {
             registrationMailSender.sendActivationEmail(
                 "admin@acme.com",
-                match { it.startsWith("http://localhost:3000/en/activate?token=") }
+                match { it.startsWith("http://localhost:3000/en/activate?token=") },
+                "en"
             )
         }
         newTokenSlot.captured.user.id shouldBe 2L
@@ -74,7 +75,7 @@ class ResendActivationEmailServiceTest {
         val result = service.resend("unknown@acme.com")
 
         result.message shouldBe "If the account is pending activation, a new activation email will be sent."
-        verify(exactly = 0) { registrationMailSender.sendActivationEmail(any(), any()) }
+        verify(exactly = 0) { registrationMailSender.sendActivationEmail(any(), any(), any()) }
     }
 
     @Test
@@ -91,7 +92,7 @@ class ResendActivationEmailServiceTest {
 
         result.message shouldBe "If the account is pending activation, a new activation email will be sent."
         verify(exactly = 0) { activationTokenRepository.save(any()) }
-        verify(exactly = 0) { registrationMailSender.sendActivationEmail(any(), any()) }
+        verify(exactly = 0) { registrationMailSender.sendActivationEmail(any(), any(), any()) }
     }
 
     private fun pendingUser() = UserAccount(

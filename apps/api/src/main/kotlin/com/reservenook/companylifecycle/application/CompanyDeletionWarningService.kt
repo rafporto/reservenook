@@ -61,7 +61,12 @@ class CompanyDeletionWarningService(
 
             recipients.forEach { email ->
                 try {
-                    companyDeletionWarningMailSender.sendDeletionWarningEmail(email, company.name, deletionScheduledAt)
+                    companyDeletionWarningMailSender.sendDeletionWarningEmail(
+                        email,
+                        company.name,
+                        deletionScheduledAt,
+                        company.defaultLanguage
+                    )
                     inactivityNotificationEventRepository.save(
                         InactivityNotificationEvent(
                             company = company,

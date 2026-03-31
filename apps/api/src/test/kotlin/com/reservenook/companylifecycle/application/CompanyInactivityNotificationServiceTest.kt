@@ -55,13 +55,13 @@ class CompanyInactivityNotificationServiceTest {
         } returns false
         every { companyMembershipRepository.findAllByCompanyIdAndRole(1L, CompanyRole.COMPANY_ADMIN) } returns listOf(recipient)
         every { inactivityNotificationEventRepository.save(any()) } answers { firstArg() }
-        justRun { companyInactivityMailSender.sendInactivityEmail("admin@acme.com", "Acme Wellness") }
+        justRun { companyInactivityMailSender.sendInactivityEmail("admin@acme.com", "Acme Wellness", "en") }
 
         val result = service.notifyCompanies(listOf(company), Instant.parse("2026-03-30T12:00:00Z"))
 
         result.companiesNotified shouldBe 1
         result.failedNotifications shouldBe 0
-        verify(exactly = 1) { companyInactivityMailSender.sendInactivityEmail("admin@acme.com", "Acme Wellness") }
+        verify(exactly = 1) { companyInactivityMailSender.sendInactivityEmail("admin@acme.com", "Acme Wellness", "en") }
     }
 
     @Test
@@ -106,7 +106,7 @@ class CompanyInactivityNotificationServiceTest {
         } returns false
         every { companyMembershipRepository.findAllByCompanyIdAndRole(1L, CompanyRole.COMPANY_ADMIN) } returns listOf(recipient)
         every { inactivityNotificationEventRepository.save(any()) } answers { firstArg() }
-        every { companyInactivityMailSender.sendInactivityEmail("admin@acme.com", "Acme Wellness") } throws MailSendException("SMTP unavailable")
+        every { companyInactivityMailSender.sendInactivityEmail("admin@acme.com", "Acme Wellness", "en") } throws MailSendException("SMTP unavailable")
 
         val result = service.notifyCompanies(listOf(company), Instant.parse("2026-03-30T12:00:00Z"))
 

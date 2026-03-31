@@ -3,6 +3,7 @@ package com.reservenook.companylifecycle.infrastructure
 import com.reservenook.companylifecycle.application.CompanyDeletionWarningMailSender
 import com.reservenook.companylifecycle.application.CompanyInactivityMailSender
 import com.reservenook.config.BrandedEmailTemplateRenderer
+import com.reservenook.config.LocalizedEmailMessageFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
@@ -16,9 +17,10 @@ class CompanyInactivityMailSenderConfiguration {
     @ConditionalOnBean(JavaMailSender::class)
     fun smtpCompanyInactivityMailSender(
         mailSender: JavaMailSender,
-        brandedEmailTemplateRenderer: BrandedEmailTemplateRenderer
+        brandedEmailTemplateRenderer: BrandedEmailTemplateRenderer,
+        localizedEmailMessageFactory: LocalizedEmailMessageFactory
     ): CompanyInactivityMailSender =
-        SmtpCompanyInactivityMailSender(mailSender, brandedEmailTemplateRenderer)
+        SmtpCompanyInactivityMailSender(mailSender, brandedEmailTemplateRenderer, localizedEmailMessageFactory)
 
     @Bean
     @ConditionalOnMissingBean(CompanyInactivityMailSender::class)
@@ -28,9 +30,10 @@ class CompanyInactivityMailSenderConfiguration {
     @ConditionalOnBean(JavaMailSender::class)
     fun smtpCompanyDeletionWarningMailSender(
         mailSender: JavaMailSender,
-        brandedEmailTemplateRenderer: BrandedEmailTemplateRenderer
+        brandedEmailTemplateRenderer: BrandedEmailTemplateRenderer,
+        localizedEmailMessageFactory: LocalizedEmailMessageFactory
     ): CompanyDeletionWarningMailSender =
-        SmtpCompanyDeletionWarningMailSender(mailSender, brandedEmailTemplateRenderer)
+        SmtpCompanyDeletionWarningMailSender(mailSender, brandedEmailTemplateRenderer, localizedEmailMessageFactory)
 
     @Bean
     @ConditionalOnMissingBean(CompanyDeletionWarningMailSender::class)

@@ -47,7 +47,7 @@ class CompanyActivationControllerTest(
 
     @BeforeEach
     fun cleanDatabase() {
-        io.mockk.justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any()) }
+        io.mockk.justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
         activationTokenRepository.deleteAll()
         companySubscriptionRepository.deleteAll()
         userAccountRepository.deleteAll()

@@ -47,8 +47,8 @@ class RequestPasswordResetControllerTest(
 
     @BeforeEach
     fun cleanDatabase() {
-        justRun { registrationMailSender.sendActivationEmail(any(), any()) }
-        justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any()) }
+        justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
+        justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
         activationTokenRepository.deleteAll()
         passwordResetTokenRepository.deleteAll()
         membershipRepository.deleteAll()
@@ -78,7 +78,7 @@ class RequestPasswordResetControllerTest(
             }
 
         passwordResetTokenRepository.findAll() shouldHaveSize 1
-        verify(exactly = 1) { passwordResetMailSender.sendPasswordResetEmail("admin@acme.com", any()) }
+        verify(exactly = 1) { passwordResetMailSender.sendPasswordResetEmail("admin@acme.com", any(), "en") }
     }
 
     @Test
@@ -92,6 +92,6 @@ class RequestPasswordResetControllerTest(
                 jsonPath("$.message") { value("If the account is eligible, a password reset email will be sent.") }
             }
 
-        verify(exactly = 0) { passwordResetMailSender.sendPasswordResetEmail(any(), any()) }
+        verify(exactly = 0) { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
     }
 }

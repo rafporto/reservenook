@@ -4,7 +4,7 @@ import com.reservenook.companylifecycle.application.CompanyInactivityMailSender
 
 class NoopCompanyInactivityMailSender : CompanyInactivityMailSender {
 
-    override fun sendInactivityEmail(email: String, companyName: String) {
+    override fun sendInactivityEmail(email: String, companyName: String, language: String) {
         // Intentionally no-op when SMTP is not configured for the current environment.
     }
 }

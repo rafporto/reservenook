@@ -61,7 +61,8 @@ class ResendActivationEmailService(
 
         registrationMailSender.sendActivationEmail(
             normalizedEmail,
-            "${registrationProperties.publicBaseUrl.trimEnd('/')}/${company.defaultLanguage}/activate?token=${nextToken.token}"
+            "${registrationProperties.publicBaseUrl.trimEnd('/')}/${company.defaultLanguage}/activate?token=${nextToken.token}",
+            company.defaultLanguage
         )
 
         return neutralResult
