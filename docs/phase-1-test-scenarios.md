@@ -303,7 +303,7 @@ Use the following test layers by default:
 ### Backend Integration
 
 - scheduled warning job dispatches warning email
-- warning event is persisted
+- warning event is persisted with deletion-warning type
 
 ## UC-16 Delete Inactive Company After Retention Period
 

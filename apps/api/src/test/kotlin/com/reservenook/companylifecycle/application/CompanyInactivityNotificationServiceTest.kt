@@ -1,5 +1,6 @@
 package com.reservenook.companylifecycle.application
 
+import com.reservenook.companylifecycle.domain.CompanyLifecycleNotificationType
 import com.reservenook.companylifecycle.domain.InactivityNotificationStatus
 import com.reservenook.companylifecycle.infrastructure.InactivityNotificationEventRepository
 import com.reservenook.registration.domain.BusinessType
@@ -45,7 +46,13 @@ class CompanyInactivityNotificationServiceTest {
             role = CompanyRole.COMPANY_ADMIN
         )
 
-        every { inactivityNotificationEventRepository.existsByCompanyIdAndStatus(1L, InactivityNotificationStatus.SENT) } returns false
+        every {
+            inactivityNotificationEventRepository.existsByCompanyIdAndNotificationTypeAndStatus(
+                1L,
+                CompanyLifecycleNotificationType.INACTIVITY_NOTICE,
+                InactivityNotificationStatus.SENT
+            )
+        } returns false
         every { companyMembershipRepository.findAllByCompanyIdAndRole(1L, CompanyRole.COMPANY_ADMIN) } returns listOf(recipient)
         every { inactivityNotificationEventRepository.save(any()) } answers { firstArg() }
         justRun { companyInactivityMailSender.sendInactivityEmail("admin@acme.com", "Acme Wellness") }
@@ -61,7 +68,13 @@ class CompanyInactivityNotificationServiceTest {
     fun `duplicate inactivity notification is prevented after a sent event exists`() {
         val company = inactiveCompany()
 
-        every { inactivityNotificationEventRepository.existsByCompanyIdAndStatus(1L, InactivityNotificationStatus.SENT) } returns true
+        every {
+            inactivityNotificationEventRepository.existsByCompanyIdAndNotificationTypeAndStatus(
+                1L,
+                CompanyLifecycleNotificationType.INACTIVITY_NOTICE,
+                InactivityNotificationStatus.SENT
+            )
+        } returns true
 
         val result = service.notifyCompanies(listOf(company), Instant.parse("2026-03-30T12:00:00Z"))
 
@@ -84,7 +97,13 @@ class CompanyInactivityNotificationServiceTest {
             role = CompanyRole.COMPANY_ADMIN
         )
 
-        every { inactivityNotificationEventRepository.existsByCompanyIdAndStatus(1L, InactivityNotificationStatus.SENT) } returns false
+        every {
+            inactivityNotificationEventRepository.existsByCompanyIdAndNotificationTypeAndStatus(
+                1L,
+                CompanyLifecycleNotificationType.INACTIVITY_NOTICE,
+                InactivityNotificationStatus.SENT
+            )
+        } returns false
         every { companyMembershipRepository.findAllByCompanyIdAndRole(1L, CompanyRole.COMPANY_ADMIN) } returns listOf(recipient)
         every { inactivityNotificationEventRepository.save(any()) } answers { firstArg() }
         every { companyInactivityMailSender.sendInactivityEmail("admin@acme.com", "Acme Wellness") } throws MailSendException("SMTP unavailable")

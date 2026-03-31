@@ -30,8 +30,8 @@ import org.springframework.boot.test.context.SpringBootTest
 import java.time.Instant
 
 @SpringBootTest
-class CompanyInactivityNotificationServiceIntegrationTest(
-    @Autowired private val evaluationService: CompanyInactivityEvaluationService,
+class CompanyDeletionWarningServiceIntegrationTest(
+    @Autowired private val companyDeletionWarningService: CompanyDeletionWarningService,
     @Autowired private val companyRepository: CompanyRepository,
     @Autowired private val userAccountRepository: UserAccountRepository,
     @Autowired private val membershipRepository: CompanyMembershipRepository,
@@ -47,13 +47,13 @@ class CompanyInactivityNotificationServiceIntegrationTest(
     private lateinit var passwordResetMailSender: PasswordResetMailSender
 
     @MockkBean
-    private lateinit var companyInactivityMailSender: CompanyInactivityMailSender
+    private lateinit var companyDeletionWarningMailSender: CompanyDeletionWarningMailSender
 
     @BeforeEach
     fun cleanDatabase() {
         justRun { registrationMailSender.sendActivationEmail(any(), any()) }
         justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any()) }
-        justRun { companyInactivityMailSender.sendInactivityEmail(any(), any()) }
+        justRun { companyDeletionWarningMailSender.sendDeletionWarningEmail(any(), any(), any()) }
         inactivityNotificationEventRepository.deleteAll()
         membershipRepository.deleteAll()
         subscriptionRepository.deleteAll()
@@ -70,16 +70,18 @@ class CompanyInactivityNotificationServiceIntegrationTest(
     }
 
     @Test
-    fun `notification dispatch occurs when inactivity state is entered`() {
+    fun `scheduled warning job dispatches warning email and persists event`() {
         val company = companyRepository.save(
             Company(
                 name = "Acme Wellness",
                 businessType = BusinessType.APPOINTMENT,
                 slug = "acme-wellness",
-                status = CompanyStatus.ACTIVE,
+                status = CompanyStatus.INACTIVE,
                 defaultLanguage = "en",
                 defaultLocale = "en-US",
-                lastActivityAt = Instant.parse("2025-12-01T00:00:00Z")
+                lastActivityAt = Instant.parse("2025-12-01T00:00:00Z"),
+                inactiveAt = Instant.parse("2026-01-12T12:00:00Z"),
+                deletionScheduledAt = Instant.parse("2026-04-12T12:00:00Z")
             )
         )
         val user = userAccountRepository.save(
@@ -98,12 +100,20 @@ class CompanyInactivityNotificationServiceIntegrationTest(
             )
         )
 
-        val result = evaluationService.evaluate(Instant.parse("2026-03-30T12:00:00Z"))
+        val result = companyDeletionWarningService.warnPendingDeletionCompanies(Instant.parse("2026-03-29T12:00:00Z"))
 
-        result.companiesMarkedInactive shouldBe 1
-        verify(exactly = 1) { companyInactivityMailSender.sendInactivityEmail("admin@acme.com", "Acme Wellness") }
-        inactivityNotificationEventRepository.findAllByCompanyId(requireNotNull(company.id)).shouldHaveSize(1)
-        inactivityNotificationEventRepository.findAllByCompanyId(requireNotNull(company.id)).single().status shouldBe InactivityNotificationStatus.SENT
-        inactivityNotificationEventRepository.findAllByCompanyId(requireNotNull(company.id)).single().notificationType shouldBe CompanyLifecycleNotificationType.INACTIVITY_NOTICE
+        result.warningsSent shouldBe 1
+        verify(exactly = 1) {
+            companyDeletionWarningMailSender.sendDeletionWarningEmail(
+                "admin@acme.com",
+                "Acme Wellness",
+                Instant.parse("2026-04-12T12:00:00Z")
+            )
+        }
+
+        val events = inactivityNotificationEventRepository.findAllByCompanyId(requireNotNull(company.id))
+        events.shouldHaveSize(1)
+        events.single().status shouldBe InactivityNotificationStatus.SENT
+        events.single().notificationType shouldBe CompanyLifecycleNotificationType.DELETION_WARNING
     }
 }

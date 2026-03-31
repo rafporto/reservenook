@@ -29,6 +29,10 @@ class InactivityNotificationEvent(
     var email: String,
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "notification_type", nullable = false)
+    var notificationType: CompanyLifecycleNotificationType,
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     var status: InactivityNotificationStatus,
 

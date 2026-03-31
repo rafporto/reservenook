@@ -1,5 +1,6 @@
 package com.reservenook.companylifecycle.infrastructure
 
+import com.reservenook.companylifecycle.application.CompanyDeletionWarningMailSender
 import com.reservenook.companylifecycle.application.CompanyInactivityMailSender
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
@@ -18,4 +19,13 @@ class CompanyInactivityMailSenderConfiguration {
     @Bean
     @ConditionalOnMissingBean(CompanyInactivityMailSender::class)
     fun noopCompanyInactivityMailSender(): CompanyInactivityMailSender = NoopCompanyInactivityMailSender()
+
+    @Bean
+    @ConditionalOnBean(JavaMailSender::class)
+    fun smtpCompanyDeletionWarningMailSender(mailSender: JavaMailSender): CompanyDeletionWarningMailSender =
+        SmtpCompanyDeletionWarningMailSender(mailSender)
+
+    @Bean
+    @ConditionalOnMissingBean(CompanyDeletionWarningMailSender::class)
+    fun noopCompanyDeletionWarningMailSender(): CompanyDeletionWarningMailSender = NoopCompanyDeletionWarningMailSender()
 }

@@ -115,6 +115,7 @@ Core concepts:
 - NotificationEvent
 - DeliveryRequest
 - InactivityNotificationEvent
+- DeletionWarningEvent
 
 ### Customer Data and Questions
 
