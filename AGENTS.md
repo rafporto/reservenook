@@ -76,6 +76,19 @@ There is no Git history yet, so use a simple convention from the start:
 - Commit format: `type: short summary`
 - Examples: `docs: add contributor guide`, `feat: add company registration endpoint`
 
+Before every commit:
+
+- run the local CI baseline that matches the changed areas
+- fix failing checks before creating the commit
+- do not commit known build, test, lint, or type errors
+
+At minimum, use the current project baseline where applicable:
+
+- `npm run test:web`
+- `npm run lint:web`
+- `npm run build:web`
+- `./gradlew :apps:api:test`
+
 PRs should include:
 
 - a short problem/solution description
