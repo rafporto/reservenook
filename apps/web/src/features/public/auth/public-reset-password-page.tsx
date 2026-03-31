@@ -1,5 +1,5 @@
-import { Paper, Stack, Typography } from "@mui/material";
-import { BrandLockup } from "@/components/public/brand-lockup";
+import { Stack, Typography } from "@mui/material";
+import { PublicAuthFrame } from "@/components/public/public-auth-frame";
 import type { SupportedLocale } from "@/lib/i18n/locales";
 import { getPublicMessages } from "@/lib/i18n/messages";
 import { ResetPasswordForm } from "@/features/public/auth/reset-password-form";
@@ -13,28 +13,17 @@ export function PublicResetPasswordPage({ locale, token }: PublicResetPasswordPa
   const messages = getPublicMessages(locale);
 
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        maxWidth: 760,
-        mx: "auto",
-        border: "1px solid",
-        borderColor: "divider",
-        borderRadius: 6,
-        p: { xs: 3, md: 5 },
-        backgroundColor: "background.paper"
-      }}
+    <PublicAuthFrame
+      locale={locale}
+      eyebrow={messages.resetPasswordTitle}
+      title={messages.resetPasswordTitle}
+      description={messages.resetPasswordDescription}
+      highlights={["Protected flow", "Short-lived token", "Account recovery"]}
     >
       <Stack spacing={3}>
-        <BrandLockup locale={locale} />
-        <Stack spacing={1}>
-          <Typography variant="h3" component="h1">
-            {messages.resetPasswordTitle}
-          </Typography>
-          <Typography color="text.secondary">{messages.resetPasswordDescription}</Typography>
-        </Stack>
+        <Typography variant="h5">Choose a new password to restore account access</Typography>
         <ResetPasswordForm locale={locale} token={token} />
       </Stack>
-    </Paper>
+    </PublicAuthFrame>
   );
 }

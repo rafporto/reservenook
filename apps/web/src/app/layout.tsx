@@ -1,15 +1,22 @@
 import type { Metadata } from "next";
+import { Fraunces, Manrope } from "next/font/google";
 import "./globals.css";
 import { AppProviders } from "@/components/providers/app-providers";
+import { getSiteMetadata } from "@/lib/seo/public-seo";
 
-export const metadata: Metadata = {
-  title: "Reservenook",
-  description: "Unified booking platform for appointments, classes, and restaurant reservations.",
-  icons: {
-    icon: "/icon.svg",
-    shortcut: "/icon.svg"
-  }
-};
+const displayFont = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-display",
+  weight: ["600", "700"]
+});
+
+const bodyFont = Manrope({
+  subsets: ["latin"],
+  variable: "--font-body",
+  weight: ["400", "500", "600", "700"]
+});
+
+export const metadata: Metadata = getSiteMetadata();
 
 export default function RootLayout({
   children
@@ -18,7 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
+      <body className={`${displayFont.variable} ${bodyFont.variable}`}>
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

@@ -34,7 +34,7 @@ The platform is planned as:
 
 ## Current App Scaffolds
 
-- `apps/web` now includes the localized public product page and the Phase 1 company registration UI
+- `apps/web` now includes a branded localized public marketing surface, improved auth/onboarding UX, and SEO assets such as route metadata, `robots.txt`, and `sitemap.xml`
 - `apps/api` now includes the Phase 1 registration, auth, platform-admin policy, inactive-company lifecycle baseline, inactivity notification wiring, pending-deletion warning flow, and automated company deletion
 
 ## Local Commands

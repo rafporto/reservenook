@@ -1,12 +1,22 @@
-import { Paper, Stack, Typography } from "@mui/material";
+import type { Metadata } from "next";
+import { Stack, Typography } from "@mui/material";
+import { PublicAuthFrame } from "@/components/public/public-auth-frame";
 import { ActivationStatus } from "@/features/public/activation/activation-status";
 import { requireSupportedLocale } from "@/lib/i18n/locales";
 import { getPublicMessages } from "@/lib/i18n/messages";
+import { getActivationMetadata } from "@/lib/seo/public-seo";
 
 type ActivatePageProps = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ token?: string }>;
 };
+
+export async function generateMetadata({ params }: ActivatePageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const safeLocale = requireSupportedLocale(locale);
+
+  return getActivationMetadata(safeLocale);
+}
 
 export default async function ActivatePage({ params, searchParams }: ActivatePageProps) {
   const { locale } = await params;
@@ -15,22 +25,17 @@ export default async function ActivatePage({ params, searchParams }: ActivatePag
   const messages = getPublicMessages(safeLocale);
 
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        maxWidth: 760,
-        mx: "auto",
-        border: "1px solid",
-        borderColor: "divider",
-        borderRadius: 6,
-        p: { xs: 3, md: 5 },
-        backgroundColor: "background.paper"
-      }}
+    <PublicAuthFrame
+      locale={safeLocale}
+      eyebrow={messages.activationTitle}
+      title={messages.activationTitle}
+      description={messages.activationNextStep}
+      highlights={["Account verification", "Company activation", "Secure onboarding"]}
     >
       <Stack spacing={3}>
-        <Typography variant="h3" component="h1">{messages.activationTitle}</Typography>
+        <Typography variant="h5">Confirm the activation link to unlock the initial company admin account</Typography>
         <ActivationStatus locale={safeLocale} token={token} />
       </Stack>
-    </Paper>
+    </PublicAuthFrame>
   );
 }
