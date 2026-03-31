@@ -166,7 +166,7 @@ export function PlatformAdminCompanyListScreen() {
         return;
       }
 
-      if (!response.ok || !("policy" in (payload ?? {}))) {
+      if (!response.ok || !payload || !("policy" in payload) || !payload.policy) {
         setPolicyFeedback({
           type: "error",
           message: payload?.message ?? "The inactivity policy could not be saved."
@@ -175,15 +175,17 @@ export function PlatformAdminCompanyListScreen() {
         return;
       }
 
+      const policy = payload.policy;
+
       if (state.status === "loaded") {
         setState({
           status: "loaded",
           companies: state.companies,
-          policy: payload.policy
+          policy
         });
         setPolicyDraft({
-          inactivityThresholdDays: String(payload.policy.inactivityThresholdDays),
-          deletionWarningLeadDays: String(payload.policy.deletionWarningLeadDays)
+          inactivityThresholdDays: String(policy.inactivityThresholdDays),
+          deletionWarningLeadDays: String(policy.deletionWarningLeadDays)
         });
       }
 
