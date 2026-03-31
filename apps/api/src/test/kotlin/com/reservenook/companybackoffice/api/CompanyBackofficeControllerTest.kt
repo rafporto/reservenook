@@ -76,10 +76,13 @@ class CompanyBackofficeControllerTest(
         }
             .andExpect {
                 status { isOk() }
-                jsonPath("$.companySlug") { value("acme-wellness") }
-                jsonPath("$.companyName") { value("Acme Wellness") }
-                jsonPath("$.role") { value("COMPANY_ADMIN") }
-                jsonPath("$.currentUserEmail") { value("admin@acme.com") }
+                jsonPath("$.company.companySlug") { value("acme-wellness") }
+                jsonPath("$.company.companyName") { value("Acme Wellness") }
+                jsonPath("$.viewer.role") { value("COMPANY_ADMIN") }
+                jsonPath("$.viewer.currentUserEmail") { value("admin@acme.com") }
+                jsonPath("$.operations.planType") { value("TRIAL") }
+                jsonPath("$.configurationAreas[0].key") { value("profile") }
+                jsonPath("$.configurationAreas[0].status") { value("available") }
             }
     }
 
