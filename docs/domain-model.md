@@ -147,6 +147,7 @@ Core concepts:
 - DeletionRequest
 - DeletionExecution
 - InactivityPolicy
+- CompanyDeletionEvent
 
 ## Appointment Domain
 

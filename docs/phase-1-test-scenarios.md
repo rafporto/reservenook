@@ -304,6 +304,7 @@ Use the following test layers by default:
 
 - scheduled warning job dispatches warning email
 - warning event is persisted with deletion-warning type
+- company moves into pending-deletion state when warning window starts
 
 ## UC-16 Delete Inactive Company After Retention Period
 

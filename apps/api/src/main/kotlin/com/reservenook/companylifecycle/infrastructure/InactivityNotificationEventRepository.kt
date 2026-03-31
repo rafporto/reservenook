@@ -12,4 +12,5 @@ interface InactivityNotificationEventRepository : JpaRepository<InactivityNotifi
         status: InactivityNotificationStatus
     ): Boolean
     fun findAllByCompanyId(companyId: Long): List<InactivityNotificationEvent>
+    fun deleteAllByCompanyId(companyId: Long)
 }

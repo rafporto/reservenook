@@ -7,4 +7,6 @@ interface ActivationTokenRepository : JpaRepository<ActivationToken, Long> {
     fun findByToken(token: String): ActivationToken?
     fun findFirstByUserIdOrderByCreatedAtDesc(userId: Long): ActivationToken?
     fun findAllByUserIdAndUsedAtIsNull(userId: Long): List<ActivationToken>
+    fun deleteAllByCompanyId(companyId: Long)
+    fun deleteAllByUserId(userId: Long)
 }

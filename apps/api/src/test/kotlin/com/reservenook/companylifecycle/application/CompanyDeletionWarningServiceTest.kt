@@ -69,6 +69,7 @@ class CompanyDeletionWarningServiceTest {
 
         result.warningsSent shouldBe 1
         result.failedWarnings shouldBe 0
+        company.status shouldBe CompanyStatus.PENDING_DELETION
         verify(exactly = 1) {
             companyDeletionWarningMailSender.sendDeletionWarningEmail(
                 "admin@acme.com",

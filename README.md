@@ -31,7 +31,7 @@ The platform is planned as:
 ## Current App Scaffolds
 
 - `apps/web` now includes the localized public product page and the Phase 1 company registration UI
-- `apps/api` now includes the Phase 1 registration, auth, platform-admin policy, inactive-company lifecycle baseline, inactivity notification wiring, and pending-deletion warning flow
+- `apps/api` now includes the Phase 1 registration, auth, platform-admin policy, inactive-company lifecycle baseline, inactivity notification wiring, pending-deletion warning flow, and automated company deletion
 
 ## Local Commands
 

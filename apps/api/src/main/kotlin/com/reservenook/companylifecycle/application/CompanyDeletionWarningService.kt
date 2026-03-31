@@ -42,6 +42,7 @@ class CompanyDeletionWarningService(
         companiesToWarn.forEach { company ->
             val companyId = requireNotNull(company.id)
             val deletionScheduledAt = requireNotNull(company.deletionScheduledAt)
+            company.status = CompanyStatus.PENDING_DELETION
             if (
                 inactivityNotificationEventRepository.existsByCompanyIdAndNotificationTypeAndStatus(
                     companyId,
