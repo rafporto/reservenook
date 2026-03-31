@@ -32,6 +32,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.put
 import java.time.Instant
 
 @SpringBootTest
@@ -68,6 +69,9 @@ class CompanyBackofficeControllerTest(
             email = "admin@acme.com",
             password = "SecurePass123"
         )
+        val company = companyRepository.findAll().first()
+        company.contactEmail = "hello@acme.com"
+        companyRepository.save(company)
 
         val session = authenticatedCompanyAdminSession(userId = 1L, email = "admin@acme.com", companySlug = "acme-wellness")
 
@@ -78,11 +82,94 @@ class CompanyBackofficeControllerTest(
                 status { isOk() }
                 jsonPath("$.company.companySlug") { value("acme-wellness") }
                 jsonPath("$.company.companyName") { value("Acme Wellness") }
+                jsonPath("$.profile.contactEmail") { value("hello@acme.com") }
                 jsonPath("$.viewer.role") { value("COMPANY_ADMIN") }
                 jsonPath("$.viewer.currentUserEmail") { value("admin@acme.com") }
                 jsonPath("$.operations.planType") { value("TRIAL") }
                 jsonPath("$.configurationAreas[0].key") { value("profile") }
                 jsonPath("$.configurationAreas[0].status") { value("available") }
+            }
+    }
+
+    @Test
+    fun `company admin can update own tenant profile`() {
+        seedCompanyAdmin(
+            slug = "acme-wellness",
+            email = "admin@acme.com",
+            password = "SecurePass123"
+        )
+
+        val company = companyRepository.findAll().first()
+        company.contactEmail = "old@acme.com"
+        company.contactPhone = "+49 30 111 1111"
+        company.addressLine1 = "Old Street 1"
+        company.city = "Berlin"
+        company.postalCode = "10000"
+        company.countryCode = "DE"
+        companyRepository.save(company)
+
+        val session = authenticatedCompanyAdminSession(userId = 1L, email = "admin@acme.com", companySlug = "acme-wellness")
+
+        mockMvc.put("/api/app/company/acme-wellness/profile") {
+            this.session = session
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "companyName": "Acme Wellness Studio",
+                  "businessDescription": "Premium appointments and classes.",
+                  "contactEmail": "hello@acme.com",
+                  "contactPhone": "+49 30 555 0000",
+                  "addressLine1": "Alexanderplatz 1",
+                  "addressLine2": "Floor 3",
+                  "city": "Berlin",
+                  "postalCode": "10178",
+                  "countryCode": "DE"
+                }
+            """.trimIndent()
+        }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.message") { value("Company profile updated.") }
+                jsonPath("$.company.companyName") { value("Acme Wellness Studio") }
+                jsonPath("$.profile.contactEmail") { value("hello@acme.com") }
+                jsonPath("$.profile.countryCode") { value("DE") }
+            }
+    }
+
+    @Test
+    fun `company admin cannot update another tenant profile`() {
+        seedCompanyAdmin(
+            slug = "acme-wellness",
+            email = "admin@acme.com",
+            password = "SecurePass123"
+        )
+        seedCompanyAdmin(
+            slug = "other-company",
+            email = "other@acme.com",
+            password = "SecurePass123"
+        )
+
+        val session = authenticatedCompanyAdminSession(userId = 1L, email = "admin@acme.com", companySlug = "acme-wellness")
+
+        mockMvc.put("/api/app/company/other-company/profile") {
+            this.session = session
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "companyName": "Other Company",
+                  "businessDescription": "Description",
+                  "contactEmail": "hello@other.com",
+                  "contactPhone": "+49 30 555 0000",
+                  "addressLine1": "Street 1",
+                  "addressLine2": null,
+                  "city": "Berlin",
+                  "postalCode": "10178",
+                  "countryCode": "DE"
+                }
+            """.trimIndent()
+        }
+            .andExpect {
+                status { isForbidden() }
             }
     }
 

@@ -37,6 +37,30 @@ class Company(
     @Column(name = "default_locale", nullable = false)
     var defaultLocale: String,
 
+    @Column(name = "business_description")
+    var businessDescription: String? = null,
+
+    @Column(name = "contact_email")
+    var contactEmail: String? = null,
+
+    @Column(name = "contact_phone")
+    var contactPhone: String? = null,
+
+    @Column(name = "address_line1")
+    var addressLine1: String? = null,
+
+    @Column(name = "address_line2")
+    var addressLine2: String? = null,
+
+    @Column(name = "city")
+    var city: String? = null,
+
+    @Column(name = "postal_code")
+    var postalCode: String? = null,
+
+    @Column(name = "country_code")
+    var countryCode: String? = null,
+
     @Column(name = "last_activity_at", nullable = false)
     var lastActivityAt: Instant = Instant.now(),
 

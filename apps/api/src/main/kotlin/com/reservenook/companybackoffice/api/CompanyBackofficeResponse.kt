@@ -2,6 +2,7 @@ package com.reservenook.companybackoffice.api
 
 data class CompanyBackofficeResponse(
     val company: CompanyBackofficeCompanySummary,
+    val profile: CompanyBackofficeProfileSummary,
     val viewer: CompanyBackofficeViewerSummary,
     val operations: CompanyBackofficeOperationsSummary,
     val configurationAreas: List<CompanyBackofficeAreaSummary>
@@ -15,6 +16,17 @@ data class CompanyBackofficeCompanySummary(
     val defaultLanguage: String,
     val defaultLocale: String,
     val createdAt: String
+)
+
+data class CompanyBackofficeProfileSummary(
+    val businessDescription: String?,
+    val contactEmail: String?,
+    val contactPhone: String?,
+    val addressLine1: String?,
+    val addressLine2: String?,
+    val city: String?,
+    val postalCode: String?,
+    val countryCode: String?
 )
 
 data class CompanyBackofficeViewerSummary(
@@ -36,4 +48,22 @@ data class CompanyBackofficeAreaSummary(
     val title: String,
     val description: String,
     val status: String
+)
+
+data class UpdateCompanyProfileRequest(
+    val companyName: String,
+    val businessDescription: String?,
+    val contactEmail: String,
+    val contactPhone: String,
+    val addressLine1: String,
+    val addressLine2: String?,
+    val city: String,
+    val postalCode: String,
+    val countryCode: String
+)
+
+data class UpdateCompanyProfileResponse(
+    val message: String,
+    val company: CompanyBackofficeCompanySummary,
+    val profile: CompanyBackofficeProfileSummary
 )

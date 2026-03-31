@@ -34,7 +34,7 @@ The platform is planned as:
 
 ## Current App Scaffolds
 
-- `apps/web` now includes a branded localized public marketing surface, improved auth/onboarding UX, SEO assets such as route metadata, `robots.txt`, and `sitemap.xml`, plus the first company-configuration dashboard baseline for the tenant backoffice
+- `apps/web` now includes a branded localized public marketing surface, improved auth/onboarding UX, SEO assets such as route metadata, `robots.txt`, and `sitemap.xml`, plus the Phase 2 company-configuration dashboard and editable company profile baseline for the tenant backoffice
 - `apps/api` now includes the Phase 1 registration, auth, platform-admin policy, inactive-company lifecycle baseline, inactivity notification wiring, pending-deletion warning flow, and automated company deletion
 
 ## Local Commands

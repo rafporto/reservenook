@@ -4,6 +4,7 @@ import com.reservenook.auth.application.AppAuthenticatedUser
 import com.reservenook.companybackoffice.api.CompanyBackofficeAreaSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeCompanySummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeOperationsSummary
+import com.reservenook.companybackoffice.api.CompanyBackofficeProfileSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeResponse
 import com.reservenook.companybackoffice.api.CompanyBackofficeViewerSummary
 import com.reservenook.registration.domain.CompanyRole
@@ -46,6 +47,16 @@ class CompanyBackofficeAccessService(
                 defaultLanguage = company.defaultLanguage,
                 defaultLocale = company.defaultLocale,
                 createdAt = company.createdAt.toString()
+            ),
+            profile = CompanyBackofficeProfileSummary(
+                businessDescription = company.businessDescription,
+                contactEmail = company.contactEmail,
+                contactPhone = company.contactPhone,
+                addressLine1 = company.addressLine1,
+                addressLine2 = company.addressLine2,
+                city = company.city,
+                postalCode = company.postalCode,
+                countryCode = company.countryCode
             ),
             viewer = CompanyBackofficeViewerSummary(
                 role = membership.role.name,
