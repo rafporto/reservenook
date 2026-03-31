@@ -1,0 +1,10 @@
+<svg width="900" height="180" viewBox="0 0 900 180" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">ReserveNook logo</title>
+  <desc id="desc">A compact minimalist logo with a small monoline booking mark and a unified ReserveNook wordmark.</desc>
+
+  <path d="M46 118V85C46 60.6995 65.6995 41 90 41C114.301 41 134 60.6995 134 85V118" stroke="#241A16" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M69 89L84 104L112 76" stroke="#B45A38" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <text x="170" y="112" fill="#241A16" font-family="Avenir Next, Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="60" font-weight="700" letter-spacing="-2.2">Reserve</text>
+  <text x="382" y="112" fill="#B45A38" font-family="Avenir Next, Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="60" font-weight="700" letter-spacing="-2.2">Nook</text>
+</svg>

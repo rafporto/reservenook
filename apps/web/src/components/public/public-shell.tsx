@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { AppBar, Box, Button, Container, Stack, Toolbar, Typography } from "@mui/material";
+import { AppBar, Box, Button, Container, Stack, Toolbar } from "@mui/material";
+import { BrandLockup } from "@/components/public/brand-lockup";
 import { LanguageSelector } from "@/components/public/language-selector";
 import type { SupportedLocale } from "@/lib/i18n/locales";
 
@@ -26,9 +27,7 @@ export function PublicShell({ children, locale, navigation }: PublicShellProps) 
         <Container maxWidth="lg">
           <Toolbar disableGutters sx={{ minHeight: 80, gap: 2, justifyContent: "space-between" }}>
             <Stack direction="row" spacing={3} alignItems="center">
-              <Typography variant="h6" component={Link} href={`/${locale}`} sx={{ fontWeight: 700 }}>
-                Reservenook
-              </Typography>
+              <BrandLockup locale={locale} width={210} height={42} />
               <Button component={Link} href={`/${locale}`} color="inherit">
                 {navigation.product}
               </Button>

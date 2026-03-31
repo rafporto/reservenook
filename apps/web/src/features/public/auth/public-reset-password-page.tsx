@@ -1,4 +1,5 @@
 import { Paper, Stack, Typography } from "@mui/material";
+import { BrandLockup } from "@/components/public/brand-lockup";
 import type { SupportedLocale } from "@/lib/i18n/locales";
 import { getPublicMessages } from "@/lib/i18n/messages";
 import { ResetPasswordForm } from "@/features/public/auth/reset-password-form";
@@ -25,6 +26,7 @@ export function PublicResetPasswordPage({ locale, token }: PublicResetPasswordPa
       }}
     >
       <Stack spacing={3}>
+        <BrandLockup locale={locale} />
         <Stack spacing={1}>
           <Typography variant="h3" component="h1">
             {messages.resetPasswordTitle}

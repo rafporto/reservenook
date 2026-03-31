@@ -1,4 +1,5 @@
 import { Paper, Stack, Typography } from "@mui/material";
+import { BrandLockup } from "@/components/public/brand-lockup";
 import type { SupportedLocale } from "@/lib/i18n/locales";
 import { getPublicMessages } from "@/lib/i18n/messages";
 import { RegistrationForm } from "@/features/public/registration/registration-form";
@@ -24,6 +25,7 @@ export function PublicRegistrationPage({ locale }: PublicRegistrationPageProps) 
       }}
     >
       <Stack spacing={3}>
+        <BrandLockup locale={locale} />
         <Stack spacing={1}>
           <Typography variant="h3" component="h1">
             {messages.registrationTitle}

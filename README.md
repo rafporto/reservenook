@@ -1,3 +1,7 @@
+<p align="left">
+  <img src="apps/web/public/reservenook-logo.svg" alt="ReserveNook logo" width="280" />
+</p>
+
 # Reservenook
 
 Reservenook is a multi-tenant booking platform for three business types in one product:
