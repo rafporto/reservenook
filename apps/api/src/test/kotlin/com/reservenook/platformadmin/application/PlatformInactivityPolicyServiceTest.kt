@@ -3,6 +3,7 @@ package com.reservenook.platformadmin.application
 import com.reservenook.auth.application.AppAuthenticatedUser
 import com.reservenook.platformadmin.domain.InactivityPolicy
 import com.reservenook.platformadmin.infrastructure.InactivityPolicyRepository
+import com.reservenook.security.application.SecurityAuditService
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
@@ -15,7 +16,8 @@ import java.util.Optional
 class PlatformInactivityPolicyServiceTest {
 
     private val inactivityPolicyRepository = mockk<InactivityPolicyRepository>(relaxed = true)
-    private val service = PlatformInactivityPolicyService(inactivityPolicyRepository)
+    private val securityAuditService = mockk<SecurityAuditService>(relaxed = true)
+    private val service = PlatformInactivityPolicyService(inactivityPolicyRepository, securityAuditService)
 
     @Test
     fun `platform admin reads current inactivity policy`() {

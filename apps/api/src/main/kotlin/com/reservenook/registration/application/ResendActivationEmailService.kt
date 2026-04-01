@@ -7,6 +7,10 @@ import com.reservenook.registration.infrastructure.ActivationTokenRepository
 import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
 import com.reservenook.security.application.RequestThrottleService
+import com.reservenook.security.application.SecurityAuditService
+import com.reservenook.security.application.TooManyRequestsException
+import com.reservenook.security.domain.SecurityAuditEventType
+import com.reservenook.security.domain.SecurityAuditOutcome
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Duration
@@ -21,7 +25,8 @@ class ResendActivationEmailService(
     private val activationTokenRepository: ActivationTokenRepository,
     private val registrationMailSender: RegistrationMailSender,
     private val registrationProperties: RegistrationProperties,
-    private val requestThrottleService: RequestThrottleService
+    private val requestThrottleService: RequestThrottleService,
+    private val securityAuditService: SecurityAuditService
 ) {
 
     @Transactional
@@ -30,17 +35,59 @@ class ResendActivationEmailService(
         val neutralResult = ResendActivationEmailResult(
             message = "If the account is pending activation, a new activation email will be sent."
         )
-        requestThrottleService.assertAllowed("resend-activation", requestFingerprint, 5, Duration.ofMinutes(10))
+        try {
+            requestThrottleService.assertAllowed("resend-activation", requestFingerprint, 5, Duration.ofMinutes(10))
+        } catch (exception: TooManyRequestsException) {
+            securityAuditService.record(
+                eventType = SecurityAuditEventType.ACTIVATION_RESEND_RATE_LIMITED,
+                outcome = SecurityAuditOutcome.RATE_LIMITED,
+                targetEmail = normalizedEmail
+            )
+            throw exception
+        }
 
-        val user = userAccountRepository.findByEmail(normalizedEmail) ?: return neutralResult
+        val user = userAccountRepository.findByEmail(normalizedEmail)
+        if (user == null) {
+            securityAuditService.record(
+                eventType = SecurityAuditEventType.ACTIVATION_RESEND_REQUESTED,
+                outcome = SecurityAuditOutcome.NEUTRAL,
+                targetEmail = normalizedEmail
+            )
+            return neutralResult
+        }
         if (user.status == UserStatus.ACTIVE || user.emailVerified) {
+            securityAuditService.record(
+                eventType = SecurityAuditEventType.ACTIVATION_RESEND_REQUESTED,
+                outcome = SecurityAuditOutcome.NEUTRAL,
+                actorUserId = user.id,
+                actorEmail = user.email,
+                targetEmail = normalizedEmail
+            )
             return neutralResult
         }
 
-        val membership = companyMembershipRepository.findFirstByUserId(requireNotNull(user.id)) ?: return neutralResult
+        val membership = companyMembershipRepository.findFirstByUserId(requireNotNull(user.id))
+        if (membership == null) {
+            securityAuditService.record(
+                eventType = SecurityAuditEventType.ACTIVATION_RESEND_REQUESTED,
+                outcome = SecurityAuditOutcome.NEUTRAL,
+                actorUserId = user.id,
+                actorEmail = user.email,
+                targetEmail = normalizedEmail
+            )
+            return neutralResult
+        }
         val company = membership.company
 
         if (company.status != CompanyStatus.PENDING_ACTIVATION) {
+            securityAuditService.record(
+                eventType = SecurityAuditEventType.ACTIVATION_RESEND_REQUESTED,
+                outcome = SecurityAuditOutcome.NEUTRAL,
+                actorUserId = user.id,
+                actorEmail = user.email,
+                companySlug = company.slug,
+                targetEmail = normalizedEmail
+            )
             return neutralResult
         }
 
@@ -67,6 +114,15 @@ class ResendActivationEmailService(
             normalizedEmail,
             "${registrationProperties.publicBaseUrl.trimEnd('/')}/${company.defaultLanguage}/activate?token=${nextToken.token}",
             company.defaultLanguage
+        )
+
+        securityAuditService.record(
+            eventType = SecurityAuditEventType.ACTIVATION_RESEND_REQUESTED,
+            outcome = SecurityAuditOutcome.SUCCESS,
+            actorUserId = user.id,
+            actorEmail = user.email,
+            companySlug = company.slug,
+            targetEmail = normalizedEmail
         )
 
         return neutralResult

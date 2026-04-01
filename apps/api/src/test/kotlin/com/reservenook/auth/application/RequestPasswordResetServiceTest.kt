@@ -13,6 +13,7 @@ import com.reservenook.registration.domain.UserStatus
 import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
 import com.reservenook.security.application.RequestThrottleService
+import com.reservenook.security.application.SecurityAuditService
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.justRun
@@ -29,6 +30,7 @@ class RequestPasswordResetServiceTest {
     private val passwordResetTokenRepository = mockk<PasswordResetTokenRepository>()
     private val passwordResetMailSender = mockk<PasswordResetMailSender>()
     private val requestThrottleService = mockk<RequestThrottleService>(relaxed = true)
+    private val securityAuditService = mockk<SecurityAuditService>(relaxed = true)
     private val registrationProperties = RegistrationProperties(
         publicBaseUrl = "http://localhost:3000",
         activationTokenHours = 48,
@@ -43,7 +45,8 @@ class RequestPasswordResetServiceTest {
         passwordResetTokenRepository = passwordResetTokenRepository,
         passwordResetMailSender = passwordResetMailSender,
         registrationProperties = registrationProperties,
-        requestThrottleService = requestThrottleService
+        requestThrottleService = requestThrottleService,
+        securityAuditService = securityAuditService
     )
 
     @Test

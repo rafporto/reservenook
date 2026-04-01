@@ -19,6 +19,8 @@ import com.reservenook.registration.infrastructure.CompanyRepository
 import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
 import com.reservenook.security.application.RequestThrottleService
+import com.reservenook.security.domain.SecurityAuditEventType
+import com.reservenook.security.infrastructure.SecurityAuditEventRepository
 import io.kotest.matchers.shouldBe
 import io.mockk.justRun
 import org.junit.jupiter.api.BeforeEach
@@ -48,6 +50,7 @@ class AuthControllerTest(
     @Autowired private val subscriptionRepository: CompanySubscriptionRepository,
     @Autowired private val activationTokenRepository: ActivationTokenRepository,
     @Autowired private val requestThrottleService: RequestThrottleService,
+    @Autowired private val securityAuditEventRepository: SecurityAuditEventRepository,
     @Autowired private val passwordEncoder: PasswordEncoder
 ) {
 
@@ -62,6 +65,7 @@ class AuthControllerTest(
         justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
         justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
         requestThrottleService.clearAll()
+        securityAuditEventRepository.deleteAll()
         activationTokenRepository.deleteAll()
         membershipRepository.deleteAll()
         subscriptionRepository.deleteAll()
@@ -120,7 +124,7 @@ class AuthControllerTest(
             }
 
         mockMvc.post("/api/auth/logout") {
-            with(csrf())
+            with(csrf().asHeader())
             this.session = session
         }
             .andExpect {
@@ -160,6 +164,8 @@ class AuthControllerTest(
                 jsonPath("$.code") { value("INVALID_CREDENTIALS") }
                 jsonPath("$.message") { value("Invalid email or password.") }
             }
+
+        securityAuditEventRepository.findAll().any { it.eventType == SecurityAuditEventType.LOGIN_FAILURE } shouldBe true
     }
 
     @Test
@@ -243,6 +249,8 @@ class AuthControllerTest(
                 status { isTooManyRequests() }
                 jsonPath("$.message") { value("Too many login attempts. Please wait and try again.") }
             }
+
+        securityAuditEventRepository.findAll().any { it.eventType == SecurityAuditEventType.LOGIN_RATE_LIMITED } shouldBe true
     }
 
     @Test

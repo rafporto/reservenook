@@ -20,6 +20,9 @@ import com.reservenook.registration.infrastructure.CompanyRepository
 import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
 import com.reservenook.security.application.RequestThrottleService
+import com.reservenook.security.domain.SecurityAuditEventType
+import com.reservenook.security.infrastructure.SecurityAuditEventRepository
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.collections.shouldHaveSize
 import io.mockk.justRun
 import io.mockk.verify
@@ -44,7 +47,8 @@ class ResendActivationEmailControllerTest(
     @Autowired private val membershipRepository: CompanyMembershipRepository,
     @Autowired private val subscriptionRepository: CompanySubscriptionRepository,
     @Autowired private val activationTokenRepository: ActivationTokenRepository,
-    @Autowired private val requestThrottleService: RequestThrottleService
+    @Autowired private val requestThrottleService: RequestThrottleService,
+    @Autowired private val securityAuditEventRepository: SecurityAuditEventRepository
 ) {
 
     @MockkBean
@@ -57,6 +61,7 @@ class ResendActivationEmailControllerTest(
     fun cleanDatabase() {
         justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
         requestThrottleService.clearAll()
+        securityAuditEventRepository.deleteAll()
         activationTokenRepository.deleteAll()
         membershipRepository.deleteAll()
         subscriptionRepository.deleteAll()
@@ -80,6 +85,7 @@ class ResendActivationEmailControllerTest(
 
         activationTokenRepository.findAll() shouldHaveSize 2
         verify(exactly = 1) { registrationMailSender.sendActivationEmail("admin@acme.com", any(), "en") }
+        securityAuditEventRepository.findAll().any { it.eventType == SecurityAuditEventType.ACTIVATION_RESEND_REQUESTED } shouldBe true
     }
 
     @Test
@@ -120,6 +126,8 @@ class ResendActivationEmailControllerTest(
                 status { isTooManyRequests() }
                 jsonPath("$.message") { value("Too many activation email requests. Please wait and try again.") }
             }
+
+        securityAuditEventRepository.findAll().any { it.eventType == SecurityAuditEventType.ACTIVATION_RESEND_RATE_LIMITED } shouldBe true
     }
 
     private fun seedPendingCompany(email: String, tokenCreatedAt: Instant) {

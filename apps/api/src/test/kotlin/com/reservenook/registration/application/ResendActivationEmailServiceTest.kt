@@ -12,6 +12,7 @@ import com.reservenook.registration.infrastructure.ActivationTokenRepository
 import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
 import com.reservenook.security.application.RequestThrottleService
+import com.reservenook.security.application.SecurityAuditService
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.justRun
@@ -28,6 +29,7 @@ class ResendActivationEmailServiceTest {
     private val activationTokenRepository = mockk<ActivationTokenRepository>()
     private val registrationMailSender = mockk<RegistrationMailSender>()
     private val requestThrottleService = mockk<RequestThrottleService>(relaxed = true)
+    private val securityAuditService = mockk<SecurityAuditService>(relaxed = true)
     private val registrationProperties = RegistrationProperties(
         publicBaseUrl = "http://localhost:3000",
         activationTokenHours = 48,
@@ -40,7 +42,8 @@ class ResendActivationEmailServiceTest {
         activationTokenRepository = activationTokenRepository,
         registrationMailSender = registrationMailSender,
         registrationProperties = registrationProperties,
-        requestThrottleService = requestThrottleService
+        requestThrottleService = requestThrottleService,
+        securityAuditService = securityAuditService
     )
 
     @Test

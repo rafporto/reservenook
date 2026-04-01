@@ -14,6 +14,9 @@ import com.reservenook.registration.infrastructure.CompanyRepository
 import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
 import com.reservenook.security.application.RequestThrottleService
+import com.reservenook.security.domain.SecurityAuditEventType
+import com.reservenook.security.infrastructure.SecurityAuditEventRepository
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.collections.shouldHaveSize
 import io.mockk.justRun
 import io.mockk.verify
@@ -38,7 +41,8 @@ class RequestPasswordResetControllerTest(
     @Autowired private val subscriptionRepository: CompanySubscriptionRepository,
     @Autowired private val activationTokenRepository: ActivationTokenRepository,
     @Autowired private val passwordResetTokenRepository: PasswordResetTokenRepository,
-    @Autowired private val requestThrottleService: RequestThrottleService
+    @Autowired private val requestThrottleService: RequestThrottleService,
+    @Autowired private val securityAuditEventRepository: SecurityAuditEventRepository
 ) {
 
     @MockkBean
@@ -52,6 +56,7 @@ class RequestPasswordResetControllerTest(
         justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
         justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
         requestThrottleService.clearAll()
+        securityAuditEventRepository.deleteAll()
         activationTokenRepository.deleteAll()
         passwordResetTokenRepository.deleteAll()
         membershipRepository.deleteAll()
@@ -82,6 +87,7 @@ class RequestPasswordResetControllerTest(
 
         passwordResetTokenRepository.findAll() shouldHaveSize 1
         verify(exactly = 1) { passwordResetMailSender.sendPasswordResetEmail("admin@acme.com", any(), "en") }
+        securityAuditEventRepository.findAll().any { it.eventType == SecurityAuditEventType.PASSWORD_RESET_REQUESTED } shouldBe true
     }
 
     @Test
@@ -118,5 +124,7 @@ class RequestPasswordResetControllerTest(
                 status { isTooManyRequests() }
                 jsonPath("$.message") { value("Too many password reset requests. Please wait and try again.") }
             }
+
+        securityAuditEventRepository.findAll().any { it.eventType == SecurityAuditEventType.PASSWORD_RESET_RATE_LIMITED } shouldBe true
     }
 }

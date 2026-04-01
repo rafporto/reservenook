@@ -7,6 +7,10 @@ import com.reservenook.registration.infrastructure.UserAccountRepository
 import com.reservenook.auth.domain.PasswordResetToken
 import com.reservenook.auth.infrastructure.PasswordResetTokenRepository
 import com.reservenook.security.application.RequestThrottleService
+import com.reservenook.security.application.SecurityAuditService
+import com.reservenook.security.application.TooManyRequestsException
+import com.reservenook.security.domain.SecurityAuditEventType
+import com.reservenook.security.domain.SecurityAuditOutcome
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Duration
@@ -21,7 +25,8 @@ class RequestPasswordResetService(
     private val passwordResetTokenRepository: PasswordResetTokenRepository,
     private val passwordResetMailSender: PasswordResetMailSender,
     private val registrationProperties: RegistrationProperties,
-    private val requestThrottleService: RequestThrottleService
+    private val requestThrottleService: RequestThrottleService,
+    private val securityAuditService: SecurityAuditService
 ) {
 
     @Transactional
@@ -30,10 +35,34 @@ class RequestPasswordResetService(
         val neutralResult = RequestPasswordResetResult(
             message = "If the account is eligible, a password reset email will be sent."
         )
-        requestThrottleService.assertAllowed("forgot-password", requestFingerprint, 5, Duration.ofMinutes(10))
+        try {
+            requestThrottleService.assertAllowed("forgot-password", requestFingerprint, 5, Duration.ofMinutes(10))
+        } catch (exception: TooManyRequestsException) {
+            securityAuditService.record(
+                eventType = SecurityAuditEventType.PASSWORD_RESET_RATE_LIMITED,
+                outcome = SecurityAuditOutcome.RATE_LIMITED,
+                targetEmail = normalizedEmail
+            )
+            throw exception
+        }
 
-        val user = userAccountRepository.findByEmail(normalizedEmail) ?: return neutralResult
+        val user = userAccountRepository.findByEmail(normalizedEmail)
+        if (user == null) {
+            securityAuditService.record(
+                eventType = SecurityAuditEventType.PASSWORD_RESET_REQUESTED,
+                outcome = SecurityAuditOutcome.NEUTRAL,
+                targetEmail = normalizedEmail
+            )
+            return neutralResult
+        }
         if (user.status != UserStatus.ACTIVE || !user.emailVerified) {
+            securityAuditService.record(
+                eventType = SecurityAuditEventType.PASSWORD_RESET_REQUESTED,
+                outcome = SecurityAuditOutcome.NEUTRAL,
+                actorUserId = user.id,
+                actorEmail = user.email,
+                targetEmail = normalizedEmail
+            )
             return neutralResult
         }
 
@@ -65,6 +94,14 @@ class RequestPasswordResetService(
             normalizedEmail,
             "${registrationProperties.publicBaseUrl.trimEnd('/')}/$language/reset-password?token=${nextToken.token}",
             language
+        )
+
+        securityAuditService.record(
+            eventType = SecurityAuditEventType.PASSWORD_RESET_REQUESTED,
+            outcome = SecurityAuditOutcome.SUCCESS,
+            actorUserId = user.id,
+            actorEmail = user.email,
+            targetEmail = normalizedEmail
         )
 
         return neutralResult

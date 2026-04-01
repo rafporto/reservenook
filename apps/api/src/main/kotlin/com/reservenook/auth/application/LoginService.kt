@@ -6,6 +6,10 @@ import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
 import com.reservenook.security.application.RequestFingerprintResolver
 import com.reservenook.security.application.RequestThrottleService
+import com.reservenook.security.application.SecurityAuditService
+import com.reservenook.security.application.TooManyRequestsException
+import com.reservenook.security.domain.SecurityAuditEventType
+import com.reservenook.security.domain.SecurityAuditOutcome
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -24,7 +28,8 @@ class LoginService(
     private val companyMembershipRepository: CompanyMembershipRepository,
     private val passwordEncoder: PasswordEncoder,
     private val securityContextRepository: HttpSessionSecurityContextRepository,
-    private val requestThrottleService: RequestThrottleService
+    private val requestThrottleService: RequestThrottleService,
+    private val securityAuditService: SecurityAuditService
 ) {
 
     @Transactional
@@ -36,19 +41,25 @@ class LoginService(
     ): LoginResult {
         val normalizedEmail = email.trim().lowercase()
         val requestFingerprint = RequestFingerprintResolver.resolve(request, normalizedEmail)
-        requestThrottleService.assertAllowed("login", requestFingerprint, 5, Duration.ofMinutes(10))
+        try {
+            requestThrottleService.assertAllowed("login", requestFingerprint, 5, Duration.ofMinutes(10))
+        } catch (exception: TooManyRequestsException) {
+            securityAuditService.record(
+                eventType = SecurityAuditEventType.LOGIN_RATE_LIMITED,
+                outcome = SecurityAuditOutcome.RATE_LIMITED,
+                targetEmail = normalizedEmail
+            )
+            throw exception
+        }
         val user = userAccountRepository.findByEmail(normalizedEmail)
-            ?: throw LoginFailedException("Invalid email or password.", LoginFailureCode.INVALID_CREDENTIALS)
+            ?: failLogin(normalizedEmail, LoginFailureCode.INVALID_CREDENTIALS)
 
         if (!passwordEncoder.matches(password, user.passwordHash)) {
-            throw LoginFailedException("Invalid email or password.", LoginFailureCode.INVALID_CREDENTIALS)
+            failLogin(normalizedEmail, LoginFailureCode.INVALID_CREDENTIALS)
         }
 
         if (!user.emailVerified || user.status != UserStatus.ACTIVE) {
-            throw LoginFailedException(
-                "Your account is not active yet. Request a new activation email.",
-                LoginFailureCode.ACTIVATION_REQUIRED
-            )
+            failLogin(normalizedEmail, LoginFailureCode.ACTIVATION_REQUIRED)
         }
 
         val loginResult = if (user.isPlatformAdmin) {
@@ -63,13 +74,10 @@ class LoginService(
             )
         } else {
             val membership = companyMembershipRepository.findFirstByUserId(requireNotNull(user.id))
-                ?: throw LoginFailedException("Invalid email or password.", LoginFailureCode.INVALID_CREDENTIALS)
+                ?: failLogin(normalizedEmail, LoginFailureCode.INVALID_CREDENTIALS)
 
             if (membership.company.status != CompanyStatus.ACTIVE) {
-                throw LoginFailedException(
-                    "The company account is not active.",
-                    LoginFailureCode.INACTIVE_COMPANY
-                )
+                failLogin(normalizedEmail, LoginFailureCode.INACTIVE_COMPANY)
             }
 
             membership.company.lastActivityAt = Instant.now()
@@ -105,5 +113,15 @@ class LoginService(
         requestThrottleService.clear("login", requestFingerprint)
 
         return loginResult
+    }
+
+    private fun failLogin(email: String, code: LoginFailureCode): Nothing {
+        securityAuditService.record(
+            eventType = SecurityAuditEventType.LOGIN_FAILURE,
+            outcome = SecurityAuditOutcome.FAILURE,
+            targetEmail = email,
+            details = code.name
+        )
+        throw LoginFailedException("Invalid email or password.", code)
     }
 }

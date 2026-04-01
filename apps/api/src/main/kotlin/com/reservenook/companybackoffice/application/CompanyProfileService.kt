@@ -6,6 +6,9 @@ import com.reservenook.companybackoffice.api.CompanyBackofficeProfileSummary
 import com.reservenook.registration.domain.Company
 import com.reservenook.registration.domain.CompanyRole
 import com.reservenook.registration.infrastructure.CompanyMembershipRepository
+import com.reservenook.security.application.SecurityAuditService
+import com.reservenook.security.domain.SecurityAuditEventType
+import com.reservenook.security.domain.SecurityAuditOutcome
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -13,7 +16,8 @@ import org.springframework.web.server.ResponseStatusException
 
 @Service
 class CompanyProfileService(
-    private val companyMembershipRepository: CompanyMembershipRepository
+    private val companyMembershipRepository: CompanyMembershipRepository,
+    private val securityAuditService: SecurityAuditService
 ) {
 
     @Transactional
@@ -61,6 +65,14 @@ class CompanyProfileService(
         company.city = city.trim()
         company.postalCode = postalCode.trim()
         company.countryCode = countryCode.trim().uppercase()
+
+        securityAuditService.record(
+            eventType = SecurityAuditEventType.COMPANY_PROFILE_UPDATED,
+            outcome = SecurityAuditOutcome.SUCCESS,
+            actorUserId = principal.userId,
+            actorEmail = principal.email,
+            companySlug = company.slug
+        )
 
         return UpdatedCompanyProfile(
             company = company.toCompanySummary(),

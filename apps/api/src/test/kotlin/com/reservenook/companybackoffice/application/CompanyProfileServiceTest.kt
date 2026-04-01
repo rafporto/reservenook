@@ -9,6 +9,7 @@ import com.reservenook.registration.domain.CompanyStatus
 import com.reservenook.registration.domain.UserAccount
 import com.reservenook.registration.domain.UserStatus
 import com.reservenook.registration.infrastructure.CompanyMembershipRepository
+import com.reservenook.security.application.SecurityAuditService
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -19,7 +20,8 @@ import org.springframework.web.server.ResponseStatusException
 class CompanyProfileServiceTest {
 
     private val companyMembershipRepository = mockk<CompanyMembershipRepository>()
-    private val service = CompanyProfileService(companyMembershipRepository)
+    private val securityAuditService = mockk<SecurityAuditService>(relaxed = true)
+    private val service = CompanyProfileService(companyMembershipRepository, securityAuditService)
 
     @Test
     fun `updates company profile for authorized company admin`() {

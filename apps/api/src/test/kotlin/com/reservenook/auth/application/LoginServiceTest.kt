@@ -10,6 +10,7 @@ import com.reservenook.registration.domain.UserStatus
 import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
 import com.reservenook.security.application.RequestThrottleService
+import com.reservenook.security.application.SecurityAuditService
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
@@ -26,13 +27,15 @@ class LoginServiceTest {
     private val passwordEncoder = mockk<PasswordEncoder>()
     private val securityContextRepository = mockk<HttpSessionSecurityContextRepository>(relaxed = true)
     private val requestThrottleService = mockk<RequestThrottleService>(relaxed = true)
+    private val securityAuditService = mockk<SecurityAuditService>(relaxed = true)
 
     private val service = LoginService(
         userAccountRepository = userAccountRepository,
         companyMembershipRepository = companyMembershipRepository,
         passwordEncoder = passwordEncoder,
         securityContextRepository = securityContextRepository,
-        requestThrottleService = requestThrottleService
+        requestThrottleService = requestThrottleService,
+        securityAuditService = securityAuditService
     )
 
     private val request = mockk<HttpServletRequest>(relaxed = true)

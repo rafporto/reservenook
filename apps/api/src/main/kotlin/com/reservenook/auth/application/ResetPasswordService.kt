@@ -2,6 +2,9 @@ package com.reservenook.auth.application
 
 import com.reservenook.auth.infrastructure.PasswordResetTokenRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
+import com.reservenook.security.application.SecurityAuditService
+import com.reservenook.security.domain.SecurityAuditEventType
+import com.reservenook.security.domain.SecurityAuditOutcome
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -11,7 +14,8 @@ import java.time.Instant
 class ResetPasswordService(
     private val passwordResetTokenRepository: PasswordResetTokenRepository,
     private val userAccountRepository: UserAccountRepository,
-    private val passwordEncoder: PasswordEncoder
+    private val passwordEncoder: PasswordEncoder,
+    private val securityAuditService: SecurityAuditService
 ) {
 
     @Transactional
@@ -47,6 +51,14 @@ class ResetPasswordService(
             .forEach { existingToken ->
                 existingToken.usedAt = now
             }
+
+        securityAuditService.record(
+            eventType = SecurityAuditEventType.PASSWORD_RESET_COMPLETED,
+            outcome = SecurityAuditOutcome.SUCCESS,
+            actorUserId = user.id,
+            actorEmail = user.email,
+            targetEmail = user.email
+        )
 
         return ResetPasswordResult(
             message = "Your password has been updated. Continue to login.",

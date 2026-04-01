@@ -35,7 +35,7 @@ The platform is planned as:
 ## Current App Scaffolds
 
 - `apps/web` now includes a branded localized public marketing surface, improved auth/onboarding UX, SEO assets such as route metadata, `robots.txt`, and `sitemap.xml`, the Phase 2 company-configuration dashboard and editable company profile baseline for the tenant backoffice, plus a baseline set of defensive browser security headers
-- `apps/api` now includes the Phase 1 registration, auth, platform-admin policy, inactive-company lifecycle baseline, inactivity notification wiring, pending-deletion warning flow, automated company deletion, and the first security-hardening baseline for public auth throttling, CSRF-protected authenticated mutations, password-reset-driven session revocation, and defensive browser headers
+- `apps/api` now includes the Phase 1 registration, auth, platform-admin policy, inactive-company lifecycle baseline, inactivity notification wiring, pending-deletion warning flow, automated company deletion, and the first security-hardening baseline for public auth throttling, CSRF-protected authenticated mutations, password-reset-driven session revocation, defensive browser headers, and persisted security audit events
 
 ## Local Commands
 

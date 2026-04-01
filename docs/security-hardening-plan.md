@@ -477,6 +477,7 @@ Completed controls:
 - tighter session-cookie defaults with `HttpOnly` and `SameSite=Lax`
 - password-reset-driven session revocation through credential-version checks on authenticated requests
 - browser-facing defensive headers on API and web responses
+- persisted security audit events for auth abuse, password recovery, and sensitive admin changes
 
 Current regression coverage includes:
 
@@ -491,11 +492,14 @@ Current regression coverage includes:
 - old passwords fail after reset while the new password remains valid
 - public auth responses emit defensive frame, content-type, referrer, and permissions headers
 - Next.js route config emits the same baseline defensive browser headers for all web pages
+- failed logins and login rate-limit hits persist durable audit events
+- password reset requests, password reset completions, and activation resend requests persist durable audit events
+- platform inactivity-policy updates and company profile updates persist durable audit events
 
 Remaining high-priority items for the next pass:
 
 - invalidate active sessions after other high-risk account changes beyond password reset
 - broaden abuse controls beyond per-email or per-client combinations
-- add security logging and audit coverage for abuse events
+- expand audit coverage to more protected flows and lifecycle jobs
 - review browser security headers such as CSP and frame protections
 - extend hardening tests across the remaining Phase 2 configuration surfaces as they are implemented

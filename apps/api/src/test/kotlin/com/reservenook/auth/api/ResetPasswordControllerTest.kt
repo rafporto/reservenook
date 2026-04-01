@@ -20,6 +20,8 @@ import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.CompanyRepository
 import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
+import com.reservenook.security.domain.SecurityAuditEventType
+import com.reservenook.security.infrastructure.SecurityAuditEventRepository
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.mockk.justRun
@@ -48,6 +50,7 @@ class ResetPasswordControllerTest(
     @Autowired private val subscriptionRepository: CompanySubscriptionRepository,
     @Autowired private val activationTokenRepository: ActivationTokenRepository,
     @Autowired private val passwordResetTokenRepository: PasswordResetTokenRepository,
+    @Autowired private val securityAuditEventRepository: SecurityAuditEventRepository,
     @Autowired private val passwordEncoder: PasswordEncoder
 ) {
 
@@ -61,6 +64,7 @@ class ResetPasswordControllerTest(
     fun cleanDatabase() {
         justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
         justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
+        securityAuditEventRepository.deleteAll()
         activationTokenRepository.deleteAll()
         passwordResetTokenRepository.deleteAll()
         membershipRepository.deleteAll()
@@ -105,6 +109,7 @@ class ResetPasswordControllerTest(
         val updatedUser = userAccountRepository.findByEmail("admin@acme.com")!!
         passwordEncoder.matches("NewSecurePass123", updatedUser.passwordHash) shouldBe true
         passwordResetTokenRepository.findByToken("valid-token")!!.usedAt.shouldNotBeNull()
+        securityAuditEventRepository.findAll().any { it.eventType == SecurityAuditEventType.PASSWORD_RESET_COMPLETED } shouldBe true
     }
 
     @Test

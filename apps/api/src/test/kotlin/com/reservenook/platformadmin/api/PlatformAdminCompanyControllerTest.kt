@@ -18,6 +18,9 @@ import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.CompanyRepository
 import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
+import com.reservenook.security.domain.SecurityAuditEventType
+import com.reservenook.security.infrastructure.SecurityAuditEventRepository
+import io.kotest.matchers.shouldBe
 import io.mockk.justRun
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -47,6 +50,7 @@ class PlatformAdminCompanyControllerTest(
     @Autowired private val membershipRepository: CompanyMembershipRepository,
     @Autowired private val subscriptionRepository: CompanySubscriptionRepository,
     @Autowired private val inactivityPolicyRepository: com.reservenook.platformadmin.infrastructure.InactivityPolicyRepository,
+    @Autowired private val securityAuditEventRepository: SecurityAuditEventRepository,
     @Autowired private val passwordEncoder: PasswordEncoder
 ) {
 
@@ -64,6 +68,7 @@ class PlatformAdminCompanyControllerTest(
         subscriptionRepository.deleteAll()
         userAccountRepository.deleteAll()
         companyRepository.deleteAll()
+        securityAuditEventRepository.deleteAll()
         inactivityPolicyRepository.deleteAll()
         inactivityPolicyRepository.save(
             com.reservenook.platformadmin.domain.InactivityPolicy(
@@ -166,7 +171,7 @@ class PlatformAdminCompanyControllerTest(
         )
 
         mockMvc.put("/api/platform-admin/inactivity-policy") {
-            with(csrf())
+            with(csrf().asHeader())
             this.session = session
             contentType = MediaType.APPLICATION_JSON
             content = objectMapper.writeValueAsString(
@@ -182,6 +187,8 @@ class PlatformAdminCompanyControllerTest(
                 jsonPath("$.policy.inactivityThresholdDays") { value(120) }
                 jsonPath("$.policy.deletionWarningLeadDays") { value(21) }
             }
+
+        securityAuditEventRepository.findAll().any { it.eventType == SecurityAuditEventType.PLATFORM_POLICY_UPDATED } shouldBe true
     }
 
     @Test
@@ -194,7 +201,7 @@ class PlatformAdminCompanyControllerTest(
         )
 
         mockMvc.put("/api/platform-admin/inactivity-policy") {
-            with(csrf())
+            with(csrf().asHeader())
             this.session = session
             contentType = MediaType.APPLICATION_JSON
             content = objectMapper.writeValueAsString(

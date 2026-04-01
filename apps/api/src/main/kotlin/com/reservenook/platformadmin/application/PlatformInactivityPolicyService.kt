@@ -4,6 +4,9 @@ import com.reservenook.auth.application.AppAuthenticatedUser
 import com.reservenook.platformadmin.api.InactivityPolicyResponse
 import com.reservenook.platformadmin.domain.InactivityPolicy
 import com.reservenook.platformadmin.infrastructure.InactivityPolicyRepository
+import com.reservenook.security.application.SecurityAuditService
+import com.reservenook.security.domain.SecurityAuditEventType
+import com.reservenook.security.domain.SecurityAuditOutcome
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -12,7 +15,8 @@ import java.time.Instant
 
 @Service
 class PlatformInactivityPolicyService(
-    private val inactivityPolicyRepository: InactivityPolicyRepository
+    private val inactivityPolicyRepository: InactivityPolicyRepository,
+    private val securityAuditService: SecurityAuditService
 ) {
 
     fun getPolicy(principal: AppAuthenticatedUser): InactivityPolicyResponse {
@@ -38,6 +42,14 @@ class PlatformInactivityPolicyService(
         policy.inactivityThresholdDays = inactivityThresholdDays
         policy.deletionWarningLeadDays = deletionWarningLeadDays
         policy.updatedAt = Instant.now()
+
+        securityAuditService.record(
+            eventType = SecurityAuditEventType.PLATFORM_POLICY_UPDATED,
+            outcome = SecurityAuditOutcome.SUCCESS,
+            actorUserId = principal.userId,
+            actorEmail = principal.email,
+            details = "threshold=$inactivityThresholdDays;lead=$deletionWarningLeadDays"
+        )
 
         return policy.toResponse()
     }

@@ -5,6 +5,7 @@ import com.reservenook.auth.infrastructure.PasswordResetTokenRepository
 import com.reservenook.registration.domain.UserAccount
 import com.reservenook.registration.domain.UserStatus
 import com.reservenook.registration.infrastructure.UserAccountRepository
+import com.reservenook.security.application.SecurityAuditService
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
@@ -20,11 +21,13 @@ class ResetPasswordServiceTest {
     private val passwordResetTokenRepository = mockk<PasswordResetTokenRepository>(relaxed = true)
     private val userAccountRepository = mockk<UserAccountRepository>(relaxed = true)
     private val passwordEncoder = mockk<PasswordEncoder>()
+    private val securityAuditService = mockk<SecurityAuditService>(relaxed = true)
 
     private val service = ResetPasswordService(
         passwordResetTokenRepository = passwordResetTokenRepository,
         userAccountRepository = userAccountRepository,
-        passwordEncoder = passwordEncoder
+        passwordEncoder = passwordEncoder,
+        securityAuditService = securityAuditService
     )
 
     @Test

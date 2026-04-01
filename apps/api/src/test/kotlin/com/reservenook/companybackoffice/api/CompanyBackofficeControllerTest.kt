@@ -18,6 +18,9 @@ import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.CompanyRepository
 import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
+import com.reservenook.security.domain.SecurityAuditEventType
+import com.reservenook.security.infrastructure.SecurityAuditEventRepository
+import io.kotest.matchers.shouldBe
 import io.mockk.justRun
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -44,6 +47,7 @@ class CompanyBackofficeControllerTest(
     @Autowired private val userAccountRepository: UserAccountRepository,
     @Autowired private val membershipRepository: CompanyMembershipRepository,
     @Autowired private val subscriptionRepository: CompanySubscriptionRepository,
+    @Autowired private val securityAuditEventRepository: SecurityAuditEventRepository,
     @Autowired private val passwordEncoder: PasswordEncoder
 ) {
 
@@ -57,6 +61,7 @@ class CompanyBackofficeControllerTest(
     fun cleanDatabase() {
         justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
         justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
+        securityAuditEventRepository.deleteAll()
         membershipRepository.deleteAll()
         subscriptionRepository.deleteAll()
         userAccountRepository.deleteAll()
@@ -120,7 +125,7 @@ class CompanyBackofficeControllerTest(
         )
 
         mockMvc.put("/api/app/company/acme-wellness/profile") {
-            with(csrf())
+            with(csrf().asHeader())
             this.session = session
             contentType = org.springframework.http.MediaType.APPLICATION_JSON
             content = """
@@ -144,6 +149,8 @@ class CompanyBackofficeControllerTest(
                 jsonPath("$.profile.contactEmail") { value("hello@acme.com") }
                 jsonPath("$.profile.countryCode") { value("DE") }
             }
+
+        securityAuditEventRepository.findAll().any { it.eventType == SecurityAuditEventType.COMPANY_PROFILE_UPDATED } shouldBe true
     }
 
     @Test
@@ -166,7 +173,7 @@ class CompanyBackofficeControllerTest(
         )
 
         mockMvc.put("/api/app/company/other-company/profile") {
-            with(csrf())
+            with(csrf().asHeader())
             this.session = session
             contentType = org.springframework.http.MediaType.APPLICATION_JSON
             content = """
