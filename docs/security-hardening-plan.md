@@ -478,6 +478,7 @@ Completed controls:
 - password-reset-driven session revocation through credential-version checks on authenticated requests
 - browser-facing defensive headers on API and web responses
 - persisted security audit events for auth abuse, password recovery, and sensitive admin changes
+- explicit Content Security Policy baselines on API and web responses
 
 Current regression coverage includes:
 
@@ -492,6 +493,7 @@ Current regression coverage includes:
 - old passwords fail after reset while the new password remains valid
 - public auth responses emit defensive frame, content-type, referrer, and permissions headers
 - Next.js route config emits the same baseline defensive browser headers for all web pages
+- API and web responses emit an explicit Content Security Policy that constrains frames, objects, base URIs, and form targets
 - failed logins and login rate-limit hits persist durable audit events
 - password reset requests, password reset completions, and activation resend requests persist durable audit events
 - platform inactivity-policy updates and company profile updates persist durable audit events

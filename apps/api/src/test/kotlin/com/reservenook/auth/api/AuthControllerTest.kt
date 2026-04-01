@@ -210,6 +210,12 @@ class AuthControllerTest(
         }
             .andExpect {
                 status { isUnauthorized() }
+                header {
+                    string(
+                        "Content-Security-Policy",
+                        "default-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+                    )
+                }
                 header { string("X-Frame-Options", "DENY") }
                 header { string("X-Content-Type-Options", "nosniff") }
                 header { string("Referrer-Policy", "strict-origin-when-cross-origin") }

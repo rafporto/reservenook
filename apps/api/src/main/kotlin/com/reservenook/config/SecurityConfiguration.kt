@@ -26,6 +26,9 @@ class SecurityConfiguration(
     private val sessionCredentialVersionFilter: SessionCredentialVersionFilter
 ) {
 
+    private val apiContentSecurityPolicy =
+        "default-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
@@ -41,6 +44,9 @@ class SecurityConfiguration(
                     .contentTypeOptions(Customizer.withDefaults())
                     .referrerPolicy { referrerPolicy ->
                         referrerPolicy.policy(ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
+                    }
+                    .contentSecurityPolicy { contentSecurityPolicy ->
+                        contentSecurityPolicy.policyDirectives(apiContentSecurityPolicy)
                     }
                     .addHeaderWriter(StaticHeadersWriter("Permissions-Policy", "camera=(), microphone=(), geolocation=()"))
             }

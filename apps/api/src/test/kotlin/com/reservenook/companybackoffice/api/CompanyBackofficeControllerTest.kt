@@ -3,6 +3,7 @@ package com.reservenook.companybackoffice.api
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.ninjasquad.springmockk.MockkBean
 import com.reservenook.auth.application.AppAuthenticatedUser
+import com.reservenook.auth.api.LoginRequest
 import com.reservenook.auth.application.PasswordResetMailSender
 import com.reservenook.registration.application.RegistrationMailSender
 import com.reservenook.registration.domain.BusinessType
@@ -36,6 +37,7 @@ import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequ
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.put
 import java.time.Instant
 
@@ -43,6 +45,7 @@ import java.time.Instant
 @AutoConfigureMockMvc
 class CompanyBackofficeControllerTest(
     @Autowired private val mockMvc: MockMvc,
+    @Autowired private val objectMapper: ObjectMapper,
     @Autowired private val companyRepository: CompanyRepository,
     @Autowired private val userAccountRepository: UserAccountRepository,
     @Autowired private val membershipRepository: CompanyMembershipRepository,
@@ -79,11 +82,7 @@ class CompanyBackofficeControllerTest(
         company.contactEmail = "hello@acme.com"
         companyRepository.save(company)
 
-        val session = authenticatedCompanyAdminSession(
-            userId = requireNotNull(admin.id),
-            email = "admin@acme.com",
-            companySlug = "acme-wellness"
-        )
+        val session = loginCompanyAdminSession("admin@acme.com", "SecurePass123")
 
         mockMvc.get("/api/app/company/acme-wellness/backoffice") {
             this.session = session
@@ -118,11 +117,7 @@ class CompanyBackofficeControllerTest(
         company.countryCode = "DE"
         companyRepository.save(company)
 
-        val session = authenticatedCompanyAdminSession(
-            userId = requireNotNull(admin.id),
-            email = "admin@acme.com",
-            companySlug = "acme-wellness"
-        )
+        val session = loginCompanyAdminSession("admin@acme.com", "SecurePass123")
 
         mockMvc.put("/api/app/company/acme-wellness/profile") {
             with(csrf().asHeader())
@@ -166,11 +161,7 @@ class CompanyBackofficeControllerTest(
             password = "SecurePass123"
         )
 
-        val session = authenticatedCompanyAdminSession(
-            userId = requireNotNull(admin.id),
-            email = "admin@acme.com",
-            companySlug = "acme-wellness"
-        )
+        val session = loginCompanyAdminSession("admin@acme.com", "SecurePass123")
 
         mockMvc.put("/api/app/company/other-company/profile") {
             with(csrf().asHeader())
@@ -203,11 +194,7 @@ class CompanyBackofficeControllerTest(
             password = "SecurePass123"
         )
 
-        val session = authenticatedCompanyAdminSession(
-            userId = requireNotNull(admin.id),
-            email = "admin@acme.com",
-            companySlug = "acme-wellness"
-        )
+        val session = loginCompanyAdminSession("admin@acme.com", "SecurePass123")
 
         mockMvc.put("/api/app/company/acme-wellness/profile") {
             this.session = session
@@ -244,11 +231,7 @@ class CompanyBackofficeControllerTest(
             password = "SecurePass123"
         )
 
-        val session = authenticatedCompanyAdminSession(
-            userId = requireNotNull(admin.id),
-            email = "admin@acme.com",
-            companySlug = "acme-wellness"
-        )
+        val session = loginCompanyAdminSession("admin@acme.com", "SecurePass123")
 
         mockMvc.get("/api/app/company/other-company/backoffice") {
             this.session = session
@@ -284,6 +267,24 @@ class CompanyBackofficeControllerTest(
         return MockHttpSession().apply {
             setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context)
         }
+    }
+
+    private fun loginCompanyAdminSession(email: String, password: String): MockHttpSession {
+        val loginResult = mockMvc.post("/api/public/auth/login") {
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(
+                LoginRequest(
+                    email = email,
+                    password = password
+                )
+            )
+        }
+            .andExpect {
+                status { isOk() }
+            }
+            .andReturn()
+
+        return loginResult.request.session as MockHttpSession
     }
 
     private fun seedCompanyAdmin(slug: String, email: String, password: String): UserAccount {
