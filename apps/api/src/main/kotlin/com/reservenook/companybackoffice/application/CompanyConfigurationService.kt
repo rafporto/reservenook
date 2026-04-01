@@ -341,8 +341,12 @@ class CompanyConfigurationService(
         val isCurrentlyAdmin = targetMembership.role == CompanyRole.COMPANY_ADMIN
         val isLosingAdminCoverage = isCurrentlyAdmin && nextRole != CompanyRole.COMPANY_ADMIN
         val isDisablingAdmin = isCurrentlyAdmin && nextStatus != UserStatus.ACTIVE
-        val adminCount = companyMembershipRepository.countByCompanyIdAndRole(companyId, CompanyRole.COMPANY_ADMIN)
-        if ((isLosingAdminCoverage || isDisablingAdmin) && adminCount <= 1) {
+        val activeAdminCount = companyMembershipRepository.countByCompanyIdAndRoleAndUserStatus(
+            companyId,
+            CompanyRole.COMPANY_ADMIN,
+            UserStatus.ACTIVE
+        )
+        if ((isLosingAdminCoverage || isDisablingAdmin) && activeAdminCount <= 1) {
             throw IllegalArgumentException("At least one company admin must remain active.")
         }
 

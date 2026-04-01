@@ -9,6 +9,7 @@ import com.reservenook.security.domain.SecurityAuditOutcome
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
@@ -17,7 +18,11 @@ import org.springframework.web.filter.OncePerRequestFilter
 class SessionCredentialVersionFilter(
     private val userAccountRepository: UserAccountRepository,
     private val companyMembershipRepository: CompanyMembershipRepository,
-    private val securityAuditService: SecurityAuditService
+    private val securityAuditService: SecurityAuditService,
+    @Value("\${app.security.idle-timeout-seconds:1800}")
+    private val idleTimeoutSeconds: Long,
+    @Value("\${app.security.absolute-timeout-seconds:43200}")
+    private val absoluteTimeoutSeconds: Long
 ) : OncePerRequestFilter() {
 
     override fun doFilterInternal(
@@ -29,6 +34,27 @@ class SessionCredentialVersionFilter(
         if (principal == null) {
             filterChain.doFilter(request, response)
             return
+        }
+
+        val session = request.getSession(false)
+        if (session != null) {
+            val nowMillis = System.currentTimeMillis()
+            val authenticatedAtMillis =
+                (session.getAttribute(SessionSecurityAttributes.AUTHENTICATED_AT_MILLIS) as? Long) ?: session.creationTime
+            val lastSeenAtMillis =
+                (session.getAttribute(SessionSecurityAttributes.LAST_SEEN_AT_MILLIS) as? Long) ?: authenticatedAtMillis
+
+            if (nowMillis - authenticatedAtMillis > absoluteTimeoutSeconds * 1000) {
+                revokeSession(request, response, principal, "ABSOLUTE_TIMEOUT")
+                return
+            }
+
+            if (nowMillis - lastSeenAtMillis > idleTimeoutSeconds * 1000) {
+                revokeSession(request, response, principal, "IDLE_TIMEOUT")
+                return
+            }
+
+            session.setAttribute(SessionSecurityAttributes.LAST_SEEN_AT_MILLIS, nowMillis)
         }
 
         val user = userAccountRepository.findById(principal.userId).orElse(null)

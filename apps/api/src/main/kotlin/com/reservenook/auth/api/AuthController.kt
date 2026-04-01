@@ -6,6 +6,7 @@ import com.reservenook.auth.application.RequestPasswordResetService
 import com.reservenook.auth.application.ResetPasswordService
 import com.reservenook.security.application.RequestFingerprintResolver
 import com.reservenook.security.application.SecurityAuditService
+import com.reservenook.security.application.SessionSecurityAttributes
 import com.reservenook.security.domain.SecurityAuditEventType
 import com.reservenook.security.domain.SecurityAuditOutcome
 import jakarta.servlet.http.HttpSession
@@ -40,6 +41,12 @@ class AuthController(
             request = httpServletRequest,
             response = httpServletResponse
         )
+        httpServletRequest.getSession(false)?.let { session ->
+            val nowMillis = System.currentTimeMillis()
+            session.setAttribute(SessionSecurityAttributes.AUTHENTICATED_AT_MILLIS, nowMillis)
+            session.setAttribute(SessionSecurityAttributes.LAST_SEEN_AT_MILLIS, nowMillis)
+            session.setAttribute(SessionSecurityAttributes.RECENT_AUTH_AT_MILLIS, nowMillis)
+        }
 
         return LoginResponse(redirectTo = result.redirectTo)
     }

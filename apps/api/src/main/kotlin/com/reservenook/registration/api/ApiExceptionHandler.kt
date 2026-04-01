@@ -4,6 +4,7 @@ import com.reservenook.auth.api.LoginErrorResponse
 import com.reservenook.auth.application.LoginFailedException
 import com.reservenook.auth.application.ResetPasswordFailedException
 import com.reservenook.registration.application.RegistrationConflictException
+import com.reservenook.security.application.RecentAuthenticationRequiredException
 import com.reservenook.security.application.TooManyRequestsException
 import jakarta.validation.ConstraintViolationException
 import org.springframework.http.HttpStatus
@@ -52,6 +53,12 @@ class ApiExceptionHandler {
     fun handleTooManyRequests(exception: TooManyRequestsException): ResponseEntity<ApiErrorResponse> =
         ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(
             ApiErrorResponse(exception.message ?: "Too many requests. Please wait and try again.")
+        )
+
+    @ExceptionHandler(RecentAuthenticationRequiredException::class)
+    fun handleRecentAuthenticationRequired(exception: RecentAuthenticationRequiredException): ResponseEntity<ApiErrorResponse> =
+        ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+            ApiErrorResponse(exception.message ?: "Please sign in again before performing this sensitive action.")
         )
 
     @ExceptionHandler(MailException::class)

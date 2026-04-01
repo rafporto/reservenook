@@ -20,6 +20,7 @@ import com.reservenook.registration.infrastructure.CompanyRepository
 import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
 import com.reservenook.security.application.RequestThrottleService
+import com.reservenook.security.application.SessionSecurityAttributes
 import com.reservenook.security.domain.SecurityAuditEventType
 import com.reservenook.security.infrastructure.SecurityAuditEventRepository
 import io.kotest.matchers.shouldBe
@@ -350,7 +351,7 @@ class CompanyBackofficeControllerTest(
     @Test
     fun `company admin can update customer questions and widget settings`() {
         val admin = seedCompanyAdmin(slug = "acme-wellness", email = companyAdminEmail, password = "SecurePass123")
-        val session = authenticatedCompanyAdminSession(requireNotNull(admin.id), companyAdminEmail, "acme-wellness")
+        val session = loginCompanyAdminSession(companyAdminEmail, "SecurePass123")
 
         mockMvc.put("/api/app/company/acme-wellness/customer-questions") {
             with(csrf().asHeader())
@@ -395,6 +396,127 @@ class CompanyBackofficeControllerTest(
     }
 
     @Test
+    fun `company staff cannot access admin backoffice routes`() {
+        val staff = seedCompanyUser(
+            slug = "acme-wellness",
+            email = "staff@acme.com",
+            password = "SecurePass123",
+            role = CompanyRole.STAFF
+        )
+        val session = authenticatedCompanyStaffSession(requireNotNull(staff.id), "staff@acme.com", "acme-wellness")
+
+        mockMvc.get("/api/app/company/acme-wellness/backoffice") {
+            this.session = session
+        }.andExpect {
+            status { isForbidden() }
+        }
+
+        mockMvc.get("/api/app/company/acme-wellness/staff") {
+            this.session = session
+        }.andExpect {
+            status { isForbidden() }
+        }
+    }
+
+    @Test
+    fun `platform admin cannot access tenant company configuration routes`() {
+        seedCompanyAdmin(slug = "acme-wellness", email = companyAdminEmail, password = "SecurePass123")
+        val platformAdmin = seedPlatformAdmin(email = "platform@reservenook.com", password = "SecurePass123")
+        val session = authenticatedPlatformAdminSession(userId = requireNotNull(platformAdmin.id), email = "platform@reservenook.com")
+
+        mockMvc.get("/api/app/company/acme-wellness/backoffice") {
+            this.session = session
+        }.andExpect {
+            status { isForbidden() }
+        }
+
+        mockMvc.put("/api/app/company/acme-wellness/widget-settings") {
+            with(csrf().asHeader())
+            this.session = session
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "ctaLabel":"Reserve now",
+                  "widgetEnabled":true,
+                  "allowedDomains":["booking.acme.com"],
+                  "themeVariant":"soft"
+                }
+            """.trimIndent()
+        }.andExpect {
+            status { isForbidden() }
+        }
+    }
+
+    @Test
+    fun `widget settings update requires csrf token`() {
+        val admin = seedCompanyAdmin(slug = "acme-wellness", email = companyAdminEmail, password = "SecurePass123")
+        val session = authenticatedCompanyAdminSession(requireNotNull(admin.id), companyAdminEmail, "acme-wellness")
+
+        mockMvc.put("/api/app/company/acme-wellness/widget-settings") {
+            this.session = session
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "ctaLabel":"Reserve now",
+                  "widgetEnabled":true,
+                  "allowedDomains":["booking.acme.com"],
+                  "themeVariant":"soft"
+                }
+            """.trimIndent()
+        }.andExpect {
+            status { isForbidden() }
+        }
+    }
+
+    @Test
+    fun `company branding update requires recent authentication`() {
+        val admin = seedCompanyAdmin(slug = "acme-wellness", email = companyAdminEmail, password = "SecurePass123")
+        val session = authenticatedCompanyAdminSession(requireNotNull(admin.id), companyAdminEmail, "acme-wellness")
+        session.setAttribute(SessionSecurityAttributes.RECENT_AUTH_AT_MILLIS, System.currentTimeMillis() - 901_000)
+
+        mockMvc.put("/api/app/company/acme-wellness/branding") {
+            with(csrf().asHeader())
+            this.session = session
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "displayName": "Acme Studio",
+                  "logoUrl": "https://cdn.acme.com/logo.svg",
+                  "accentColor": "#B45A38",
+                  "supportEmail": "support@acme.com",
+                  "supportPhone": "+49 30 555 0101"
+                }
+            """.trimIndent()
+        }.andExpect {
+            status { isUnauthorized() }
+            jsonPath("$.message") { value("Please sign in again before performing this sensitive action.") }
+        }
+    }
+
+    @Test
+    fun `company admin cannot update a staff membership from another tenant by id guessing`() {
+        val admin = seedCompanyAdmin(slug = "acme-wellness", email = companyAdminEmail, password = "SecurePass123")
+        val otherUser = seedCompanyUser(
+            slug = "other-company",
+            email = "other-staff@acme.com",
+            password = "SecurePass123",
+            role = CompanyRole.STAFF
+        )
+        val otherMembership = membershipRepository.findFirstByUserIdAndCompanySlug(requireNotNull(otherUser.id), "other-company")
+            ?: error("Expected other-company membership")
+        val session = authenticatedCompanyAdminSession(requireNotNull(admin.id), companyAdminEmail, "acme-wellness")
+
+        mockMvc.put("/api/app/company/acme-wellness/staff/${requireNotNull(otherMembership.id)}") {
+            with(csrf().asHeader())
+            this.session = session
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = """{"role":"STAFF","status":"ACTIVE"}"""
+        }.andExpect {
+            status { isBadRequest() }
+        }
+    }
+
+    @Test
     fun `company admin cannot access another tenant backoffice`() {
         val admin = seedCompanyAdmin(
             slug = "acme-wellness",
@@ -430,7 +552,8 @@ class CompanyBackofficeControllerTest(
             userId = userId,
             email = email,
             isPlatformAdmin = false,
-            companySlug = companySlug
+            companySlug = companySlug,
+            companyRole = CompanyRole.COMPANY_ADMIN.name
         )
         val authentication = UsernamePasswordAuthenticationToken(
             principal,
@@ -442,7 +565,59 @@ class CompanyBackofficeControllerTest(
 
         return MockHttpSession().apply {
             setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context)
+            seedSecurityTimestamps(this)
         }
+    }
+
+    private fun authenticatedCompanyStaffSession(userId: Long, email: String, companySlug: String): MockHttpSession {
+        val principal = AppAuthenticatedUser(
+            userId = userId,
+            email = email,
+            isPlatformAdmin = false,
+            companySlug = companySlug,
+            companyRole = CompanyRole.STAFF.name
+        )
+        val authentication = UsernamePasswordAuthenticationToken(
+            principal,
+            null,
+            listOf(SimpleGrantedAuthority("ROLE_COMPANY_STAFF"))
+        )
+        val context = SecurityContextHolder.createEmptyContext()
+        context.authentication = authentication
+
+        return MockHttpSession().apply {
+            setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context)
+            seedSecurityTimestamps(this)
+        }
+    }
+
+    private fun authenticatedPlatformAdminSession(userId: Long, email: String): MockHttpSession {
+        val principal = AppAuthenticatedUser(
+            userId = userId,
+            email = email,
+            isPlatformAdmin = true,
+            companySlug = null,
+            companyRole = null
+        )
+        val authentication = UsernamePasswordAuthenticationToken(
+            principal,
+            null,
+            listOf(SimpleGrantedAuthority("ROLE_PLATFORM_ADMIN"))
+        )
+        val context = SecurityContextHolder.createEmptyContext()
+        context.authentication = authentication
+
+        return MockHttpSession().apply {
+            setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context)
+            seedSecurityTimestamps(this)
+        }
+    }
+
+    private fun seedSecurityTimestamps(session: MockHttpSession) {
+        val nowMillis = System.currentTimeMillis()
+        session.setAttribute(SessionSecurityAttributes.AUTHENTICATED_AT_MILLIS, nowMillis)
+        session.setAttribute(SessionSecurityAttributes.LAST_SEEN_AT_MILLIS, nowMillis)
+        session.setAttribute(SessionSecurityAttributes.RECENT_AUTH_AT_MILLIS, nowMillis)
     }
 
     private fun loginCompanyAdminSession(email: String, password: String): MockHttpSession {
@@ -470,6 +645,22 @@ class CompanyBackofficeControllerTest(
     }
 
     private fun seedCompanyAdmin(slug: String, email: String, password: String): UserAccount {
+        return seedCompanyUser(slug, email, password, CompanyRole.COMPANY_ADMIN)
+    }
+
+    private fun seedPlatformAdmin(email: String, password: String): UserAccount {
+        return userAccountRepository.save(
+            UserAccount(
+                email = email,
+                passwordHash = passwordEncoder.encode(password),
+                status = UserStatus.ACTIVE,
+                emailVerified = true,
+                isPlatformAdmin = true
+            )
+        )
+    }
+
+    private fun seedCompanyUser(slug: String, email: String, password: String, role: CompanyRole): UserAccount {
         val company = companyRepository.save(
             Company(
                 name = slug.split("-").joinToString(" ") { part -> part.replaceFirstChar(Char::titlecase) },
@@ -494,7 +685,7 @@ class CompanyBackofficeControllerTest(
             CompanyMembership(
                 company = company,
                 user = user,
-                role = CompanyRole.COMPANY_ADMIN
+                role = role
             )
         )
 

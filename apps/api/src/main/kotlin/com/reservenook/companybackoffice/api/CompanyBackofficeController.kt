@@ -7,6 +7,8 @@ import com.reservenook.companybackoffice.application.ClosureDateDraft
 import com.reservenook.companybackoffice.application.CompanyConfigurationService
 import com.reservenook.companybackoffice.application.CustomerQuestionDraft
 import com.reservenook.companybackoffice.application.CompanyProfileService
+import com.reservenook.security.application.RecentAuthenticationGuard
+import jakarta.servlet.http.HttpSession
 import jakarta.validation.Valid
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
@@ -20,7 +22,8 @@ import org.springframework.web.bind.annotation.RestController
 class CompanyBackofficeController(
     private val companyBackofficeAccessService: CompanyBackofficeAccessService,
     private val companyProfileService: CompanyProfileService,
-    private val companyConfigurationService: CompanyConfigurationService
+    private val companyConfigurationService: CompanyConfigurationService,
+    private val recentAuthenticationGuard: RecentAuthenticationGuard
 ) {
 
     @GetMapping("/api/app/company/{slug}/backoffice")
@@ -33,8 +36,10 @@ class CompanyBackofficeController(
     fun updateProfile(
         @PathVariable slug: String,
         @AuthenticationPrincipal principal: AppAuthenticatedUser,
+        session: HttpSession,
         @Valid @RequestBody request: UpdateCompanyProfileRequest
     ): UpdateCompanyProfileResponse {
+        recentAuthenticationGuard.requireRecentAuthentication(session)
         val updatedProfile = companyProfileService.updateProfile(
             principal = principal,
             requestedSlug = slug,
@@ -60,8 +65,11 @@ class CompanyBackofficeController(
     fun updateBranding(
         @PathVariable slug: String,
         @AuthenticationPrincipal principal: AppAuthenticatedUser,
+        session: HttpSession,
         @Valid @RequestBody request: UpdateCompanyBrandingRequest
-    ) = UpdateCompanyBrandingResponse(
+    ) : UpdateCompanyBrandingResponse {
+        recentAuthenticationGuard.requireRecentAuthentication(session)
+        return UpdateCompanyBrandingResponse(
         message = "Company branding updated.",
         branding = companyConfigurationService.updateBranding(
             principal = principal,
@@ -73,13 +81,16 @@ class CompanyBackofficeController(
             supportPhone = request.supportPhone
         )
     )
+    }
 
     @PutMapping("/api/app/company/{slug}/localization")
     fun updateLocalization(
         @PathVariable slug: String,
         @AuthenticationPrincipal principal: AppAuthenticatedUser,
+        session: HttpSession,
         @Valid @RequestBody request: UpdateCompanyLocalizationRequest
     ): UpdateCompanyLocalizationResponse {
+        recentAuthenticationGuard.requireRecentAuthentication(session)
         val localization = companyConfigurationService.updateLocalization(
             principal = principal,
             requestedSlug = slug,
@@ -99,8 +110,11 @@ class CompanyBackofficeController(
     fun updateBusinessHours(
         @PathVariable slug: String,
         @AuthenticationPrincipal principal: AppAuthenticatedUser,
+        session: HttpSession,
         @Valid @RequestBody request: UpdateCompanyBusinessHoursRequest
-    ) = UpdateCompanyBusinessHoursResponse(
+    ) : UpdateCompanyBusinessHoursResponse {
+        recentAuthenticationGuard.requireRecentAuthentication(session)
+        return UpdateCompanyBusinessHoursResponse(
         message = "Business hours updated.",
         businessHours = companyConfigurationService.updateBusinessHours(
             principal = principal,
@@ -115,13 +129,17 @@ class CompanyBackofficeController(
             }
         )
     )
+    }
 
     @PutMapping("/api/app/company/{slug}/closure-dates")
     fun updateClosureDates(
         @PathVariable slug: String,
         @AuthenticationPrincipal principal: AppAuthenticatedUser,
+        session: HttpSession,
         @Valid @RequestBody request: UpdateCompanyClosureDatesRequest
-    ) = UpdateCompanyClosureDatesResponse(
+    ) : UpdateCompanyClosureDatesResponse {
+        recentAuthenticationGuard.requireRecentAuthentication(session)
+        return UpdateCompanyClosureDatesResponse(
         message = "Closure dates updated.",
         closureDates = companyConfigurationService.updateClosureDates(
             principal = principal,
@@ -135,13 +153,17 @@ class CompanyBackofficeController(
             }
         )
     )
+    }
 
     @PutMapping("/api/app/company/{slug}/notification-preferences")
     fun updateNotificationPreferences(
         @PathVariable slug: String,
         @AuthenticationPrincipal principal: AppAuthenticatedUser,
+        session: HttpSession,
         @Valid @RequestBody request: UpdateCompanyNotificationPreferencesRequest
-    ) = UpdateCompanyNotificationPreferencesResponse(
+    ) : UpdateCompanyNotificationPreferencesResponse {
+        recentAuthenticationGuard.requireRecentAuthentication(session)
+        return UpdateCompanyNotificationPreferencesResponse(
         message = "Notification preferences updated.",
         notificationPreferences = companyConfigurationService.updateNotificationPreferences(
             principal = principal,
@@ -152,6 +174,7 @@ class CompanyBackofficeController(
             notifyDailySummary = request.notifyDailySummary
         )
     )
+    }
 
     @GetMapping("/api/app/company/{slug}/staff")
     fun listStaffUsers(
@@ -165,8 +188,11 @@ class CompanyBackofficeController(
     fun createStaffUser(
         @PathVariable slug: String,
         @AuthenticationPrincipal principal: AppAuthenticatedUser,
+        session: HttpSession,
         @Valid @RequestBody request: CreateStaffUserRequest
-    ) = CreateStaffUserResponse(
+    ) : CreateStaffUserResponse {
+        recentAuthenticationGuard.requireRecentAuthentication(session)
+        return CreateStaffUserResponse(
         message = "Staff user created.",
         staffUser = companyConfigurationService.createStaffUser(
             principal = principal,
@@ -176,14 +202,18 @@ class CompanyBackofficeController(
             role = request.role
         )
     )
+    }
 
     @PutMapping("/api/app/company/{slug}/staff/{membershipId}")
     fun updateStaffUser(
         @PathVariable slug: String,
         @PathVariable membershipId: Long,
         @AuthenticationPrincipal principal: AppAuthenticatedUser,
+        session: HttpSession,
         @Valid @RequestBody request: UpdateStaffUserRequest
-    ) = UpdateStaffUserResponse(
+    ) : UpdateStaffUserResponse {
+        recentAuthenticationGuard.requireRecentAuthentication(session)
+        return UpdateStaffUserResponse(
         message = "Staff user updated.",
         staffUser = companyConfigurationService.updateStaffUser(
             principal = principal,
@@ -193,13 +223,17 @@ class CompanyBackofficeController(
             status = request.status
         )
     )
+    }
 
     @PutMapping("/api/app/company/{slug}/customer-questions")
     fun updateCustomerQuestions(
         @PathVariable slug: String,
         @AuthenticationPrincipal principal: AppAuthenticatedUser,
+        session: HttpSession,
         @Valid @RequestBody request: UpdateCompanyCustomerQuestionsRequest
-    ) = UpdateCompanyCustomerQuestionsResponse(
+    ) : UpdateCompanyCustomerQuestionsResponse {
+        recentAuthenticationGuard.requireRecentAuthentication(session)
+        return UpdateCompanyCustomerQuestionsResponse(
         message = "Customer questions updated.",
         customerQuestions = companyConfigurationService.updateCustomerQuestions(
             principal = principal,
@@ -216,13 +250,17 @@ class CompanyBackofficeController(
             }
         )
     )
+    }
 
     @PutMapping("/api/app/company/{slug}/widget-settings")
     fun updateWidgetSettings(
         @PathVariable slug: String,
         @AuthenticationPrincipal principal: AppAuthenticatedUser,
+        session: HttpSession,
         @Valid @RequestBody request: UpdateCompanyWidgetSettingsRequest
-    ) = UpdateCompanyWidgetSettingsResponse(
+    ) : UpdateCompanyWidgetSettingsResponse {
+        recentAuthenticationGuard.requireRecentAuthentication(session)
+        return UpdateCompanyWidgetSettingsResponse(
         message = "Widget settings updated.",
         widgetSettings = companyConfigurationService.updateWidgetSettings(
             principal = principal,
@@ -233,4 +271,5 @@ class CompanyBackofficeController(
             themeVariant = request.themeVariant
         )
     )
+    }
 }

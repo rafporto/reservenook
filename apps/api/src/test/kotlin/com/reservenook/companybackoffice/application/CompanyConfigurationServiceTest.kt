@@ -156,7 +156,13 @@ class CompanyConfigurationServiceTest {
 
         every { companyAdminAccessService.requireCompanyAdmin(any(), "acme-wellness") } returns membership
         every { companyMembershipRepository.findByIdAndCompanyId(30L, 1L) } returns targetMembership
-        every { companyMembershipRepository.countByCompanyIdAndRole(1L, CompanyRole.COMPANY_ADMIN) } returns 1L
+        every {
+            companyMembershipRepository.countByCompanyIdAndRoleAndUserStatus(
+                1L,
+                CompanyRole.COMPANY_ADMIN,
+                UserStatus.ACTIVE
+            )
+        } returns 1L
 
         val exception = assertThrows(IllegalArgumentException::class.java) {
             service.updateStaffUser(
@@ -169,6 +175,46 @@ class CompanyConfigurationServiceTest {
         }
 
         assertEquals("You cannot remove your own active company-admin access.", exception.message)
+    }
+
+    @Test
+    fun `update staff user rejects losing the last active admin when another admin is already inactive`() {
+        val actingMembership = adminMembership()
+        val targetMembership = CompanyMembership(
+            id = 30L,
+            company = actingMembership.company,
+            user = UserAccount(
+                id = 7L,
+                email = "other-admin@acme.com",
+                fullName = "Other Admin",
+                passwordHash = "encoded",
+                status = UserStatus.ACTIVE,
+                emailVerified = true
+            ),
+            role = CompanyRole.COMPANY_ADMIN
+        )
+
+        every { companyAdminAccessService.requireCompanyAdmin(any(), "acme-wellness") } returns actingMembership
+        every { companyMembershipRepository.findByIdAndCompanyId(30L, 1L) } returns targetMembership
+        every {
+            companyMembershipRepository.countByCompanyIdAndRoleAndUserStatus(
+                1L,
+                CompanyRole.COMPANY_ADMIN,
+                UserStatus.ACTIVE
+            )
+        } returns 1L
+
+        val exception = assertThrows(IllegalArgumentException::class.java) {
+            service.updateStaffUser(
+                principal = principal(),
+                requestedSlug = "acme-wellness",
+                membershipId = 30L,
+                role = "STAFF",
+                status = "ACTIVE"
+            )
+        }
+
+        assertEquals("At least one company admin must remain active.", exception.message)
     }
 
     @Test

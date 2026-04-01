@@ -1,16 +1,19 @@
 package com.reservenook.security.application
 
+import com.reservenook.security.domain.RequestThrottleAttempt
+import com.reservenook.security.infrastructure.RequestThrottleAttemptRepository
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
+import org.springframework.transaction.annotation.Transactional
 import java.time.Duration
 import java.time.Instant
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentLinkedDeque
 
 @Service
-class RequestThrottleService {
+class RequestThrottleService(
+    private val requestThrottleAttemptRepository: RequestThrottleAttemptRepository
+) {
 
-    private val attempts = ConcurrentHashMap<String, ConcurrentLinkedDeque<Instant>>()
-
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun assertAllowed(
         scope: String,
         key: String,
@@ -19,50 +22,52 @@ class RequestThrottleService {
         now: Instant = Instant.now()
     ) {
         val bucketKey = bucketKey(scope, key)
-        val bucket = attempts.computeIfAbsent(bucketKey) { ConcurrentLinkedDeque() }
-
-        synchronized(bucket) {
-            pruneExpired(bucket, window, now)
-            if (bucket.size >= threshold) {
-                throw TooManyRequestsException(messageFor(scope))
-            }
-
-            bucket.addLast(now)
+        pruneExpired(window, now)
+        val activeAttempts = requestThrottleAttemptRepository.countByScopeAndBucketKeyAndOccurredAtAfter(
+            scope,
+            bucketKey,
+            now.minus(window)
+        )
+        if (activeAttempts >= threshold) {
+            throw TooManyRequestsException(messageFor(scope))
         }
+
+        requestThrottleAttemptRepository.save(
+            RequestThrottleAttempt(
+                scope = scope,
+                bucketKey = bucketKey,
+                occurredAt = now
+            )
+        )
     }
 
+    @Transactional(readOnly = true)
     fun countActiveAttempts(
         scope: String,
         key: String,
         window: Duration,
         now: Instant = Instant.now()
     ): Int {
-        val bucket = attempts[bucketKey(scope, key)] ?: return 0
-
-        synchronized(bucket) {
-            pruneExpired(bucket, window, now)
-            return bucket.size
-        }
+        pruneExpired(window, now)
+        return requestThrottleAttemptRepository.countByScopeAndBucketKeyAndOccurredAtAfter(
+            scope,
+            bucketKey(scope, key),
+            now.minus(window)
+        ).toInt()
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun clear(scope: String, key: String) {
-        attempts.remove(bucketKey(scope, key))
+        requestThrottleAttemptRepository.deleteByScopeAndBucketKey(scope, bucketKey(scope, key))
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun clearAll() {
-        attempts.clear()
+        requestThrottleAttemptRepository.deleteAll()
     }
 
-    private fun pruneExpired(bucket: ConcurrentLinkedDeque<Instant>, window: Duration, now: Instant) {
-        val threshold = now.minus(window)
-        while (true) {
-            val oldest = bucket.peekFirst() ?: return
-            if (!oldest.isBefore(threshold)) {
-                return
-            }
-
-            bucket.pollFirst()
-        }
+    private fun pruneExpired(window: Duration, now: Instant) {
+        requestThrottleAttemptRepository.deleteByOccurredAtBefore(now.minus(window))
     }
 
     private fun bucketKey(scope: String, key: String) = "$scope::$key"

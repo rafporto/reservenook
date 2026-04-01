@@ -178,6 +178,7 @@ Use the following test layers by default:
 
 - staff list endpoint returns only current-tenant users
 - cross-tenant staff visibility is denied
+- staff-role company users are denied access to the staff list endpoint
 
 ### Frontend
 
@@ -204,6 +205,7 @@ Use the following test layers by default:
 - create-staff endpoint persists user and membership records
 - onboarding dispatch is triggered
 - tenant scoping is enforced for creation
+- non-admin company users are denied access to the create-staff endpoint
 
 ### Frontend
 
@@ -228,6 +230,7 @@ Use the following test layers by default:
 
 - staff update endpoint persists new role or status
 - cross-tenant update is denied
+- update is rejected if it would leave the tenant without any active company admin
 
 ### Frontend
 
@@ -291,6 +294,7 @@ These scenarios should exist independently of individual use cases:
 - staff invitation onboarding uses the company language and issues a password-reset-based set-password flow instead of exposing a raw credential
 - company admin changes that affect staffing, branding, localization, widget domains, or notification routing stay behind CSRF-protected authenticated mutations
 - unsupported localization or widget values are rejected centrally
+- identifier-guessing attacks against tenant-owned staff membership ids are rejected even when the attacker knows a valid id from another tenant
 
 ## Minimum End-to-End Suite for Phase 2
 

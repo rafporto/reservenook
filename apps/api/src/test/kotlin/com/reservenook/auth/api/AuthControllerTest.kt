@@ -19,6 +19,7 @@ import com.reservenook.registration.infrastructure.CompanyRepository
 import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
 import com.reservenook.security.application.RequestThrottleService
+import com.reservenook.security.application.SessionSecurityAttributes
 import com.reservenook.security.domain.SecurityAuditEventType
 import com.reservenook.security.infrastructure.SecurityAuditEventRepository
 import io.kotest.matchers.shouldBe
@@ -231,6 +232,65 @@ class AuthControllerTest(
             }
 
         securityAuditEventRepository.findAll().any { it.eventType == SecurityAuditEventType.SESSION_REVOKED } shouldBe true
+    }
+
+    @Test
+    fun `authenticated session is revoked after absolute timeout`() {
+        seedCompanyAdmin(email = "admin@acme.com", password = "SecurePass123")
+
+        val loginResult = mockMvc.post("/api/public/auth/login") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(
+                LoginRequest(
+                    email = "admin@acme.com",
+                    password = "SecurePass123"
+                )
+            )
+        }.andExpect { status { isOk() } }.andReturn()
+
+        val session = loginResult.request.session as MockHttpSession
+        session.setAttribute(SessionSecurityAttributes.AUTHENTICATED_AT_MILLIS, System.currentTimeMillis() - 43_201_000)
+        session.setAttribute(SessionSecurityAttributes.LAST_SEEN_AT_MILLIS, System.currentTimeMillis())
+
+        mockMvc.get("/api/auth/session") {
+            this.session = session
+        }.andExpect {
+            status { isUnauthorized() }
+        }
+
+        securityAuditEventRepository.findAll().any {
+            it.eventType == SecurityAuditEventType.SESSION_REVOKED && it.details == "ABSOLUTE_TIMEOUT"
+        } shouldBe true
+    }
+
+    @Test
+    fun `authenticated session is revoked after idle timeout`() {
+        seedCompanyAdmin(email = "admin@acme.com", password = "SecurePass123")
+
+        val loginResult = mockMvc.post("/api/public/auth/login") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(
+                LoginRequest(
+                    email = "admin@acme.com",
+                    password = "SecurePass123"
+                )
+            )
+        }.andExpect { status { isOk() } }.andReturn()
+
+        val session = loginResult.request.session as MockHttpSession
+        val staleMillis = System.currentTimeMillis() - 1_801_000
+        session.setAttribute(SessionSecurityAttributes.AUTHENTICATED_AT_MILLIS, staleMillis)
+        session.setAttribute(SessionSecurityAttributes.LAST_SEEN_AT_MILLIS, staleMillis)
+
+        mockMvc.get("/api/auth/session") {
+            this.session = session
+        }.andExpect {
+            status { isUnauthorized() }
+        }
+
+        securityAuditEventRepository.findAll().any {
+            it.eventType == SecurityAuditEventType.SESSION_REVOKED && it.details == "IDLE_TIMEOUT"
+        } shouldBe true
     }
 
     @Test

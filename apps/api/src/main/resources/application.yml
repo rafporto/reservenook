@@ -34,6 +34,7 @@ server:
     port: ${SERVER_PORT:8080}
     servlet:
         session:
+            timeout: ${SESSION_IDLE_TIMEOUT:30m}
             cookie:
                 http-only: true
                 same-site: lax
@@ -49,3 +50,6 @@ app:
     security:
         hsts-enabled: ${SECURITY_HSTS_ENABLED:false}
         hsts-max-age-seconds: ${SECURITY_HSTS_MAX_AGE_SECONDS:31536000}
+        idle-timeout-seconds: ${SECURITY_IDLE_TIMEOUT_SECONDS:1800}
+        absolute-timeout-seconds: ${SECURITY_ABSOLUTE_TIMEOUT_SECONDS:43200}
+        recent-auth-window-seconds: ${SECURITY_RECENT_AUTH_WINDOW_SECONDS:900}

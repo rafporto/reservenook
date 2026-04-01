@@ -504,10 +504,42 @@ Current regression coverage includes:
 - password reset requests, password reset completions, and activation resend requests persist durable audit events
 - platform inactivity-policy updates and company profile updates persist durable audit events
 - inactivity transitions, inactivity notices, deletion warnings, session revocations, and company deletions persist durable audit events
+- company staff users are forbidden from Phase 2 admin-only backoffice routes
+- platform admins are forbidden from bypassing tenant-scoped Phase 2 company configuration routes
+- widget settings updates reject missing CSRF tokens
+- guessed cross-tenant staff membership identifiers cannot be updated through another tenant scope
+- staff-role changes cannot remove the last active company admin when another admin record is already inactive
 
-Residual risks and next-pass candidates:
+## Phase 2 Company-Configuration Hardening
 
-- extend hardening tests across additional Phase 2 configuration surfaces as they are implemented
-- evaluate persistent or distributed abuse-throttling storage for multi-node deployments
-- add explicit idle-session and absolute-session timeout policies once product requirements are defined
-- evaluate MFA and step-up authentication before sensitive future account settings are introduced
+The next hardening pass for Phase 2 should explicitly test the shared company-configuration surface introduced in UC-17 through UC-28.
+
+Priority attack tests:
+
+- company staff attempts to read the company configuration dashboard
+- company staff attempts to list, create, or update staff users
+- platform admin attempts to access company-tenant configuration endpoints directly
+- company admin attempts to update another tenant's staff membership by guessing `membershipId`
+- company admin attempts to remove the last active admin while an inactive admin record still exists
+- company admin attempts state-changing requests without a CSRF token on branding, localization, widget, and staff-management endpoints
+- company admin submits invalid widget domains, invalid localization combinations, and malformed support or notification destinations
+- invited staff onboarding flow is verified to use a set-password link rather than exposing a reusable password
+
+Expected outcomes:
+
+- only company admins can access admin-only Phase 2 routes
+- tenant scoping is enforced both by slug and by tenant-owned identifiers
+- state-changing routes remain CSRF protected
+- last-active-admin coverage is preserved
+- onboarding remains recoverable without weakening credential safety
+
+Completed follow-up hardening from the previous residual-risk list:
+
+- abuse-throttling storage now persists in the database so rate limits survive across requests and application instances sharing the same data store
+- authenticated sessions now enforce explicit idle-timeout and absolute-timeout policies and revoke stale sessions on the next protected request
+- sensitive configuration writes now require recent authentication in addition to role, tenant, and CSRF checks
+
+Current residual risks outside the already implemented Phase 1 and Phase 2 scope:
+
+- extend the same recent-auth and abuse-test matrix to future booking, payment, and customer-facing flows as those use cases are added
+- evaluate MFA for future high-risk account actions such as primary-email changes, platform-admin break-glass actions, and payment-adjacent operations

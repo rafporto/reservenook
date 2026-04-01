@@ -18,6 +18,7 @@ import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.CompanyRepository
 import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
+import com.reservenook.security.application.SessionSecurityAttributes
 import com.reservenook.security.domain.SecurityAuditEventType
 import com.reservenook.security.infrastructure.SecurityAuditEventRepository
 import io.kotest.matchers.shouldBe
@@ -241,6 +242,34 @@ class PlatformAdminCompanyControllerTest(
             }
     }
 
+    @Test
+    fun `platform admin update requires recent authentication`() {
+        val platformAdmin = seedPlatformAdmin(email = "platform@reservenook.com", password = "SecurePass123")
+
+        val session = authenticatedPlatformAdminSession(
+            userId = requireNotNull(platformAdmin.id),
+            email = "platform@reservenook.com"
+        ).apply {
+            setAttribute(SessionSecurityAttributes.RECENT_AUTH_AT_MILLIS, System.currentTimeMillis() - 901_000)
+        }
+
+        mockMvc.put("/api/platform-admin/inactivity-policy") {
+            with(csrf().asHeader())
+            this.session = session
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(
+                UpdateInactivityPolicyRequest(
+                    inactivityThresholdDays = 120,
+                    deletionWarningLeadDays = 21
+                )
+            )
+        }
+            .andExpect {
+                status { isUnauthorized() }
+                jsonPath("$.message") { value("Please sign in again before performing this sensitive action.") }
+            }
+    }
+
     private fun authenticatedPlatformAdminSession(userId: Long, email: String): MockHttpSession {
         val principal = AppAuthenticatedUser(
             userId = userId,
@@ -257,6 +286,7 @@ class PlatformAdminCompanyControllerTest(
 
         return MockHttpSession().apply {
             setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context)
+            seedSecurityTimestamps(this)
         }
     }
 
@@ -277,7 +307,15 @@ class PlatformAdminCompanyControllerTest(
 
         return MockHttpSession().apply {
             setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context)
+            seedSecurityTimestamps(this)
         }
+    }
+
+    private fun seedSecurityTimestamps(session: MockHttpSession) {
+        val nowMillis = System.currentTimeMillis()
+        session.setAttribute(SessionSecurityAttributes.AUTHENTICATED_AT_MILLIS, nowMillis)
+        session.setAttribute(SessionSecurityAttributes.LAST_SEEN_AT_MILLIS, nowMillis)
+        session.setAttribute(SessionSecurityAttributes.RECENT_AUTH_AT_MILLIS, nowMillis)
     }
 
     private fun seedPlatformAdmin(email: String, password: String): UserAccount {
