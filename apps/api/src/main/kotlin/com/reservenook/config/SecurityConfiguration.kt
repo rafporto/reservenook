@@ -13,6 +13,8 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy
+import org.springframework.security.web.header.writers.StaticHeadersWriter
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
@@ -34,6 +36,14 @@ class SecurityConfiguration(
             }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) }
             .exceptionHandling { it.authenticationEntryPoint(HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)) }
+            .headers {
+                it.frameOptions { frameOptions -> frameOptions.deny() }
+                    .contentTypeOptions(Customizer.withDefaults())
+                    .referrerPolicy { referrerPolicy ->
+                        referrerPolicy.policy(ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
+                    }
+                    .addHeaderWriter(StaticHeadersWriter("Permissions-Policy", "camera=(), microphone=(), geolocation=()"))
+            }
             .authorizeHttpRequests {
                 it.requestMatchers("/actuator/health", "/api/public/**").permitAll()
                     .anyRequest().authenticated()

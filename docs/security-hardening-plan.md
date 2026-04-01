@@ -476,6 +476,7 @@ Completed controls:
 - explicit authenticated CSRF token endpoint for the web client
 - tighter session-cookie defaults with `HttpOnly` and `SameSite=Lax`
 - password-reset-driven session revocation through credential-version checks on authenticated requests
+- browser-facing defensive headers on API and web responses
 
 Current regression coverage includes:
 
@@ -488,6 +489,8 @@ Current regression coverage includes:
 - platform-admin inactivity-policy updates require a valid CSRF token
 - password reset revokes authenticated sessions created before the password change
 - old passwords fail after reset while the new password remains valid
+- public auth responses emit defensive frame, content-type, referrer, and permissions headers
+- Next.js route config emits the same baseline defensive browser headers for all web pages
 
 Remaining high-priority items for the next pass:
 

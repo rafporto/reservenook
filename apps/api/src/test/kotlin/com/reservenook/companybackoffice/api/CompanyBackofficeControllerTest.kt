@@ -120,8 +120,8 @@ class CompanyBackofficeControllerTest(
         )
 
         mockMvc.put("/api/app/company/acme-wellness/profile") {
-            this.session = session
             with(csrf())
+            this.session = session
             contentType = org.springframework.http.MediaType.APPLICATION_JSON
             content = """
                 {
@@ -166,8 +166,8 @@ class CompanyBackofficeControllerTest(
         )
 
         mockMvc.put("/api/app/company/other-company/profile") {
-            this.session = session
             with(csrf())
+            this.session = session
             contentType = org.springframework.http.MediaType.APPLICATION_JSON
             content = """
                 {

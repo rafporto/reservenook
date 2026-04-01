@@ -120,8 +120,8 @@ class AuthControllerTest(
             }
 
         mockMvc.post("/api/auth/logout") {
-            this.session = session
             with(csrf())
+            this.session = session
         }
             .andExpect {
                 status { isOk() }
@@ -188,6 +188,26 @@ class AuthControllerTest(
             .andExpect {
                 status { isOk() }
                 jsonPath("$.token") { isNotEmpty() }
+            }
+    }
+
+    @Test
+    fun `public auth responses include defensive browser headers`() {
+        mockMvc.post("/api/public/auth/login") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(
+                LoginRequest(
+                    email = "missing@acme.com",
+                    password = "WrongPass123"
+                )
+            )
+        }
+            .andExpect {
+                status { isUnauthorized() }
+                header { string("X-Frame-Options", "DENY") }
+                header { string("X-Content-Type-Options", "nosniff") }
+                header { string("Referrer-Policy", "strict-origin-when-cross-origin") }
+                header { string("Permissions-Policy", "camera=(), microphone=(), geolocation=()") }
             }
     }
 

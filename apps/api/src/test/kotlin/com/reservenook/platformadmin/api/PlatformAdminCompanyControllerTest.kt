@@ -166,8 +166,8 @@ class PlatformAdminCompanyControllerTest(
         )
 
         mockMvc.put("/api/platform-admin/inactivity-policy") {
-            this.session = session
             with(csrf())
+            this.session = session
             contentType = MediaType.APPLICATION_JSON
             content = objectMapper.writeValueAsString(
                 UpdateInactivityPolicyRequest(
@@ -194,8 +194,8 @@ class PlatformAdminCompanyControllerTest(
         )
 
         mockMvc.put("/api/platform-admin/inactivity-policy") {
-            this.session = session
             with(csrf())
+            this.session = session
             contentType = MediaType.APPLICATION_JSON
             content = objectMapper.writeValueAsString(
                 UpdateInactivityPolicyRequest(

@@ -1,10 +1,12 @@
-import type { NextConfig } from "next";
+import nextConfig from "./next.config";
 
-const nextConfig: NextConfig = {
-  reactStrictMode: true,
-  output: "standalone",
-  async headers() {
-    return [
+describe("next.config security headers", () => {
+  it("defines browser security headers for every route", async () => {
+    expect(nextConfig.headers).toBeTypeOf("function");
+
+    const rules = await nextConfig.headers?.();
+
+    expect(rules).toEqual([
       {
         source: "/:path*",
         headers: [
@@ -14,8 +16,6 @@ const nextConfig: NextConfig = {
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" }
         ]
       }
-    ];
-  }
-};
-
-export default nextConfig;
+    ]);
+  });
+});
