@@ -5,5 +5,6 @@ data class SessionResponse(
     val email: String,
     val isPlatformAdmin: Boolean,
     val companySlug: String?,
+    val companyRole: String?,
     val redirectTo: String
 )

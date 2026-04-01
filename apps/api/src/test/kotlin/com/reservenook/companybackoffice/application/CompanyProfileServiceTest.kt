@@ -8,7 +8,6 @@ import com.reservenook.registration.domain.CompanyRole
 import com.reservenook.registration.domain.CompanyStatus
 import com.reservenook.registration.domain.UserAccount
 import com.reservenook.registration.domain.UserStatus
-import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.security.application.SecurityAuditService
 import io.mockk.every
 import io.mockk.mockk
@@ -19,9 +18,9 @@ import org.springframework.web.server.ResponseStatusException
 
 class CompanyProfileServiceTest {
 
-    private val companyMembershipRepository = mockk<CompanyMembershipRepository>()
+    private val companyAdminAccessService = mockk<CompanyAdminAccessService>()
     private val securityAuditService = mockk<SecurityAuditService>(relaxed = true)
-    private val service = CompanyProfileService(companyMembershipRepository, securityAuditService)
+    private val service = CompanyProfileService(companyAdminAccessService, securityAuditService)
 
     @Test
     fun `updates company profile for authorized company admin`() {
@@ -46,9 +45,7 @@ class CompanyProfileServiceTest {
             role = CompanyRole.COMPANY_ADMIN
         )
 
-        every {
-            companyMembershipRepository.findFirstByUserEmailAndCompanySlug("admin@acme.com", "acme-wellness")
-        } returns membership
+        every { companyAdminAccessService.requireCompanyAdmin(any(), "acme-wellness") } returns membership
 
         val result = service.updateProfile(
             principal = AppAuthenticatedUser(
@@ -97,9 +94,7 @@ class CompanyProfileServiceTest {
             role = CompanyRole.COMPANY_ADMIN
         )
 
-        every {
-            companyMembershipRepository.findFirstByUserEmailAndCompanySlug("admin@acme.com", "acme-wellness")
-        } returns membership
+        every { companyAdminAccessService.requireCompanyAdmin(any(), "acme-wellness") } returns membership
 
         val exception = assertThrows(IllegalArgumentException::class.java) {
             service.updateProfile(
@@ -127,9 +122,10 @@ class CompanyProfileServiceTest {
 
     @Test
     fun `rejects unauthorized tenant access`() {
-        every {
-            companyMembershipRepository.findFirstByUserEmailAndCompanySlug("admin@acme.com", "other-company")
-        } returns null
+        every { companyAdminAccessService.requireCompanyAdmin(any(), "other-company") } throws ResponseStatusException(
+            org.springframework.http.HttpStatus.FORBIDDEN,
+            "Access denied."
+        )
 
         assertThrows(ResponseStatusException::class.java) {
             service.updateProfile(

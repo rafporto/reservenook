@@ -3,6 +3,14 @@ package com.reservenook.companybackoffice.api
 data class CompanyBackofficeResponse(
     val company: CompanyBackofficeCompanySummary,
     val profile: CompanyBackofficeProfileSummary,
+    val branding: CompanyBackofficeBrandingSummary,
+    val localization: CompanyBackofficeLocalizationSummary,
+    val businessHours: List<CompanyBackofficeBusinessHourSummary>,
+    val closureDates: List<CompanyBackofficeClosureDateSummary>,
+    val notificationPreferences: CompanyBackofficeNotificationPreferencesSummary,
+    val staffUsers: List<CompanyBackofficeStaffUserSummary>,
+    val customerQuestions: List<CompanyBackofficeCustomerQuestionSummary>,
+    val widgetSettings: CompanyBackofficeWidgetSettingsSummary,
     val viewer: CompanyBackofficeViewerSummary,
     val operations: CompanyBackofficeOperationsSummary,
     val configurationAreas: List<CompanyBackofficeAreaSummary>
@@ -27,6 +35,71 @@ data class CompanyBackofficeProfileSummary(
     val city: String?,
     val postalCode: String?,
     val countryCode: String?
+)
+
+data class CompanyBackofficeBrandingSummary(
+    val displayName: String?,
+    val logoUrl: String?,
+    val accentColor: String?,
+    val supportEmail: String?,
+    val supportPhone: String?
+)
+
+data class CompanyBackofficeLocalizationSummary(
+    val defaultLanguage: String,
+    val defaultLocale: String,
+    val supportedLanguages: List<String>,
+    val supportedLocales: List<String>
+)
+
+data class CompanyBackofficeBusinessHourSummary(
+    val id: Long?,
+    val dayOfWeek: String,
+    val opensAt: String,
+    val closesAt: String,
+    val displayOrder: Int
+)
+
+data class CompanyBackofficeClosureDateSummary(
+    val id: Long?,
+    val label: String?,
+    val startsOn: String,
+    val endsOn: String
+)
+
+data class CompanyBackofficeNotificationPreferencesSummary(
+    val destinationEmail: String?,
+    val notifyOnNewBooking: Boolean,
+    val notifyOnCancellation: Boolean,
+    val notifyDailySummary: Boolean
+)
+
+data class CompanyBackofficeStaffUserSummary(
+    val membershipId: Long,
+    val userId: Long,
+    val fullName: String?,
+    val email: String,
+    val role: String,
+    val status: String,
+    val emailVerified: Boolean,
+    val createdAt: String
+)
+
+data class CompanyBackofficeCustomerQuestionSummary(
+    val id: Long?,
+    val label: String,
+    val questionType: String,
+    val required: Boolean,
+    val enabled: Boolean,
+    val displayOrder: Int,
+    val options: List<String>
+)
+
+data class CompanyBackofficeWidgetSettingsSummary(
+    val ctaLabel: String?,
+    val widgetEnabled: Boolean,
+    val allowedDomains: List<String>,
+    val themeVariant: String
 )
 
 data class CompanyBackofficeViewerSummary(
@@ -62,8 +135,130 @@ data class UpdateCompanyProfileRequest(
     val countryCode: String
 )
 
+data class UpdateCompanyBrandingRequest(
+    val displayName: String?,
+    val logoUrl: String?,
+    val accentColor: String,
+    val supportEmail: String,
+    val supportPhone: String
+)
+
+data class UpdateCompanyLocalizationRequest(
+    val defaultLanguage: String,
+    val defaultLocale: String
+)
+
+data class UpdateCompanyBusinessHoursRequest(
+    val entries: List<UpdateCompanyBusinessHourEntryRequest>
+)
+
+data class UpdateCompanyBusinessHourEntryRequest(
+    val dayOfWeek: String,
+    val opensAt: String,
+    val closesAt: String,
+    val displayOrder: Int
+)
+
+data class UpdateCompanyClosureDatesRequest(
+    val entries: List<UpdateCompanyClosureDateEntryRequest>
+)
+
+data class UpdateCompanyClosureDateEntryRequest(
+    val label: String?,
+    val startsOn: String,
+    val endsOn: String
+)
+
+data class UpdateCompanyNotificationPreferencesRequest(
+    val destinationEmail: String,
+    val notifyOnNewBooking: Boolean,
+    val notifyOnCancellation: Boolean,
+    val notifyDailySummary: Boolean
+)
+
+data class CreateStaffUserRequest(
+    val fullName: String,
+    val email: String,
+    val role: String
+)
+
+data class UpdateStaffUserRequest(
+    val role: String,
+    val status: String
+)
+
+data class UpdateCompanyCustomerQuestionsRequest(
+    val entries: List<UpdateCompanyCustomerQuestionEntryRequest>
+)
+
+data class UpdateCompanyCustomerQuestionEntryRequest(
+    val label: String,
+    val questionType: String,
+    val required: Boolean,
+    val enabled: Boolean,
+    val displayOrder: Int,
+    val options: List<String> = emptyList()
+)
+
+data class UpdateCompanyWidgetSettingsRequest(
+    val ctaLabel: String?,
+    val widgetEnabled: Boolean,
+    val allowedDomains: List<String>,
+    val themeVariant: String
+)
+
 data class UpdateCompanyProfileResponse(
     val message: String,
     val company: CompanyBackofficeCompanySummary,
     val profile: CompanyBackofficeProfileSummary
+)
+
+data class UpdateCompanyBrandingResponse(
+    val message: String,
+    val branding: CompanyBackofficeBrandingSummary
+)
+
+data class UpdateCompanyLocalizationResponse(
+    val message: String,
+    val localization: CompanyBackofficeLocalizationSummary,
+    val company: CompanyBackofficeCompanySummary
+)
+
+data class UpdateCompanyBusinessHoursResponse(
+    val message: String,
+    val businessHours: List<CompanyBackofficeBusinessHourSummary>
+)
+
+data class UpdateCompanyClosureDatesResponse(
+    val message: String,
+    val closureDates: List<CompanyBackofficeClosureDateSummary>
+)
+
+data class UpdateCompanyNotificationPreferencesResponse(
+    val message: String,
+    val notificationPreferences: CompanyBackofficeNotificationPreferencesSummary
+)
+
+data class StaffUsersResponse(
+    val staffUsers: List<CompanyBackofficeStaffUserSummary>
+)
+
+data class CreateStaffUserResponse(
+    val message: String,
+    val staffUser: CompanyBackofficeStaffUserSummary
+)
+
+data class UpdateStaffUserResponse(
+    val message: String,
+    val staffUser: CompanyBackofficeStaffUserSummary
+)
+
+data class UpdateCompanyCustomerQuestionsResponse(
+    val message: String,
+    val customerQuestions: List<CompanyBackofficeCustomerQuestionSummary>
+)
+
+data class UpdateCompanyWidgetSettingsResponse(
+    val message: String,
+    val widgetSettings: CompanyBackofficeWidgetSettingsSummary
 )

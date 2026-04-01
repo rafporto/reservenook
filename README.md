@@ -34,8 +34,8 @@ The platform is planned as:
 
 ## Current App Scaffolds
 
-- `apps/web` now includes a branded localized public marketing surface, improved auth/onboarding UX, SEO assets such as route metadata, `robots.txt`, and `sitemap.xml`, the Phase 2 company-configuration dashboard and editable company profile baseline for the tenant backoffice, plus defensive browser headers, a pragmatic Content Security Policy, and optional HSTS support for secure deployments
-- `apps/api` now includes the Phase 1 registration, auth, platform-admin policy, inactive-company lifecycle baseline, inactivity notification wiring, pending-deletion warning flow, automated company deletion, and the completed first security-hardening baseline for layered public auth throttling, CSRF-protected authenticated mutations, password-reset and inactive-tenant session revocation, defensive browser headers, persisted security audit events, an explicit Content Security Policy, and optional HSTS support for secure deployments
+- `apps/web` now includes a branded localized public marketing surface, improved auth/onboarding UX, SEO assets such as route metadata, `robots.txt`, and `sitemap.xml`, and the completed Phase 2 tenant backoffice for profile, branding, localization, business hours, closure dates, notification preferences, staff management, customer questions, and widget settings, plus defensive browser headers, a pragmatic Content Security Policy, and optional HSTS support for secure deployments
+- `apps/api` now includes the Phase 1 registration, auth, platform-admin policy, inactive-company lifecycle baseline, inactivity notification wiring, pending-deletion warning flow, automated company deletion, the completed Phase 2 company-configuration endpoints and persistence model, and the completed first security-hardening baseline for layered public auth throttling, CSRF-protected authenticated mutations, password-reset and inactive-tenant session revocation, defensive browser headers, persisted security audit events, an explicit Content Security Policy, and optional HSTS support for secure deployments
 
 ## Local Commands
 
@@ -110,6 +110,17 @@ Useful checks:
 - forgot password endpoint: `POST http://localhost:8080/api/public/auth/forgot-password`
 - reset password endpoint: `POST http://localhost:8080/api/public/auth/reset-password`
 - company backoffice endpoint: `GET http://localhost:8080/api/app/company/{slug}/backoffice`
+- company profile endpoint: `PUT http://localhost:8080/api/app/company/{slug}/profile`
+- company branding endpoint: `PUT http://localhost:8080/api/app/company/{slug}/branding`
+- company localization endpoint: `PUT http://localhost:8080/api/app/company/{slug}/localization`
+- company business hours endpoint: `PUT http://localhost:8080/api/app/company/{slug}/business-hours`
+- company closure dates endpoint: `PUT http://localhost:8080/api/app/company/{slug}/closure-dates`
+- company notification preferences endpoint: `PUT http://localhost:8080/api/app/company/{slug}/notification-preferences`
+- company staff list endpoint: `GET http://localhost:8080/api/app/company/{slug}/staff`
+- company staff create endpoint: `POST http://localhost:8080/api/app/company/{slug}/staff`
+- company staff update endpoint: `PUT http://localhost:8080/api/app/company/{slug}/staff/{membershipId}`
+- company customer questions endpoint: `PUT http://localhost:8080/api/app/company/{slug}/customer-questions`
+- company widget settings endpoint: `PUT http://localhost:8080/api/app/company/{slug}/widget-settings`
 - platform admin companies endpoint: `GET http://localhost:8080/api/platform-admin/companies`
 - inactivity policy endpoints: `GET` and `PUT http://localhost:8080/api/platform-admin/inactivity-policy`
 - session endpoint: `GET http://localhost:8080/api/auth/session`

@@ -2,11 +2,16 @@ package com.reservenook.companybackoffice.api
 
 import com.reservenook.auth.application.AppAuthenticatedUser
 import com.reservenook.companybackoffice.application.CompanyBackofficeAccessService
+import com.reservenook.companybackoffice.application.BusinessHourDraft
+import com.reservenook.companybackoffice.application.ClosureDateDraft
+import com.reservenook.companybackoffice.application.CompanyConfigurationService
+import com.reservenook.companybackoffice.application.CustomerQuestionDraft
 import com.reservenook.companybackoffice.application.CompanyProfileService
 import jakarta.validation.Valid
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
@@ -14,7 +19,8 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class CompanyBackofficeController(
     private val companyBackofficeAccessService: CompanyBackofficeAccessService,
-    private val companyProfileService: CompanyProfileService
+    private val companyProfileService: CompanyProfileService,
+    private val companyConfigurationService: CompanyConfigurationService
 ) {
 
     @GetMapping("/api/app/company/{slug}/backoffice")
@@ -49,4 +55,182 @@ class CompanyBackofficeController(
             profile = updatedProfile.profile
         )
     }
+
+    @PutMapping("/api/app/company/{slug}/branding")
+    fun updateBranding(
+        @PathVariable slug: String,
+        @AuthenticationPrincipal principal: AppAuthenticatedUser,
+        @Valid @RequestBody request: UpdateCompanyBrandingRequest
+    ) = UpdateCompanyBrandingResponse(
+        message = "Company branding updated.",
+        branding = companyConfigurationService.updateBranding(
+            principal = principal,
+            requestedSlug = slug,
+            displayName = request.displayName,
+            logoUrl = request.logoUrl,
+            accentColor = request.accentColor,
+            supportEmail = request.supportEmail,
+            supportPhone = request.supportPhone
+        )
+    )
+
+    @PutMapping("/api/app/company/{slug}/localization")
+    fun updateLocalization(
+        @PathVariable slug: String,
+        @AuthenticationPrincipal principal: AppAuthenticatedUser,
+        @Valid @RequestBody request: UpdateCompanyLocalizationRequest
+    ): UpdateCompanyLocalizationResponse {
+        val localization = companyConfigurationService.updateLocalization(
+            principal = principal,
+            requestedSlug = slug,
+            defaultLanguage = request.defaultLanguage,
+            defaultLocale = request.defaultLocale
+        )
+        val backoffice = companyBackofficeAccessService.getBackoffice(principal, slug)
+
+        return UpdateCompanyLocalizationResponse(
+            message = "Language and locale settings updated.",
+            localization = localization,
+            company = backoffice.company
+        )
+    }
+
+    @PutMapping("/api/app/company/{slug}/business-hours")
+    fun updateBusinessHours(
+        @PathVariable slug: String,
+        @AuthenticationPrincipal principal: AppAuthenticatedUser,
+        @Valid @RequestBody request: UpdateCompanyBusinessHoursRequest
+    ) = UpdateCompanyBusinessHoursResponse(
+        message = "Business hours updated.",
+        businessHours = companyConfigurationService.updateBusinessHours(
+            principal = principal,
+            requestedSlug = slug,
+            entries = request.entries.map {
+                BusinessHourDraft(
+                    dayOfWeek = it.dayOfWeek,
+                    opensAt = it.opensAt,
+                    closesAt = it.closesAt,
+                    displayOrder = it.displayOrder
+                )
+            }
+        )
+    )
+
+    @PutMapping("/api/app/company/{slug}/closure-dates")
+    fun updateClosureDates(
+        @PathVariable slug: String,
+        @AuthenticationPrincipal principal: AppAuthenticatedUser,
+        @Valid @RequestBody request: UpdateCompanyClosureDatesRequest
+    ) = UpdateCompanyClosureDatesResponse(
+        message = "Closure dates updated.",
+        closureDates = companyConfigurationService.updateClosureDates(
+            principal = principal,
+            requestedSlug = slug,
+            entries = request.entries.map {
+                ClosureDateDraft(
+                    label = it.label,
+                    startsOn = it.startsOn,
+                    endsOn = it.endsOn
+                )
+            }
+        )
+    )
+
+    @PutMapping("/api/app/company/{slug}/notification-preferences")
+    fun updateNotificationPreferences(
+        @PathVariable slug: String,
+        @AuthenticationPrincipal principal: AppAuthenticatedUser,
+        @Valid @RequestBody request: UpdateCompanyNotificationPreferencesRequest
+    ) = UpdateCompanyNotificationPreferencesResponse(
+        message = "Notification preferences updated.",
+        notificationPreferences = companyConfigurationService.updateNotificationPreferences(
+            principal = principal,
+            requestedSlug = slug,
+            destinationEmail = request.destinationEmail,
+            notifyOnNewBooking = request.notifyOnNewBooking,
+            notifyOnCancellation = request.notifyOnCancellation,
+            notifyDailySummary = request.notifyDailySummary
+        )
+    )
+
+    @GetMapping("/api/app/company/{slug}/staff")
+    fun listStaffUsers(
+        @PathVariable slug: String,
+        @AuthenticationPrincipal principal: AppAuthenticatedUser
+    ) = StaffUsersResponse(
+        staffUsers = companyConfigurationService.listStaffUsers(principal, slug)
+    )
+
+    @PostMapping("/api/app/company/{slug}/staff")
+    fun createStaffUser(
+        @PathVariable slug: String,
+        @AuthenticationPrincipal principal: AppAuthenticatedUser,
+        @Valid @RequestBody request: CreateStaffUserRequest
+    ) = CreateStaffUserResponse(
+        message = "Staff user created.",
+        staffUser = companyConfigurationService.createStaffUser(
+            principal = principal,
+            requestedSlug = slug,
+            fullName = request.fullName,
+            email = request.email,
+            role = request.role
+        )
+    )
+
+    @PutMapping("/api/app/company/{slug}/staff/{membershipId}")
+    fun updateStaffUser(
+        @PathVariable slug: String,
+        @PathVariable membershipId: Long,
+        @AuthenticationPrincipal principal: AppAuthenticatedUser,
+        @Valid @RequestBody request: UpdateStaffUserRequest
+    ) = UpdateStaffUserResponse(
+        message = "Staff user updated.",
+        staffUser = companyConfigurationService.updateStaffUser(
+            principal = principal,
+            requestedSlug = slug,
+            membershipId = membershipId,
+            role = request.role,
+            status = request.status
+        )
+    )
+
+    @PutMapping("/api/app/company/{slug}/customer-questions")
+    fun updateCustomerQuestions(
+        @PathVariable slug: String,
+        @AuthenticationPrincipal principal: AppAuthenticatedUser,
+        @Valid @RequestBody request: UpdateCompanyCustomerQuestionsRequest
+    ) = UpdateCompanyCustomerQuestionsResponse(
+        message = "Customer questions updated.",
+        customerQuestions = companyConfigurationService.updateCustomerQuestions(
+            principal = principal,
+            requestedSlug = slug,
+            entries = request.entries.map {
+                CustomerQuestionDraft(
+                    label = it.label,
+                    questionType = it.questionType,
+                    required = it.required,
+                    enabled = it.enabled,
+                    displayOrder = it.displayOrder,
+                    options = it.options
+                )
+            }
+        )
+    )
+
+    @PutMapping("/api/app/company/{slug}/widget-settings")
+    fun updateWidgetSettings(
+        @PathVariable slug: String,
+        @AuthenticationPrincipal principal: AppAuthenticatedUser,
+        @Valid @RequestBody request: UpdateCompanyWidgetSettingsRequest
+    ) = UpdateCompanyWidgetSettingsResponse(
+        message = "Widget settings updated.",
+        widgetSettings = companyConfigurationService.updateWidgetSettings(
+            principal = principal,
+            requestedSlug = slug,
+            ctaLabel = request.ctaLabel,
+            widgetEnabled = request.widgetEnabled,
+            allowedDomains = request.allowedDomains,
+            themeVariant = request.themeVariant
+        )
+    )
 }

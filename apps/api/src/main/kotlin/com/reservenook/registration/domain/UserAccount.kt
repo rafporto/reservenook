@@ -20,6 +20,9 @@ class UserAccount(
     @Column(name = "email", nullable = false, unique = true)
     var email: String,
 
+    @Column(name = "full_name")
+    var fullName: String? = null,
+
     @Column(name = "password_hash", nullable = false)
     var passwordHash: String,
 

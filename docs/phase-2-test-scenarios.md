@@ -288,6 +288,8 @@ These scenarios should exist independently of individual use cases:
 - staff management endpoints reject unauthorized company roles
 - platform-level context cannot bypass company-level authorization rules where not intended
 - audit-relevant configuration changes can be recorded or traced according to policy
+- staff invitation onboarding uses the company language and issues a password-reset-based set-password flow instead of exposing a raw credential
+- company admin changes that affect staffing, branding, localization, widget domains, or notification routing stay behind CSRF-protected authenticated mutations
 - unsupported localization or widget values are rejected centrally
 
 ## Minimum End-to-End Suite for Phase 2

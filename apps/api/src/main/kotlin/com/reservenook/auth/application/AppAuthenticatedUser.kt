@@ -5,5 +5,6 @@ data class AppAuthenticatedUser(
     val email: String,
     val isPlatformAdmin: Boolean,
     val companySlug: String? = null,
+    val companyRole: String? = null,
     val passwordVersion: Int = 0
 )

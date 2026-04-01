@@ -28,6 +28,8 @@ Responsibilities:
 - activation status
 - trial or paid status
 - locale defaults
+- shared company configuration such as branding, support contacts, notification routing, and widget baseline settings
+- operating-calendar foundations such as business hours and closure dates
 
 Core concepts:
 
@@ -37,6 +39,10 @@ Core concepts:
 - CompanyStatus
 - CompanyActivityTimestamp
 - ActivationPeriod
+- CompanyBranding
+- CompanyBusinessHours
+- CompanyClosureCalendar
+- CompanyWidgetSettings
 
 ### Users
 
@@ -47,6 +53,7 @@ Responsibilities:
 - membership in company scope
 - invitations
 - password lifecycle
+- company-admin and staff backoffice participation
 
 Core concepts:
 
@@ -55,6 +62,7 @@ Core concepts:
 - Invitation
 - PasswordResetToken
 - EmailVerificationToken
+- StaffInvitation
 
 ### Roles and Permissions
 
@@ -131,6 +139,18 @@ Core concepts:
 - CustomQuestion
 - QuestionAnswer
 - ConsentRecord
+
+## Phase 2 Shared Configuration Aggregates
+
+The implemented Phase 2 baseline adds explicit tenant-owned configuration aggregates that are reused by later booking flows.
+
+- company profile fields live on `Company` and represent the public-facing business identity
+- branding fields live on `Company` and control display name, logo reference, accent color, and support contacts
+- business hours are modeled as tenant-owned weekly entries
+- closure dates are modeled as tenant-owned date-range entries
+- customer questions are modeled as ordered tenant-owned configuration entries with question type and selectable options where applicable
+- widget settings are modeled as tenant-owned embed configuration with domain allow-list validation
+- staff management remains identity-plus-membership based, with `CompanyMembership` carrying the tenant role and the linked `User` carrying credential state
 
 ### Audit and Compliance
 

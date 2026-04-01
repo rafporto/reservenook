@@ -4,19 +4,15 @@ import com.reservenook.auth.application.AppAuthenticatedUser
 import com.reservenook.companybackoffice.api.CompanyBackofficeCompanySummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeProfileSummary
 import com.reservenook.registration.domain.Company
-import com.reservenook.registration.domain.CompanyRole
-import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.security.application.SecurityAuditService
 import com.reservenook.security.domain.SecurityAuditEventType
 import com.reservenook.security.domain.SecurityAuditOutcome
-import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.server.ResponseStatusException
 
 @Service
 class CompanyProfileService(
-    private val companyMembershipRepository: CompanyMembershipRepository,
+    private val companyAdminAccessService: CompanyAdminAccessService,
     private val securityAuditService: SecurityAuditService
 ) {
 
@@ -34,16 +30,7 @@ class CompanyProfileService(
         postalCode: String,
         countryCode: String
     ): UpdatedCompanyProfile {
-        if (principal.isPlatformAdmin) {
-            throw ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied.")
-        }
-
-        val membership = companyMembershipRepository.findFirstByUserEmailAndCompanySlug(principal.email, requestedSlug)
-            ?: throw ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied.")
-
-        if (membership.role != CompanyRole.COMPANY_ADMIN) {
-            throw ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied.")
-        }
+        val membership = companyAdminAccessService.requireCompanyAdmin(principal, requestedSlug)
 
         validateProfile(
             companyName = companyName,
@@ -122,25 +109,4 @@ class CompanyProfileService(
 data class UpdatedCompanyProfile(
     val company: CompanyBackofficeCompanySummary,
     val profile: CompanyBackofficeProfileSummary
-)
-
-private fun Company.toCompanySummary() = CompanyBackofficeCompanySummary(
-    companyName = name,
-    companySlug = slug,
-    businessType = businessType.name,
-    companyStatus = status.name,
-    defaultLanguage = defaultLanguage,
-    defaultLocale = defaultLocale,
-    createdAt = createdAt.toString()
-)
-
-private fun Company.toProfileSummary() = CompanyBackofficeProfileSummary(
-    businessDescription = businessDescription,
-    contactEmail = contactEmail,
-    contactPhone = contactPhone,
-    addressLine1 = addressLine1,
-    addressLine2 = addressLine2,
-    city = city,
-    postalCode = postalCode,
-    countryCode = countryCode
 )

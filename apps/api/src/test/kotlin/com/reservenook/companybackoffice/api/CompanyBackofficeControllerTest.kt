@@ -24,6 +24,7 @@ import com.reservenook.security.domain.SecurityAuditEventType
 import com.reservenook.security.infrastructure.SecurityAuditEventRepository
 import io.kotest.matchers.shouldBe
 import io.mockk.justRun
+import io.mockk.verify
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -224,6 +225,176 @@ class CompanyBackofficeControllerTest(
     }
 
     @Test
+    fun `company admin can update branding settings`() {
+        val admin = seedCompanyAdmin(slug = "acme-wellness", email = companyAdminEmail, password = "SecurePass123")
+        val session = authenticatedCompanyAdminSession(requireNotNull(admin.id), companyAdminEmail, "acme-wellness")
+
+        mockMvc.put("/api/app/company/acme-wellness/branding") {
+            with(csrf().asHeader())
+            this.session = session
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "displayName": "Acme Studio",
+                  "logoUrl": "https://cdn.acme.com/logo.svg",
+                  "accentColor": "#B45A38",
+                  "supportEmail": "support@acme.com",
+                  "supportPhone": "+49 30 555 0101"
+                }
+            """.trimIndent()
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.branding.displayName") { value("Acme Studio") }
+            jsonPath("$.branding.accentColor") { value("#B45A38") }
+        }
+    }
+
+    @Test
+    fun `company admin can update localization settings`() {
+        val admin = seedCompanyAdmin(slug = "acme-wellness", email = companyAdminEmail, password = "SecurePass123")
+        val session = authenticatedCompanyAdminSession(requireNotNull(admin.id), companyAdminEmail, "acme-wellness")
+
+        mockMvc.put("/api/app/company/acme-wellness/localization") {
+            with(csrf().asHeader())
+            this.session = session
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = """{"defaultLanguage":"de","defaultLocale":"de-DE"}"""
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.localization.defaultLanguage") { value("de") }
+            jsonPath("$.company.defaultLocale") { value("de-DE") }
+        }
+    }
+
+    @Test
+    fun `company admin can update business hours and closure dates`() {
+        val admin = seedCompanyAdmin(slug = "acme-wellness", email = companyAdminEmail, password = "SecurePass123")
+        val session = authenticatedCompanyAdminSession(requireNotNull(admin.id), companyAdminEmail, "acme-wellness")
+
+        mockMvc.put("/api/app/company/acme-wellness/business-hours") {
+            with(csrf().asHeader())
+            this.session = session
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = """{"entries":[{"dayOfWeek":"MONDAY","opensAt":"09:00","closesAt":"17:00","displayOrder":0}]}"""
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.businessHours[0].dayOfWeek") { value("MONDAY") }
+        }
+
+        mockMvc.put("/api/app/company/acme-wellness/closure-dates") {
+            with(csrf().asHeader())
+            this.session = session
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = """{"entries":[{"label":"Holiday","startsOn":"2026-12-24","endsOn":"2026-12-26"}]}"""
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.closureDates[0].label") { value("Holiday") }
+        }
+    }
+
+    @Test
+    fun `company admin can update notification preferences`() {
+        val admin = seedCompanyAdmin(slug = "acme-wellness", email = companyAdminEmail, password = "SecurePass123")
+        val session = authenticatedCompanyAdminSession(requireNotNull(admin.id), companyAdminEmail, "acme-wellness")
+
+        mockMvc.put("/api/app/company/acme-wellness/notification-preferences") {
+            with(csrf().asHeader())
+            this.session = session
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "destinationEmail":"alerts@acme.com",
+                  "notifyOnNewBooking":true,
+                  "notifyOnCancellation":false,
+                  "notifyDailySummary":true
+                }
+            """.trimIndent()
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.notificationPreferences.destinationEmail") { value("alerts@acme.com") }
+            jsonPath("$.notificationPreferences.notifyDailySummary") { value(true) }
+        }
+    }
+
+    @Test
+    fun `company admin can create and update a staff user`() {
+        val admin = seedCompanyAdmin(slug = "acme-wellness", email = companyAdminEmail, password = "SecurePass123")
+        val session = authenticatedCompanyAdminSession(requireNotNull(admin.id), companyAdminEmail, "acme-wellness")
+
+        val createResult = mockMvc.post("/api/app/company/acme-wellness/staff") {
+            with(csrf().asHeader())
+            this.session = session
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = """{"fullName":"Support Agent","email":"staff@acme.com","role":"STAFF"}"""
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.staffUser.email") { value("staff@acme.com") }
+            jsonPath("$.staffUser.role") { value("STAFF") }
+        }.andReturn()
+
+        verify(exactly = 1) { passwordResetMailSender.sendPasswordResetEmail(eq("staff@acme.com"), any(), eq("en")) }
+
+        val membershipId = objectMapper.readTree(createResult.response.contentAsString).path("staffUser").path("membershipId").asLong()
+
+        mockMvc.put("/api/app/company/acme-wellness/staff/$membershipId") {
+            with(csrf().asHeader())
+            this.session = session
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = """{"role":"COMPANY_ADMIN","status":"ACTIVE"}"""
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.staffUser.role") { value("COMPANY_ADMIN") }
+        }
+    }
+
+    @Test
+    fun `company admin can update customer questions and widget settings`() {
+        val admin = seedCompanyAdmin(slug = "acme-wellness", email = companyAdminEmail, password = "SecurePass123")
+        val session = authenticatedCompanyAdminSession(requireNotNull(admin.id), companyAdminEmail, "acme-wellness")
+
+        mockMvc.put("/api/app/company/acme-wellness/customer-questions") {
+            with(csrf().asHeader())
+            this.session = session
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "entries":[
+                    {
+                      "label":"Preferred provider",
+                      "questionType":"SINGLE_SELECT",
+                      "required":true,
+                      "enabled":true,
+                      "displayOrder":0,
+                      "options":["Any","Anna","Luis"]
+                    }
+                  ]
+                }
+            """.trimIndent()
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.customerQuestions[0].label") { value("Preferred provider") }
+        }
+
+        mockMvc.put("/api/app/company/acme-wellness/widget-settings") {
+            with(csrf().asHeader())
+            this.session = session
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "ctaLabel":"Reserve now",
+                  "widgetEnabled":true,
+                  "allowedDomains":["booking.acme.com"],
+                  "themeVariant":"soft"
+                }
+            """.trimIndent()
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.widgetSettings.widgetEnabled") { value(true) }
+            jsonPath("$.widgetSettings.themeVariant") { value("soft") }
+        }
+    }
+
+    @Test
     fun `company admin cannot access another tenant backoffice`() {
         val admin = seedCompanyAdmin(
             slug = "acme-wellness",
@@ -275,10 +446,11 @@ class CompanyBackofficeControllerTest(
     }
 
     private fun loginCompanyAdminSession(email: String, password: String): MockHttpSession {
+        val uniqueClientAddress = "10.0.17.${(System.nanoTime() % 200).toInt() + 20}"
         val loginResult = mockMvc.perform(
             org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/public/auth/login")
                 .with { request ->
-                    request.remoteAddr = "10.0.17.18"
+                    request.remoteAddr = uniqueClientAddress
                     request
                 }
                 .contentType(org.springframework.http.MediaType.APPLICATION_JSON)

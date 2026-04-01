@@ -1,6 +1,7 @@
 package com.reservenook.auth.application
 
 import com.reservenook.registration.domain.CompanyStatus
+import com.reservenook.registration.domain.CompanyRole
 import com.reservenook.registration.domain.UserStatus
 import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
@@ -68,6 +69,7 @@ class LoginService(
                     userId = requireNotNull(user.id),
                     email = user.email,
                     isPlatformAdmin = true,
+                    companyRole = null,
                     passwordVersion = user.passwordVersion
                 ),
                 redirectTo = "/platform-admin"
@@ -88,16 +90,18 @@ class LoginService(
                     email = user.email,
                     isPlatformAdmin = false,
                     companySlug = membership.company.slug,
+                    companyRole = membership.role.name,
                     passwordVersion = user.passwordVersion
                 ),
                 redirectTo = "/app/company/${membership.company.slug}"
             )
         }
 
-        val authority = if (loginResult.authenticatedUser.isPlatformAdmin) {
-            SimpleGrantedAuthority("ROLE_PLATFORM_ADMIN")
-        } else {
-            SimpleGrantedAuthority("ROLE_COMPANY_ADMIN")
+        val authority = when {
+            loginResult.authenticatedUser.isPlatformAdmin -> SimpleGrantedAuthority("ROLE_PLATFORM_ADMIN")
+            loginResult.authenticatedUser.companyRole == CompanyRole.COMPANY_ADMIN.name ->
+                SimpleGrantedAuthority("ROLE_COMPANY_ADMIN")
+            else -> SimpleGrantedAuthority("ROLE_COMPANY_STAFF")
         }
 
         val authentication = UsernamePasswordAuthenticationToken(

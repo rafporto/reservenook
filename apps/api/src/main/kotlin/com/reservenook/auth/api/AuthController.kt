@@ -76,6 +76,7 @@ class AuthController(
             email = principal.email,
             isPlatformAdmin = principal.isPlatformAdmin,
             companySlug = principal.companySlug,
+            companyRole = principal.companyRole,
             redirectTo = if (principal.isPlatformAdmin) "/platform-admin" else "/app/company/${principal.companySlug}"
         )
     }

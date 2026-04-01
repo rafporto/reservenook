@@ -2,7 +2,7 @@ import nextConfig, { buildSecurityHeaders } from "./next.config";
 
 describe("next.config security headers", () => {
   it("defines browser security headers for every route", async () => {
-    expect(nextConfig.headers).toBeTypeOf("function");
+    expect(typeof nextConfig.headers).toBe("function");
 
     const rules = await nextConfig.headers?.();
 

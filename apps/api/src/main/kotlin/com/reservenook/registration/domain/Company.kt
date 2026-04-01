@@ -61,6 +61,45 @@ class Company(
     @Column(name = "country_code")
     var countryCode: String? = null,
 
+    @Column(name = "brand_display_name")
+    var brandDisplayName: String? = null,
+
+    @Column(name = "brand_logo_url")
+    var brandLogoUrl: String? = null,
+
+    @Column(name = "brand_accent_color")
+    var brandAccentColor: String? = null,
+
+    @Column(name = "support_email")
+    var supportEmail: String? = null,
+
+    @Column(name = "support_phone")
+    var supportPhone: String? = null,
+
+    @Column(name = "notification_destination_email")
+    var notificationDestinationEmail: String? = null,
+
+    @Column(name = "notify_on_new_booking", nullable = false)
+    var notifyOnNewBooking: Boolean = true,
+
+    @Column(name = "notify_on_cancellation", nullable = false)
+    var notifyOnCancellation: Boolean = true,
+
+    @Column(name = "notify_daily_summary", nullable = false)
+    var notifyDailySummary: Boolean = false,
+
+    @Column(name = "widget_cta_label")
+    var widgetCtaLabel: String? = null,
+
+    @Column(name = "widget_enabled", nullable = false)
+    var widgetEnabled: Boolean = false,
+
+    @Column(name = "widget_allowed_domains")
+    var widgetAllowedDomains: String? = null,
+
+    @Column(name = "widget_theme_variant", nullable = false)
+    var widgetThemeVariant: String = "minimal",
+
     @Column(name = "last_activity_at", nullable = false)
     var lastActivityAt: Instant = Instant.now(),
 
