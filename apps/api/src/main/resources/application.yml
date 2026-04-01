@@ -46,3 +46,6 @@ app:
         resend-cooldown-minutes: ${RESEND_COOLDOWN_MINUTES:5}
         password-reset-token-hours: ${PASSWORD_RESET_TOKEN_HOURS:2}
         password-reset-cooldown-minutes: ${PASSWORD_RESET_COOLDOWN_MINUTES:5}
+    security:
+        hsts-enabled: ${SECURITY_HSTS_ENABLED:false}
+        hsts-max-age-seconds: ${SECURITY_HSTS_MAX_AGE_SECONDS:31536000}

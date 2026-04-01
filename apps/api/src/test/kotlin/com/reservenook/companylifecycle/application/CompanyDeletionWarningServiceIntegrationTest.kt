@@ -19,6 +19,8 @@ import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.CompanyRepository
 import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
+import com.reservenook.security.domain.SecurityAuditEventType
+import com.reservenook.security.infrastructure.SecurityAuditEventRepository
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.mockk.justRun
@@ -37,7 +39,8 @@ class CompanyDeletionWarningServiceIntegrationTest(
     @Autowired private val membershipRepository: CompanyMembershipRepository,
     @Autowired private val subscriptionRepository: CompanySubscriptionRepository,
     @Autowired private val inactivityPolicyRepository: InactivityPolicyRepository,
-    @Autowired private val inactivityNotificationEventRepository: InactivityNotificationEventRepository
+    @Autowired private val inactivityNotificationEventRepository: InactivityNotificationEventRepository,
+    @Autowired private val securityAuditEventRepository: SecurityAuditEventRepository
 ) {
 
     @MockkBean
@@ -54,6 +57,7 @@ class CompanyDeletionWarningServiceIntegrationTest(
         justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
         justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
         justRun { companyDeletionWarningMailSender.sendDeletionWarningEmail(any(), any(), any(), any()) }
+        securityAuditEventRepository.deleteAll()
         inactivityNotificationEventRepository.deleteAll()
         membershipRepository.deleteAll()
         subscriptionRepository.deleteAll()
@@ -117,5 +121,10 @@ class CompanyDeletionWarningServiceIntegrationTest(
         events.shouldHaveSize(1)
         events.single().status shouldBe InactivityNotificationStatus.SENT
         events.single().notificationType shouldBe CompanyLifecycleNotificationType.DELETION_WARNING
+        securityAuditEventRepository.findAll().any {
+            it.eventType == SecurityAuditEventType.COMPANY_DELETION_WARNING_SENT &&
+                it.companySlug == "acme-wellness" &&
+                it.targetEmail == "admin@acme.com"
+        } shouldBe true
     }
 }

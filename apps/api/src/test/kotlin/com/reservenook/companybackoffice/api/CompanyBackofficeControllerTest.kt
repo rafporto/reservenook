@@ -19,6 +19,7 @@ import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.CompanyRepository
 import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
+import com.reservenook.security.application.RequestThrottleService
 import com.reservenook.security.domain.SecurityAuditEventType
 import com.reservenook.security.infrastructure.SecurityAuditEventRepository
 import io.kotest.matchers.shouldBe
@@ -50,9 +51,12 @@ class CompanyBackofficeControllerTest(
     @Autowired private val userAccountRepository: UserAccountRepository,
     @Autowired private val membershipRepository: CompanyMembershipRepository,
     @Autowired private val subscriptionRepository: CompanySubscriptionRepository,
+    @Autowired private val requestThrottleService: RequestThrottleService,
     @Autowired private val securityAuditEventRepository: SecurityAuditEventRepository,
     @Autowired private val passwordEncoder: PasswordEncoder
 ) {
+
+    private val companyAdminEmail = "backoffice-admin@acme.com"
 
     @MockkBean
     private lateinit var registrationMailSender: RegistrationMailSender
@@ -64,6 +68,7 @@ class CompanyBackofficeControllerTest(
     fun cleanDatabase() {
         justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
         justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
+        requestThrottleService.clearAll()
         securityAuditEventRepository.deleteAll()
         membershipRepository.deleteAll()
         subscriptionRepository.deleteAll()
@@ -75,14 +80,14 @@ class CompanyBackofficeControllerTest(
     fun `company admin can access own tenant backoffice`() {
         val admin = seedCompanyAdmin(
             slug = "acme-wellness",
-            email = "admin@acme.com",
+            email = companyAdminEmail,
             password = "SecurePass123"
         )
         val company = companyRepository.findAll().first()
         company.contactEmail = "hello@acme.com"
         companyRepository.save(company)
 
-        val session = loginCompanyAdminSession("admin@acme.com", "SecurePass123")
+        val session = loginCompanyAdminSession(companyAdminEmail, "SecurePass123")
 
         mockMvc.get("/api/app/company/acme-wellness/backoffice") {
             this.session = session
@@ -93,7 +98,7 @@ class CompanyBackofficeControllerTest(
                 jsonPath("$.company.companyName") { value("Acme Wellness") }
                 jsonPath("$.profile.contactEmail") { value("hello@acme.com") }
                 jsonPath("$.viewer.role") { value("COMPANY_ADMIN") }
-                jsonPath("$.viewer.currentUserEmail") { value("admin@acme.com") }
+                jsonPath("$.viewer.currentUserEmail") { value(companyAdminEmail) }
                 jsonPath("$.operations.planType") { value("TRIAL") }
                 jsonPath("$.configurationAreas[0].key") { value("profile") }
                 jsonPath("$.configurationAreas[0].status") { value("available") }
@@ -104,7 +109,7 @@ class CompanyBackofficeControllerTest(
     fun `company admin can update own tenant profile`() {
         val admin = seedCompanyAdmin(
             slug = "acme-wellness",
-            email = "admin@acme.com",
+            email = companyAdminEmail,
             password = "SecurePass123"
         )
 
@@ -117,7 +122,7 @@ class CompanyBackofficeControllerTest(
         company.countryCode = "DE"
         companyRepository.save(company)
 
-        val session = loginCompanyAdminSession("admin@acme.com", "SecurePass123")
+        val session = loginCompanyAdminSession(companyAdminEmail, "SecurePass123")
 
         mockMvc.put("/api/app/company/acme-wellness/profile") {
             with(csrf().asHeader())
@@ -152,7 +157,7 @@ class CompanyBackofficeControllerTest(
     fun `company admin cannot update another tenant profile`() {
         val admin = seedCompanyAdmin(
             slug = "acme-wellness",
-            email = "admin@acme.com",
+            email = companyAdminEmail,
             password = "SecurePass123"
         )
         seedCompanyAdmin(
@@ -161,7 +166,7 @@ class CompanyBackofficeControllerTest(
             password = "SecurePass123"
         )
 
-        val session = loginCompanyAdminSession("admin@acme.com", "SecurePass123")
+        val session = loginCompanyAdminSession(companyAdminEmail, "SecurePass123")
 
         mockMvc.put("/api/app/company/other-company/profile") {
             with(csrf().asHeader())
@@ -190,11 +195,11 @@ class CompanyBackofficeControllerTest(
     fun `company profile update requires csrf token`() {
         val admin = seedCompanyAdmin(
             slug = "acme-wellness",
-            email = "admin@acme.com",
+            email = companyAdminEmail,
             password = "SecurePass123"
         )
 
-        val session = loginCompanyAdminSession("admin@acme.com", "SecurePass123")
+        val session = loginCompanyAdminSession(companyAdminEmail, "SecurePass123")
 
         mockMvc.put("/api/app/company/acme-wellness/profile") {
             this.session = session
@@ -222,7 +227,7 @@ class CompanyBackofficeControllerTest(
     fun `company admin cannot access another tenant backoffice`() {
         val admin = seedCompanyAdmin(
             slug = "acme-wellness",
-            email = "admin@acme.com",
+            email = companyAdminEmail,
             password = "SecurePass123"
         )
         seedCompanyAdmin(
@@ -231,7 +236,7 @@ class CompanyBackofficeControllerTest(
             password = "SecurePass123"
         )
 
-        val session = loginCompanyAdminSession("admin@acme.com", "SecurePass123")
+        val session = loginCompanyAdminSession(companyAdminEmail, "SecurePass123")
 
         mockMvc.get("/api/app/company/other-company/backoffice") {
             this.session = session
@@ -270,18 +275,23 @@ class CompanyBackofficeControllerTest(
     }
 
     private fun loginCompanyAdminSession(email: String, password: String): MockHttpSession {
-        val loginResult = mockMvc.post("/api/public/auth/login") {
-            contentType = org.springframework.http.MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(
-                LoginRequest(
-                    email = email,
-                    password = password
+        val loginResult = mockMvc.perform(
+            org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/public/auth/login")
+                .with { request ->
+                    request.remoteAddr = "10.0.17.18"
+                    request
+                }
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(
+                        LoginRequest(
+                            email = email,
+                            password = password
+                        )
+                    )
                 )
-            )
-        }
-            .andExpect {
-                status { isOk() }
-            }
+        )
+            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk)
             .andReturn()
 
         return loginResult.request.session as MockHttpSession

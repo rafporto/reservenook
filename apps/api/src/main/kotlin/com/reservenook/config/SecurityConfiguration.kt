@@ -23,6 +23,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 class SecurityConfiguration(
     @Value("\${NEXT_PUBLIC_APP_URL:http://localhost:3000}")
     private val frontendOrigin: String,
+    @Value("\${app.security.hsts-enabled:false}")
+    private val hstsEnabled: Boolean,
+    @Value("\${app.security.hsts-max-age-seconds:31536000}")
+    private val hstsMaxAgeSeconds: Long,
     private val sessionCredentialVersionFilter: SessionCredentialVersionFilter
 ) {
 
@@ -49,6 +53,12 @@ class SecurityConfiguration(
                         contentSecurityPolicy.policyDirectives(apiContentSecurityPolicy)
                     }
                     .addHeaderWriter(StaticHeadersWriter("Permissions-Policy", "camera=(), microphone=(), geolocation=()"))
+                if (hstsEnabled) {
+                    it.httpStrictTransportSecurity { hsts ->
+                        hsts.includeSubDomains(true)
+                        hsts.maxAgeInSeconds(hstsMaxAgeSeconds)
+                    }
+                }
             }
             .authorizeHttpRequests {
                 it.requestMatchers("/actuator/health", "/api/public/**").permitAll()

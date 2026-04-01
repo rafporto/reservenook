@@ -6,7 +6,7 @@ import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
 import com.reservenook.auth.domain.PasswordResetToken
 import com.reservenook.auth.infrastructure.PasswordResetTokenRepository
-import com.reservenook.security.application.RequestThrottleService
+import com.reservenook.security.application.PublicRequestAbuseGuard
 import com.reservenook.security.application.SecurityAuditService
 import com.reservenook.security.application.TooManyRequestsException
 import com.reservenook.security.domain.SecurityAuditEventType
@@ -25,7 +25,7 @@ class RequestPasswordResetService(
     private val passwordResetTokenRepository: PasswordResetTokenRepository,
     private val passwordResetMailSender: PasswordResetMailSender,
     private val registrationProperties: RegistrationProperties,
-    private val requestThrottleService: RequestThrottleService,
+    private val publicRequestAbuseGuard: PublicRequestAbuseGuard,
     private val securityAuditService: SecurityAuditService
 ) {
 
@@ -36,7 +36,8 @@ class RequestPasswordResetService(
             message = "If the account is eligible, a password reset email will be sent."
         )
         try {
-            requestThrottleService.assertAllowed("forgot-password", requestFingerprint, 5, Duration.ofMinutes(10))
+            val clientAddress = requestFingerprint.substringBefore("|")
+            publicRequestAbuseGuard.assertAllowed("forgot-password", clientAddress, normalizedEmail)
         } catch (exception: TooManyRequestsException) {
             securityAuditService.record(
                 eventType = SecurityAuditEventType.PASSWORD_RESET_RATE_LIMITED,

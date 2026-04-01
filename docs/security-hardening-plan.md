@@ -471,18 +471,22 @@ The first hardening pass is now implemented with automated regression coverage.
 Completed controls:
 
 - public auth abuse throttling for login, forgot-password, and resend-activation requests
+- layered public abuse throttling across client-plus-email, client-only, and email-only buckets
 - generic login failure handling to reduce account-state enumeration
 - CSRF protection for authenticated state-changing endpoints
 - explicit authenticated CSRF token endpoint for the web client
 - tighter session-cookie defaults with `HttpOnly` and `SameSite=Lax`
 - password-reset-driven session revocation through credential-version checks on authenticated requests
+- authenticated session revocation when a tenant session no longer belongs to an active company
 - browser-facing defensive headers on API and web responses
 - persisted security audit events for auth abuse, password recovery, and sensitive admin changes
 - explicit Content Security Policy baselines on API and web responses
+- optional HSTS support for secure deployments on API and web responses
 
 Current regression coverage includes:
 
 - repeated failed login attempts are blocked with `429 Too Many Requests`
+- repeated login attempts from one client across many usernames are blocked with `429 Too Many Requests`
 - repeated forgot-password requests are blocked with `429 Too Many Requests`
 - repeated resend-activation requests are blocked with `429 Too Many Requests`
 - activation-blocked login attempts return the same generic invalid-credentials response as other login failures
@@ -490,18 +494,20 @@ Current regression coverage includes:
 - company profile updates require a valid CSRF token
 - platform-admin inactivity-policy updates require a valid CSRF token
 - password reset revokes authenticated sessions created before the password change
+- inactive-company transitions revoke previously authenticated tenant sessions
 - old passwords fail after reset while the new password remains valid
 - public auth responses emit defensive frame, content-type, referrer, and permissions headers
 - Next.js route config emits the same baseline defensive browser headers for all web pages
 - API and web responses emit an explicit Content Security Policy that constrains frames, objects, base URIs, and form targets
-- failed logins and login rate-limit hits persist durable audit events
+- secure requests can emit HSTS when deployment configuration enables it
+- failed logins, successful logins, logout events, and login rate-limit hits persist durable audit events
 - password reset requests, password reset completions, and activation resend requests persist durable audit events
 - platform inactivity-policy updates and company profile updates persist durable audit events
+- inactivity transitions, inactivity notices, deletion warnings, session revocations, and company deletions persist durable audit events
 
-Remaining high-priority items for the next pass:
+Residual risks and next-pass candidates:
 
-- invalidate active sessions after other high-risk account changes beyond password reset
-- broaden abuse controls beyond per-email or per-client combinations
-- expand audit coverage to more protected flows and lifecycle jobs
-- review browser security headers such as CSP and frame protections
-- extend hardening tests across the remaining Phase 2 configuration surfaces as they are implemented
+- extend hardening tests across additional Phase 2 configuration surfaces as they are implemented
+- evaluate persistent or distributed abuse-throttling storage for multi-node deployments
+- add explicit idle-session and absolute-session timeout policies once product requirements are defined
+- evaluate MFA and step-up authentication before sensitive future account settings are introduced

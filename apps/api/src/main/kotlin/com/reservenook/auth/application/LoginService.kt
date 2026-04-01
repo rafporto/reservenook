@@ -4,8 +4,8 @@ import com.reservenook.registration.domain.CompanyStatus
 import com.reservenook.registration.domain.UserStatus
 import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
+import com.reservenook.security.application.PublicRequestAbuseGuard
 import com.reservenook.security.application.RequestFingerprintResolver
-import com.reservenook.security.application.RequestThrottleService
 import com.reservenook.security.application.SecurityAuditService
 import com.reservenook.security.application.TooManyRequestsException
 import com.reservenook.security.domain.SecurityAuditEventType
@@ -19,7 +19,6 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.Duration
 import java.time.Instant
 
 @Service
@@ -28,7 +27,7 @@ class LoginService(
     private val companyMembershipRepository: CompanyMembershipRepository,
     private val passwordEncoder: PasswordEncoder,
     private val securityContextRepository: HttpSessionSecurityContextRepository,
-    private val requestThrottleService: RequestThrottleService,
+    private val publicRequestAbuseGuard: PublicRequestAbuseGuard,
     private val securityAuditService: SecurityAuditService
 ) {
 
@@ -40,14 +39,15 @@ class LoginService(
         response: HttpServletResponse
     ): LoginResult {
         val normalizedEmail = email.trim().lowercase()
-        val requestFingerprint = RequestFingerprintResolver.resolve(request, normalizedEmail)
+        val clientAddress = RequestFingerprintResolver.resolveClientAddress(request)
         try {
-            requestThrottleService.assertAllowed("login", requestFingerprint, 5, Duration.ofMinutes(10))
+            publicRequestAbuseGuard.assertAllowed("login", clientAddress, normalizedEmail)
         } catch (exception: TooManyRequestsException) {
             securityAuditService.record(
                 eventType = SecurityAuditEventType.LOGIN_RATE_LIMITED,
                 outcome = SecurityAuditOutcome.RATE_LIMITED,
-                targetEmail = normalizedEmail
+                targetEmail = normalizedEmail,
+                details = clientAddress
             )
             throw exception
         }
@@ -110,7 +110,14 @@ class LoginService(
         context.authentication = authentication
         SecurityContextHolder.setContext(context)
         securityContextRepository.saveContext(context, request, response)
-        requestThrottleService.clear("login", requestFingerprint)
+        publicRequestAbuseGuard.clearSuccessfulLogin(clientAddress, normalizedEmail)
+        securityAuditService.record(
+            eventType = SecurityAuditEventType.LOGIN_SUCCESS,
+            outcome = SecurityAuditOutcome.SUCCESS,
+            actorUserId = loginResult.authenticatedUser.userId,
+            actorEmail = loginResult.authenticatedUser.email,
+            companySlug = loginResult.authenticatedUser.companySlug
+        )
 
         return loginResult
     }

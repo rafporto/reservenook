@@ -6,7 +6,7 @@ import com.reservenook.registration.domain.UserStatus
 import com.reservenook.registration.infrastructure.ActivationTokenRepository
 import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
-import com.reservenook.security.application.RequestThrottleService
+import com.reservenook.security.application.PublicRequestAbuseGuard
 import com.reservenook.security.application.SecurityAuditService
 import com.reservenook.security.application.TooManyRequestsException
 import com.reservenook.security.domain.SecurityAuditEventType
@@ -25,7 +25,7 @@ class ResendActivationEmailService(
     private val activationTokenRepository: ActivationTokenRepository,
     private val registrationMailSender: RegistrationMailSender,
     private val registrationProperties: RegistrationProperties,
-    private val requestThrottleService: RequestThrottleService,
+    private val publicRequestAbuseGuard: PublicRequestAbuseGuard,
     private val securityAuditService: SecurityAuditService
 ) {
 
@@ -36,7 +36,8 @@ class ResendActivationEmailService(
             message = "If the account is pending activation, a new activation email will be sent."
         )
         try {
-            requestThrottleService.assertAllowed("resend-activation", requestFingerprint, 5, Duration.ofMinutes(10))
+            val clientAddress = requestFingerprint.substringBefore("|")
+            publicRequestAbuseGuard.assertAllowed("resend-activation", clientAddress, normalizedEmail)
         } catch (exception: TooManyRequestsException) {
             securityAuditService.record(
                 eventType = SecurityAuditEventType.ACTIVATION_RESEND_RATE_LIMITED,

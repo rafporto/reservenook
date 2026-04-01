@@ -11,6 +11,9 @@ import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.CompanyRepository
 import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
+import com.reservenook.security.application.SecurityAuditService
+import com.reservenook.security.domain.SecurityAuditEventType
+import com.reservenook.security.domain.SecurityAuditOutcome
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
@@ -24,7 +27,8 @@ class CompanyDeletionService(
     private val passwordResetTokenRepository: PasswordResetTokenRepository,
     private val inactivityNotificationEventRepository: InactivityNotificationEventRepository,
     private val companyDeletionEventRepository: CompanyDeletionEventRepository,
-    private val userAccountRepository: UserAccountRepository
+    private val userAccountRepository: UserAccountRepository,
+    private val securityAuditService: SecurityAuditService
 ) {
 
     @Transactional
@@ -74,6 +78,11 @@ class CompanyDeletionService(
                         deletedAt = now
                     )
                 )
+                securityAuditService.record(
+                    eventType = SecurityAuditEventType.COMPANY_DELETED,
+                    outcome = SecurityAuditOutcome.SUCCESS,
+                    companySlug = companySlug
+                )
                 deletedCompanies += 1
             } catch (exception: Exception) {
                 companyDeletionEventRepository.save(
@@ -84,6 +93,12 @@ class CompanyDeletionService(
                         status = CompanyDeletionEventStatus.FAILED,
                         failureReason = exception.message
                     )
+                )
+                securityAuditService.record(
+                    eventType = SecurityAuditEventType.COMPANY_DELETION_FAILED,
+                    outcome = SecurityAuditOutcome.FAILURE,
+                    companySlug = companySlug,
+                    details = exception.message
                 )
                 failedDeletions += 1
             }

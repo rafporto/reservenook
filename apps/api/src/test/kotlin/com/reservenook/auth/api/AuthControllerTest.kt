@@ -93,6 +93,7 @@ class AuthControllerTest(
             .andReturn()
 
         (result.request.session!!.getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY) != null) shouldBe true
+        securityAuditEventRepository.findAll().any { it.eventType == SecurityAuditEventType.LOGIN_SUCCESS } shouldBe true
     }
 
     @Test
@@ -138,6 +139,8 @@ class AuthControllerTest(
             .andExpect {
                 status { isUnauthorized() }
             }
+
+        securityAuditEventRepository.findAll().any { it.eventType == SecurityAuditEventType.LOGOUT_SUCCESS } shouldBe true
     }
 
     @Test
@@ -195,6 +198,39 @@ class AuthControllerTest(
                 status { isOk() }
                 jsonPath("$.token") { isNotEmpty() }
             }
+    }
+
+    @Test
+    fun `company session is revoked after the tenant becomes inactive`() {
+        val company = seedCompanyAdmin(email = "admin@acme.com", password = "SecurePass123")
+
+        val loginResult = mockMvc.post("/api/public/auth/login") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(
+                LoginRequest(
+                    email = "admin@acme.com",
+                    password = "SecurePass123"
+                )
+            )
+        }
+            .andExpect {
+                status { isOk() }
+            }
+            .andReturn()
+
+        val session = loginResult.request.session as MockHttpSession
+
+        company.status = CompanyStatus.INACTIVE
+        companyRepository.save(company)
+
+        mockMvc.get("/api/auth/session") {
+            this.session = session
+        }
+            .andExpect {
+                status { isUnauthorized() }
+            }
+
+        securityAuditEventRepository.findAll().any { it.eventType == SecurityAuditEventType.SESSION_REVOKED } shouldBe true
     }
 
     @Test
@@ -260,6 +296,38 @@ class AuthControllerTest(
     }
 
     @Test
+    fun `login endpoint rate limits repeated attempts from the same client across many usernames`() {
+        repeat(10) { attempt ->
+            mockMvc.post("/api/public/auth/login") {
+                contentType = MediaType.APPLICATION_JSON
+                content = objectMapper.writeValueAsString(
+                    LoginRequest(
+                        email = "missing-$attempt@acme.com",
+                        password = "WrongPass123"
+                    )
+                )
+            }
+                .andExpect {
+                    status { isUnauthorized() }
+                }
+        }
+
+        mockMvc.post("/api/public/auth/login") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(
+                LoginRequest(
+                    email = "missing-11@acme.com",
+                    password = "WrongPass123"
+                )
+            )
+        }
+            .andExpect {
+                status { isTooManyRequests() }
+                jsonPath("$.message") { value("Too many login attempts. Please wait and try again.") }
+            }
+    }
+
+    @Test
     fun `login endpoint authenticates platform admin`() {
         userAccountRepository.save(
             UserAccount(
@@ -292,7 +360,7 @@ class AuthControllerTest(
         userStatus: UserStatus = UserStatus.ACTIVE,
         emailVerified: Boolean = true,
         companyStatus: CompanyStatus = CompanyStatus.ACTIVE
-    ) {
+    ): Company {
         val company = companyRepository.save(
             Company(
                 name = "Acme Wellness",
@@ -329,5 +397,7 @@ class AuthControllerTest(
                 expiresAt = Instant.now().plusSeconds(604800)
             )
         )
+
+        return company
     }
 }

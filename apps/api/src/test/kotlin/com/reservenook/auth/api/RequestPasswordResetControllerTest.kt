@@ -127,4 +127,26 @@ class RequestPasswordResetControllerTest(
 
         securityAuditEventRepository.findAll().any { it.eventType == SecurityAuditEventType.PASSWORD_RESET_RATE_LIMITED } shouldBe true
     }
+
+    @Test
+    fun `forgot password endpoint rate limits repeated requests from the same client across many emails`() {
+        repeat(10) { attempt ->
+            mockMvc.post("/api/public/auth/forgot-password") {
+                contentType = MediaType.APPLICATION_JSON
+                content = objectMapper.writeValueAsString(RequestPasswordResetRequest("missing-$attempt@acme.com"))
+            }
+                .andExpect {
+                    status { isOk() }
+                }
+        }
+
+        mockMvc.post("/api/public/auth/forgot-password") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(RequestPasswordResetRequest("missing-11@acme.com"))
+        }
+            .andExpect {
+                status { isTooManyRequests() }
+                jsonPath("$.message") { value("Too many password reset requests. Please wait and try again.") }
+            }
+    }
 }

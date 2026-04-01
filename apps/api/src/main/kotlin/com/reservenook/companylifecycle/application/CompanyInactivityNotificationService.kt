@@ -8,6 +8,9 @@ import com.reservenook.registration.domain.Company
 import com.reservenook.registration.domain.CompanyRole
 import com.reservenook.registration.domain.UserStatus
 import com.reservenook.registration.infrastructure.CompanyMembershipRepository
+import com.reservenook.security.application.SecurityAuditService
+import com.reservenook.security.domain.SecurityAuditEventType
+import com.reservenook.security.domain.SecurityAuditOutcome
 import org.springframework.mail.MailException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -17,7 +20,8 @@ import java.time.Instant
 class CompanyInactivityNotificationService(
     private val companyMembershipRepository: CompanyMembershipRepository,
     private val inactivityNotificationEventRepository: InactivityNotificationEventRepository,
-    private val companyInactivityMailSender: CompanyInactivityMailSender
+    private val companyInactivityMailSender: CompanyInactivityMailSender,
+    private val securityAuditService: SecurityAuditService
 ) {
 
     @Transactional
@@ -55,6 +59,12 @@ class CompanyInactivityNotificationService(
                             notifiedAt = now
                         )
                     )
+                    securityAuditService.record(
+                        eventType = SecurityAuditEventType.COMPANY_INACTIVITY_NOTICE_SENT,
+                        outcome = SecurityAuditOutcome.SUCCESS,
+                        companySlug = company.slug,
+                        targetEmail = email
+                    )
                     notifiedCount += 1
                 } catch (exception: MailException) {
                     inactivityNotificationEventRepository.save(
@@ -66,6 +76,13 @@ class CompanyInactivityNotificationService(
                             failureReason = exception.message,
                             notifiedAt = null
                         )
+                    )
+                    securityAuditService.record(
+                        eventType = SecurityAuditEventType.COMPANY_INACTIVITY_NOTICE_FAILED,
+                        outcome = SecurityAuditOutcome.FAILURE,
+                        companySlug = company.slug,
+                        targetEmail = email,
+                        details = exception.message
                     )
                     failedCount += 1
                 }

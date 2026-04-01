@@ -1,4 +1,4 @@
-import nextConfig from "./next.config";
+import nextConfig, { buildSecurityHeaders } from "./next.config";
 
 describe("next.config security headers", () => {
   it("defines browser security headers for every route", async () => {
@@ -9,18 +9,15 @@ describe("next.config security headers", () => {
     expect(rules).toEqual([
       {
         source: "/:path*",
-        headers: [
-          {
-            key: "Content-Security-Policy",
-            value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
-          },
-          { key: "X-Frame-Options", value: "DENY" },
-          { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" }
-        ]
+        headers: buildSecurityHeaders(false)
       }
     ]);
+  });
+
+  it("adds hsts when enabled for a secure deployment", () => {
+    expect(buildSecurityHeaders(true)).toContainEqual({
+      key: "Strict-Transport-Security",
+      value: "max-age=31536000; includeSubDomains"
+    });
   });
 });

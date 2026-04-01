@@ -16,6 +16,7 @@ import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.CompanyRepository
 import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
+import com.reservenook.security.application.SecurityAuditService
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
@@ -34,6 +35,7 @@ class CompanyDeletionServiceTest {
     private val inactivityNotificationEventRepository = mockk<InactivityNotificationEventRepository>(relaxed = true)
     private val companyDeletionEventRepository = mockk<CompanyDeletionEventRepository>(relaxed = true)
     private val userAccountRepository = mockk<UserAccountRepository>(relaxed = true)
+    private val securityAuditService = mockk<SecurityAuditService>(relaxed = true)
     private val service = CompanyDeletionService(
         companyRepository = companyRepository,
         companyMembershipRepository = companyMembershipRepository,
@@ -42,7 +44,8 @@ class CompanyDeletionServiceTest {
         passwordResetTokenRepository = passwordResetTokenRepository,
         inactivityNotificationEventRepository = inactivityNotificationEventRepository,
         companyDeletionEventRepository = companyDeletionEventRepository,
-        userAccountRepository = userAccountRepository
+        userAccountRepository = userAccountRepository,
+        securityAuditService = securityAuditService
     )
 
     @Test

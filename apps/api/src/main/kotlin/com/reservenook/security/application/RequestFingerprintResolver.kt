@@ -4,13 +4,11 @@ import jakarta.servlet.http.HttpServletRequest
 
 object RequestFingerprintResolver {
 
-    fun resolve(request: HttpServletRequest, email: String): String {
-        val forwardedFor = request.getHeader("X-Forwarded-For")
-            ?.split(",")
-            ?.firstOrNull()
-            ?.trim()
-            ?.takeIf { it.isNotBlank() }
-        val clientAddress = forwardedFor ?: request.remoteAddr ?: "unknown"
-        return "$clientAddress|${email.trim().lowercase()}"
-    }
+    fun resolve(request: HttpServletRequest, email: String): String =
+        "${resolveClientAddress(request)}|${normalizeEmail(email)}"
+
+    fun resolveClientAddress(request: HttpServletRequest): String =
+        request.remoteAddr?.takeIf { it.isNotBlank() } ?: "unknown"
+
+    fun normalizeEmail(email: String): String = email.trim().lowercase()
 }

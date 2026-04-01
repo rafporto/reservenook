@@ -25,6 +25,8 @@ import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.CompanyRepository
 import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
+import com.reservenook.security.domain.SecurityAuditEventType
+import com.reservenook.security.infrastructure.SecurityAuditEventRepository
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -46,7 +48,8 @@ class CompanyDeletionServiceIntegrationTest(
     @Autowired private val passwordResetTokenRepository: PasswordResetTokenRepository,
     @Autowired private val inactivityNotificationEventRepository: InactivityNotificationEventRepository,
     @Autowired private val companyDeletionEventRepository: CompanyDeletionEventRepository,
-    @Autowired private val inactivityPolicyRepository: InactivityPolicyRepository
+    @Autowired private val inactivityPolicyRepository: InactivityPolicyRepository,
+    @Autowired private val securityAuditEventRepository: SecurityAuditEventRepository
 ) {
 
     @MockkBean
@@ -59,6 +62,7 @@ class CompanyDeletionServiceIntegrationTest(
     fun cleanDatabase() {
         justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
         justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
+        securityAuditEventRepository.deleteAll()
         inactivityNotificationEventRepository.deleteAll()
         companyDeletionEventRepository.deleteAll()
         activationTokenRepository.deleteAll()
@@ -140,5 +144,8 @@ class CompanyDeletionServiceIntegrationTest(
         userAccountRepository.findById(requireNotNull(user.id)).orElse(null).shouldBeNull()
         companyDeletionEventRepository.findAllByCompanyId(requireNotNull(company.id)).shouldHaveSize(1)
         companyDeletionEventRepository.findAllByCompanyId(requireNotNull(company.id)).single().status shouldBe CompanyDeletionEventStatus.SUCCEEDED
+        securityAuditEventRepository.findAll().any {
+            it.eventType == SecurityAuditEventType.COMPANY_DELETED && it.companySlug == "acme-wellness"
+        } shouldBe true
     }
 }

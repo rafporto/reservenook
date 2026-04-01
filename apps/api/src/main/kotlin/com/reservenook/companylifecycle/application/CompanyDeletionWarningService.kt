@@ -10,6 +10,9 @@ import com.reservenook.registration.domain.CompanyStatus
 import com.reservenook.registration.domain.UserStatus
 import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.CompanyRepository
+import com.reservenook.security.application.SecurityAuditService
+import com.reservenook.security.domain.SecurityAuditEventType
+import com.reservenook.security.domain.SecurityAuditOutcome
 import org.springframework.mail.MailException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -22,7 +25,8 @@ class CompanyDeletionWarningService(
     private val inactivityPolicyRepository: InactivityPolicyRepository,
     private val companyMembershipRepository: CompanyMembershipRepository,
     private val inactivityNotificationEventRepository: InactivityNotificationEventRepository,
-    private val companyDeletionWarningMailSender: CompanyDeletionWarningMailSender
+    private val companyDeletionWarningMailSender: CompanyDeletionWarningMailSender,
+    private val securityAuditService: SecurityAuditService
 ) {
 
     @Transactional
@@ -76,6 +80,13 @@ class CompanyDeletionWarningService(
                             notifiedAt = now
                         )
                     )
+                    securityAuditService.record(
+                        eventType = SecurityAuditEventType.COMPANY_DELETION_WARNING_SENT,
+                        outcome = SecurityAuditOutcome.SUCCESS,
+                        companySlug = company.slug,
+                        targetEmail = email,
+                        details = "scheduledDeletionAt=$deletionScheduledAt"
+                    )
                     warningsSent += 1
                 } catch (exception: MailException) {
                     inactivityNotificationEventRepository.save(
@@ -87,6 +98,13 @@ class CompanyDeletionWarningService(
                             failureReason = exception.message,
                             notifiedAt = null
                         )
+                    )
+                    securityAuditService.record(
+                        eventType = SecurityAuditEventType.COMPANY_DELETION_WARNING_FAILED,
+                        outcome = SecurityAuditOutcome.FAILURE,
+                        companySlug = company.slug,
+                        targetEmail = email,
+                        details = exception.message
                     )
                     failedWarnings += 1
                 }

@@ -5,6 +5,9 @@ import com.reservenook.auth.application.LoginService
 import com.reservenook.auth.application.RequestPasswordResetService
 import com.reservenook.auth.application.ResetPasswordService
 import com.reservenook.security.application.RequestFingerprintResolver
+import com.reservenook.security.application.SecurityAuditService
+import com.reservenook.security.domain.SecurityAuditEventType
+import com.reservenook.security.domain.SecurityAuditOutcome
 import jakarta.servlet.http.HttpSession
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -21,7 +24,8 @@ import org.springframework.web.bind.annotation.RestController
 class AuthController(
     private val loginService: LoginService,
     private val requestPasswordResetService: RequestPasswordResetService,
-    private val resetPasswordService: ResetPasswordService
+    private val resetPasswordService: ResetPasswordService,
+    private val securityAuditService: SecurityAuditService
 ) {
 
     @PostMapping("/api/public/auth/login")
@@ -80,7 +84,16 @@ class AuthController(
     fun csrfToken(csrfToken: CsrfToken): CsrfTokenResponse = CsrfTokenResponse(token = csrfToken.token)
 
     @PostMapping("/api/auth/logout")
-    fun logout(session: HttpSession?): LoginResponse {
+    fun logout(@AuthenticationPrincipal principal: AppAuthenticatedUser?, session: HttpSession?): LoginResponse {
+        if (principal != null) {
+            securityAuditService.record(
+                eventType = SecurityAuditEventType.LOGOUT_SUCCESS,
+                outcome = SecurityAuditOutcome.SUCCESS,
+                actorUserId = principal.userId,
+                actorEmail = principal.email,
+                companySlug = principal.companySlug
+            )
+        }
         session?.invalidate()
         SecurityContextHolder.clearContext()
 

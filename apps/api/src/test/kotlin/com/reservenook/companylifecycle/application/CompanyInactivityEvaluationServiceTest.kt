@@ -6,6 +6,7 @@ import com.reservenook.registration.domain.BusinessType
 import com.reservenook.registration.domain.Company
 import com.reservenook.registration.domain.CompanyStatus
 import com.reservenook.registration.infrastructure.CompanyRepository
+import com.reservenook.security.application.SecurityAuditService
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
@@ -19,10 +20,12 @@ class CompanyInactivityEvaluationServiceTest {
     private val companyRepository = mockk<CompanyRepository>(relaxed = true)
     private val inactivityPolicyRepository = mockk<InactivityPolicyRepository>()
     private val companyInactivityNotificationService = mockk<CompanyInactivityNotificationService>(relaxed = true)
+    private val securityAuditService = mockk<SecurityAuditService>(relaxed = true)
     private val service = CompanyInactivityEvaluationService(
         companyRepository,
         inactivityPolicyRepository,
-        companyInactivityNotificationService
+        companyInactivityNotificationService,
+        securityAuditService
     )
 
     @Test

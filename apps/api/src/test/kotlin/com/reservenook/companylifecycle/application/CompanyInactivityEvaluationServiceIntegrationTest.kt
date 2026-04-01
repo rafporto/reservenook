@@ -12,6 +12,8 @@ import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.CompanyRepository
 import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
+import com.reservenook.security.domain.SecurityAuditEventType
+import com.reservenook.security.infrastructure.SecurityAuditEventRepository
 import io.kotest.matchers.shouldBe
 import io.mockk.justRun
 import org.junit.jupiter.api.BeforeEach
@@ -27,7 +29,8 @@ class CompanyInactivityEvaluationServiceIntegrationTest(
     @Autowired private val inactivityPolicyRepository: InactivityPolicyRepository,
     @Autowired private val membershipRepository: CompanyMembershipRepository,
     @Autowired private val subscriptionRepository: CompanySubscriptionRepository,
-    @Autowired private val userAccountRepository: UserAccountRepository
+    @Autowired private val userAccountRepository: UserAccountRepository,
+    @Autowired private val securityAuditEventRepository: SecurityAuditEventRepository
 ) {
 
     @MockkBean
@@ -44,6 +47,7 @@ class CompanyInactivityEvaluationServiceIntegrationTest(
         justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
         justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
         justRun { companyInactivityMailSender.sendInactivityEmail(any(), any(), any()) }
+        securityAuditEventRepository.deleteAll()
         membershipRepository.deleteAll()
         subscriptionRepository.deleteAll()
         userAccountRepository.deleteAll()
@@ -80,5 +84,8 @@ class CompanyInactivityEvaluationServiceIntegrationTest(
         updatedCompany.status shouldBe CompanyStatus.INACTIVE
         updatedCompany.inactiveAt shouldBe Instant.parse("2026-03-30T12:00:00Z")
         updatedCompany.deletionScheduledAt shouldBe Instant.parse("2026-06-28T12:00:00Z")
+        securityAuditEventRepository.findAll().any {
+            it.eventType == SecurityAuditEventType.COMPANY_MARKED_INACTIVE && it.companySlug == "acme-wellness"
+        } shouldBe true
     }
 }

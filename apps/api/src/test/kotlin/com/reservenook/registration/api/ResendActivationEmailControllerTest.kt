@@ -130,6 +130,30 @@ class ResendActivationEmailControllerTest(
         securityAuditEventRepository.findAll().any { it.eventType == SecurityAuditEventType.ACTIVATION_RESEND_RATE_LIMITED } shouldBe true
     }
 
+    @Test
+    fun `resend endpoint rate limits repeated requests from the same client across many emails`() {
+        justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
+
+        repeat(10) { attempt ->
+            mockMvc.post("/api/public/companies/activation/resend") {
+                contentType = MediaType.APPLICATION_JSON
+                content = objectMapper.writeValueAsString(ResendActivationEmailRequest("missing-$attempt@acme.com"))
+            }
+                .andExpect {
+                    status { isOk() }
+                }
+        }
+
+        mockMvc.post("/api/public/companies/activation/resend") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(ResendActivationEmailRequest("missing-11@acme.com"))
+        }
+            .andExpect {
+                status { isTooManyRequests() }
+                jsonPath("$.message") { value("Too many activation email requests. Please wait and try again.") }
+            }
+    }
+
     private fun seedPendingCompany(email: String, tokenCreatedAt: Instant) {
         val company = companyRepository.save(
             Company(

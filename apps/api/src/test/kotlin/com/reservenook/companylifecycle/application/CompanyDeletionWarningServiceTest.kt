@@ -14,6 +14,7 @@ import com.reservenook.registration.domain.UserAccount
 import com.reservenook.registration.domain.UserStatus
 import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.CompanyRepository
+import com.reservenook.security.application.SecurityAuditService
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.justRun
@@ -31,12 +32,14 @@ class CompanyDeletionWarningServiceTest {
     private val companyMembershipRepository = mockk<CompanyMembershipRepository>()
     private val inactivityNotificationEventRepository = mockk<InactivityNotificationEventRepository>()
     private val companyDeletionWarningMailSender = mockk<CompanyDeletionWarningMailSender>()
+    private val securityAuditService = mockk<SecurityAuditService>(relaxed = true)
     private val service = CompanyDeletionWarningService(
         companyRepository = companyRepository,
         inactivityPolicyRepository = inactivityPolicyRepository,
         companyMembershipRepository = companyMembershipRepository,
         inactivityNotificationEventRepository = inactivityNotificationEventRepository,
-        companyDeletionWarningMailSender = companyDeletionWarningMailSender
+        companyDeletionWarningMailSender = companyDeletionWarningMailSender,
+        securityAuditService = securityAuditService
     )
 
     @Test
