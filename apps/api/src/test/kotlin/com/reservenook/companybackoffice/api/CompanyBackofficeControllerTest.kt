@@ -29,6 +29,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
@@ -112,6 +113,7 @@ class CompanyBackofficeControllerTest(
 
         mockMvc.put("/api/app/company/acme-wellness/profile") {
             this.session = session
+            with(csrf())
             contentType = org.springframework.http.MediaType.APPLICATION_JSON
             content = """
                 {
@@ -153,6 +155,7 @@ class CompanyBackofficeControllerTest(
 
         mockMvc.put("/api/app/company/other-company/profile") {
             this.session = session
+            with(csrf())
             contentType = org.springframework.http.MediaType.APPLICATION_JSON
             content = """
                 {
@@ -162,6 +165,38 @@ class CompanyBackofficeControllerTest(
                   "contactPhone": "+49 30 555 0000",
                   "addressLine1": "Street 1",
                   "addressLine2": null,
+                  "city": "Berlin",
+                  "postalCode": "10178",
+                  "countryCode": "DE"
+                }
+            """.trimIndent()
+        }
+            .andExpect {
+                status { isForbidden() }
+            }
+    }
+
+    @Test
+    fun `company profile update requires csrf token`() {
+        seedCompanyAdmin(
+            slug = "acme-wellness",
+            email = "admin@acme.com",
+            password = "SecurePass123"
+        )
+
+        val session = authenticatedCompanyAdminSession(userId = 1L, email = "admin@acme.com", companySlug = "acme-wellness")
+
+        mockMvc.put("/api/app/company/acme-wellness/profile") {
+            this.session = session
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "companyName": "Acme Wellness Studio",
+                  "businessDescription": "Premium appointments and classes.",
+                  "contactEmail": "hello@acme.com",
+                  "contactPhone": "+49 30 555 0000",
+                  "addressLine1": "Alexanderplatz 1",
+                  "addressLine2": "Floor 3",
                   "city": "Berlin",
                   "postalCode": "10178",
                   "countryCode": "DE"

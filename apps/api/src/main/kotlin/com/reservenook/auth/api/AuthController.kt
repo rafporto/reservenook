@@ -4,12 +4,14 @@ import com.reservenook.auth.application.AppAuthenticatedUser
 import com.reservenook.auth.application.LoginService
 import com.reservenook.auth.application.RequestPasswordResetService
 import com.reservenook.auth.application.ResetPasswordService
+import com.reservenook.security.application.RequestFingerprintResolver
 import jakarta.servlet.http.HttpSession
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.Valid
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.web.csrf.CsrfToken
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -39,8 +41,14 @@ class AuthController(
     }
 
     @PostMapping("/api/public/auth/forgot-password")
-    fun requestPasswordReset(@Valid @RequestBody request: RequestPasswordResetRequest): RequestPasswordResetResponse {
-        val result = requestPasswordResetService.request(request.email)
+    fun requestPasswordReset(
+        @Valid @RequestBody request: RequestPasswordResetRequest,
+        httpServletRequest: HttpServletRequest
+    ): RequestPasswordResetResponse {
+        val result = requestPasswordResetService.request(
+            request.email,
+            RequestFingerprintResolver.resolve(httpServletRequest, request.email)
+        )
         return RequestPasswordResetResponse(result.message)
     }
 
@@ -67,6 +75,9 @@ class AuthController(
             redirectTo = if (principal.isPlatformAdmin) "/platform-admin" else "/app/company/${principal.companySlug}"
         )
     }
+
+    @GetMapping("/api/auth/csrf-token")
+    fun csrfToken(csrfToken: CsrfToken): CsrfTokenResponse = CsrfTokenResponse(token = csrfToken.token)
 
     @PostMapping("/api/auth/logout")
     fun logout(session: HttpSession?): LoginResponse {

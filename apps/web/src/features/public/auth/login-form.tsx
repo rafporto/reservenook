@@ -19,7 +19,7 @@ type LoginFormValues = {
   password: string;
 };
 
-type LoginErrorCode = "INVALID_CREDENTIALS" | "ACTIVATION_REQUIRED" | "INACTIVE_COMPANY";
+type LoginErrorCode = "INVALID_CREDENTIALS";
 
 function buildSchema(locale: SupportedLocale) {
   const messages = getPublicMessages(locale);
@@ -81,20 +81,10 @@ export function LoginForm({ locale }: LoginFormProps) {
     router.push(redirectTo);
   }
 
-  const emailValue = form.watch("email");
-
   return (
     <Stack spacing={3} component="form" noValidate onSubmit={form.handleSubmit(onSubmit)}>
       {successHint ? <Alert severity="success">{successHint}</Alert> : null}
       {errorState ? <Alert severity="error">{errorState.message}</Alert> : null}
-
-      {errorState?.code === "ACTIVATION_REQUIRED" ? (
-        <Typography variant="body2">
-          <Link href={`/${locale}/resend-activation${emailValue ? `?email=${encodeURIComponent(emailValue)}` : ""}`}>
-            {messages.loginResendActivationCta}
-          </Link>
-        </Typography>
-      ) : null}
 
       <Typography variant="body2">
         <Link href={`/${locale}/forgot-password`}>{messages.loginForgotPasswordCta}</Link>

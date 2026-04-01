@@ -1,6 +1,8 @@
 package com.reservenook.registration.api
 
 import com.reservenook.registration.application.ResendActivationEmailService
+import com.reservenook.security.application.RequestFingerprintResolver
+import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -14,8 +16,14 @@ class ResendActivationEmailController(
 ) {
 
     @PostMapping("/resend")
-    fun resend(@Valid @RequestBody request: ResendActivationEmailRequest): ResendActivationEmailResponse {
-        val result = resendActivationEmailService.resend(request.email)
+    fun resend(
+        @Valid @RequestBody request: ResendActivationEmailRequest,
+        httpServletRequest: HttpServletRequest
+    ): ResendActivationEmailResponse {
+        val result = resendActivationEmailService.resend(
+            request.email,
+            RequestFingerprintResolver.resolve(httpServletRequest, request.email)
+        )
         return ResendActivationEmailResponse(result.message)
     }
 }

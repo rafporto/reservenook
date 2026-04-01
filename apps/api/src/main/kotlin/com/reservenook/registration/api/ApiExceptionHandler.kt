@@ -4,6 +4,7 @@ import com.reservenook.auth.api.LoginErrorResponse
 import com.reservenook.auth.application.LoginFailedException
 import com.reservenook.auth.application.ResetPasswordFailedException
 import com.reservenook.registration.application.RegistrationConflictException
+import com.reservenook.security.application.TooManyRequestsException
 import jakarta.validation.ConstraintViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -17,13 +18,12 @@ class ApiExceptionHandler {
 
     @ExceptionHandler(LoginFailedException::class)
     fun handleLoginFailure(exception: LoginFailedException): ResponseEntity<LoginErrorResponse> {
-        val status = when (exception.code) {
-            com.reservenook.auth.application.LoginFailureCode.INVALID_CREDENTIALS -> HttpStatus.UNAUTHORIZED
-            com.reservenook.auth.application.LoginFailureCode.ACTIVATION_REQUIRED -> HttpStatus.FORBIDDEN
-            com.reservenook.auth.application.LoginFailureCode.INACTIVE_COMPANY -> HttpStatus.FORBIDDEN
-        }
-
-        return ResponseEntity.status(status).body(LoginErrorResponse(exception.message, exception.code.name))
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+            LoginErrorResponse(
+                message = "Invalid email or password.",
+                code = com.reservenook.auth.application.LoginFailureCode.INVALID_CREDENTIALS.name
+            )
+        )
     }
 
     @ExceptionHandler(ResetPasswordFailedException::class)
@@ -47,6 +47,12 @@ class ApiExceptionHandler {
     @ExceptionHandler(ConstraintViolationException::class)
     fun handleConstraintViolations(exception: ConstraintViolationException): ResponseEntity<ApiErrorResponse> =
         ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiErrorResponse(exception.message ?: "Validation failed."))
+
+    @ExceptionHandler(TooManyRequestsException::class)
+    fun handleTooManyRequests(exception: TooManyRequestsException): ResponseEntity<ApiErrorResponse> =
+        ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(
+            ApiErrorResponse(exception.message ?: "Too many requests. Please wait and try again.")
+        )
 
     @ExceptionHandler(MailException::class)
     fun handleMailFailure(): ResponseEntity<ApiErrorResponse> =

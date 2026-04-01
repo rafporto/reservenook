@@ -4,6 +4,8 @@ import com.reservenook.registration.domain.CompanyStatus
 import com.reservenook.registration.domain.UserStatus
 import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
+import com.reservenook.security.application.RequestFingerprintResolver
+import com.reservenook.security.application.RequestThrottleService
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -13,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Duration
 import java.time.Instant
 
 @Service
@@ -20,7 +23,8 @@ class LoginService(
     private val userAccountRepository: UserAccountRepository,
     private val companyMembershipRepository: CompanyMembershipRepository,
     private val passwordEncoder: PasswordEncoder,
-    private val securityContextRepository: HttpSessionSecurityContextRepository
+    private val securityContextRepository: HttpSessionSecurityContextRepository,
+    private val requestThrottleService: RequestThrottleService
 ) {
 
     @Transactional
@@ -31,6 +35,8 @@ class LoginService(
         response: HttpServletResponse
     ): LoginResult {
         val normalizedEmail = email.trim().lowercase()
+        val requestFingerprint = RequestFingerprintResolver.resolve(request, normalizedEmail)
+        requestThrottleService.assertAllowed("login", requestFingerprint, 5, Duration.ofMinutes(10))
         val user = userAccountRepository.findByEmail(normalizedEmail)
             ?: throw LoginFailedException("Invalid email or password.", LoginFailureCode.INVALID_CREDENTIALS)
 
@@ -94,6 +100,7 @@ class LoginService(
         context.authentication = authentication
         SecurityContextHolder.setContext(context)
         securityContextRepository.saveContext(context, request, response)
+        requestThrottleService.clear("login", requestFingerprint)
 
         return loginResult
     }

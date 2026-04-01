@@ -18,6 +18,7 @@ import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.CompanyRepository
 import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
+import com.reservenook.security.application.RequestThrottleService
 import io.kotest.matchers.shouldBe
 import io.mockk.justRun
 import org.junit.jupiter.api.BeforeEach
@@ -27,6 +28,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.mock.web.MockHttpSession
 import org.springframework.test.web.servlet.MockMvc
@@ -45,6 +47,7 @@ class AuthControllerTest(
     @Autowired private val membershipRepository: CompanyMembershipRepository,
     @Autowired private val subscriptionRepository: CompanySubscriptionRepository,
     @Autowired private val activationTokenRepository: ActivationTokenRepository,
+    @Autowired private val requestThrottleService: RequestThrottleService,
     @Autowired private val passwordEncoder: PasswordEncoder
 ) {
 
@@ -58,6 +61,7 @@ class AuthControllerTest(
     fun cleanDatabase() {
         justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
         justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
+        requestThrottleService.clearAll()
         activationTokenRepository.deleteAll()
         membershipRepository.deleteAll()
         subscriptionRepository.deleteAll()
@@ -117,6 +121,7 @@ class AuthControllerTest(
 
         mockMvc.post("/api/auth/logout") {
             this.session = session
+            with(csrf())
         }
             .andExpect {
                 status { isOk() }
@@ -151,8 +156,72 @@ class AuthControllerTest(
             )
         }
             .andExpect {
-                status { isForbidden() }
-                jsonPath("$.code") { value("ACTIVATION_REQUIRED") }
+                status { isUnauthorized() }
+                jsonPath("$.code") { value("INVALID_CREDENTIALS") }
+                jsonPath("$.message") { value("Invalid email or password.") }
+            }
+    }
+
+    @Test
+    fun `authenticated session can fetch csrf token`() {
+        seedCompanyAdmin(email = "admin@acme.com", password = "SecurePass123")
+
+        val loginResult = mockMvc.post("/api/public/auth/login") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(
+                LoginRequest(
+                    email = "admin@acme.com",
+                    password = "SecurePass123"
+                )
+            )
+        }
+            .andExpect {
+                status { isOk() }
+            }
+            .andReturn()
+
+        val session = loginResult.request.session as MockHttpSession
+
+        mockMvc.get("/api/auth/csrf-token") {
+            this.session = session
+        }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.token") { isNotEmpty() }
+            }
+    }
+
+    @Test
+    fun `login endpoint rate limits repeated failed attempts`() {
+        seedCompanyAdmin(email = "admin@acme.com", password = "SecurePass123")
+
+        repeat(5) {
+            mockMvc.post("/api/public/auth/login") {
+                contentType = MediaType.APPLICATION_JSON
+                content = objectMapper.writeValueAsString(
+                    LoginRequest(
+                        email = "admin@acme.com",
+                        password = "WrongPass123"
+                    )
+                )
+            }
+                .andExpect {
+                    status { isUnauthorized() }
+                }
+        }
+
+        mockMvc.post("/api/public/auth/login") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(
+                LoginRequest(
+                    email = "admin@acme.com",
+                    password = "WrongPass123"
+                )
+            )
+        }
+            .andExpect {
+                status { isTooManyRequests() }
+                jsonPath("$.message") { value("Too many login attempts. Please wait and try again.") }
             }
     }
 

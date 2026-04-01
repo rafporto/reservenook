@@ -35,7 +35,7 @@ The platform is planned as:
 ## Current App Scaffolds
 
 - `apps/web` now includes a branded localized public marketing surface, improved auth/onboarding UX, SEO assets such as route metadata, `robots.txt`, and `sitemap.xml`, plus the Phase 2 company-configuration dashboard and editable company profile baseline for the tenant backoffice
-- `apps/api` now includes the Phase 1 registration, auth, platform-admin policy, inactive-company lifecycle baseline, inactivity notification wiring, pending-deletion warning flow, and automated company deletion
+- `apps/api` now includes the Phase 1 registration, auth, platform-admin policy, inactive-company lifecycle baseline, inactivity notification wiring, pending-deletion warning flow, automated company deletion, and the first security-hardening baseline for public auth throttling and CSRF-protected authenticated mutations
 
 ## Local Commands
 
@@ -113,6 +113,7 @@ Useful checks:
 - platform admin companies endpoint: `GET http://localhost:8080/api/platform-admin/companies`
 - inactivity policy endpoints: `GET` and `PUT http://localhost:8080/api/platform-admin/inactivity-policy`
 - session endpoint: `GET http://localhost:8080/api/auth/session`
+- CSRF token endpoint: `GET http://localhost:8080/api/auth/csrf-token`
 - logout endpoint: `POST http://localhost:8080/api/auth/logout`
 - Mailpit UI: `http://localhost:8025`
 
@@ -139,6 +140,7 @@ Project decisions and planning are documented in:
 - [docs/phase-1-test-scenarios.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-1-test-scenarios.md)
 - [docs/phase-2-use-cases.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-2-use-cases.md)
 - [docs/phase-2-test-scenarios.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-2-test-scenarios.md)
+- [docs/security-hardening-plan.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\security-hardening-plan.md)
 
 ## Working Rule
 

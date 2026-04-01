@@ -6,8 +6,10 @@ import com.reservenook.registration.domain.UserStatus
 import com.reservenook.registration.infrastructure.ActivationTokenRepository
 import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
+import com.reservenook.security.application.RequestThrottleService
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.UUID
@@ -18,15 +20,17 @@ class ResendActivationEmailService(
     private val companyMembershipRepository: CompanyMembershipRepository,
     private val activationTokenRepository: ActivationTokenRepository,
     private val registrationMailSender: RegistrationMailSender,
-    private val registrationProperties: RegistrationProperties
+    private val registrationProperties: RegistrationProperties,
+    private val requestThrottleService: RequestThrottleService
 ) {
 
     @Transactional
-    fun resend(email: String): ResendActivationEmailResult {
+    fun resend(email: String, requestFingerprint: String): ResendActivationEmailResult {
         val normalizedEmail = email.trim().lowercase()
         val neutralResult = ResendActivationEmailResult(
             message = "If the account is pending activation, a new activation email will be sent."
         )
+        requestThrottleService.assertAllowed("resend-activation", requestFingerprint, 5, Duration.ofMinutes(10))
 
         val user = userAccountRepository.findByEmail(normalizedEmail) ?: return neutralResult
         if (user.status == UserStatus.ACTIVE || user.emailVerified) {

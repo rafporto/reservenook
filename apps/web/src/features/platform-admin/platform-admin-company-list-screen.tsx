@@ -18,6 +18,7 @@ import {
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { LogoutButton } from "@/components/app/logout-button";
+import { CsrfTokenError, fetchCsrfToken } from "@/lib/security/csrf";
 
 type PlatformAdminCompany = {
   companyName: string;
@@ -134,13 +135,15 @@ export function PlatformAdminCompanyListScreen() {
     setIsSavingPolicy(true);
 
     try {
+      const csrfToken = await fetchCsrfToken();
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080"}/api/platform-admin/inactivity-policy`,
         {
           method: "PUT",
           credentials: "include",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "X-CSRF-TOKEN": csrfToken
           },
           body: JSON.stringify({
             inactivityThresholdDays,
@@ -193,7 +196,12 @@ export function PlatformAdminCompanyListScreen() {
         type: "success",
         message: payload.message ?? "Inactivity policy updated."
       });
-    } catch {
+    } catch (error) {
+      if (error instanceof CsrfTokenError && error.status === 401) {
+        router.replace("/en/login");
+        return;
+      }
+
       setPolicyFeedback({
         type: "error",
         message: "The inactivity policy could not be saved."

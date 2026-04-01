@@ -51,15 +51,15 @@ describe("LoginForm", () => {
     expect(await screen.findByText("Invalid email or password.")).toBeInTheDocument();
   });
 
-  it("shows activation recovery guidance for unverified accounts", async () => {
+  it("uses the same generic failure message for activation-blocked accounts", async () => {
     vi.spyOn(global, "fetch").mockResolvedValue(
       new Response(
         JSON.stringify({
-          message: "Your account is not active yet. Request a new activation email.",
-          code: "ACTIVATION_REQUIRED"
+          message: "Invalid email or password.",
+          code: "INVALID_CREDENTIALS"
         }),
         {
-          status: 403,
+          status: 401,
           headers: { "Content-Type": "application/json" }
         }
       )
@@ -71,13 +71,7 @@ describe("LoginForm", () => {
     fireEvent.change(screen.getByLabelText("Password"), { target: { value: "SecurePass123" } });
     fireEvent.click(screen.getByRole("button", { name: "Login" }));
 
-    expect(
-      await screen.findByText("Your account is not active yet. Request a new activation email.")
-    ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Resend activation email" })).toHaveAttribute(
-      "href",
-      "/en/resend-activation?email=admin%40acme.com"
-    );
+    expect(await screen.findByText("Invalid email or password.")).toBeInTheDocument();
   });
 
   it("redirects after successful login", async () => {

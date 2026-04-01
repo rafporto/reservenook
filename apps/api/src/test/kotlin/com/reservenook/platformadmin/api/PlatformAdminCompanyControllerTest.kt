@@ -30,6 +30,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
@@ -153,6 +154,7 @@ class PlatformAdminCompanyControllerTest(
 
         mockMvc.put("/api/platform-admin/inactivity-policy") {
             this.session = session
+            with(csrf())
             contentType = MediaType.APPLICATION_JSON
             content = objectMapper.writeValueAsString(
                 UpdateInactivityPolicyRequest(
@@ -177,6 +179,7 @@ class PlatformAdminCompanyControllerTest(
 
         mockMvc.put("/api/platform-admin/inactivity-policy") {
             this.session = session
+            with(csrf())
             contentType = MediaType.APPLICATION_JSON
             content = objectMapper.writeValueAsString(
                 UpdateInactivityPolicyRequest(
@@ -188,6 +191,27 @@ class PlatformAdminCompanyControllerTest(
             .andExpect {
                 status { isBadRequest() }
                 jsonPath("$.message") { value("Deletion warning lead time cannot be greater than the inactivity threshold.") }
+            }
+    }
+
+    @Test
+    fun `platform admin update requires csrf token`() {
+        seedPlatformAdmin(email = "platform@reservenook.com", password = "SecurePass123")
+
+        val session = authenticatedPlatformAdminSession(userId = 1L, email = "platform@reservenook.com")
+
+        mockMvc.put("/api/platform-admin/inactivity-policy") {
+            this.session = session
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(
+                UpdateInactivityPolicyRequest(
+                    inactivityThresholdDays = 120,
+                    deletionWarningLeadDays = 21
+                )
+            )
+        }
+            .andExpect {
+                status { isForbidden() }
             }
     }
 

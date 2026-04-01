@@ -13,6 +13,7 @@ import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.CompanyRepository
 import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
+import com.reservenook.security.application.RequestThrottleService
 import io.kotest.matchers.collections.shouldHaveSize
 import io.mockk.justRun
 import io.mockk.verify
@@ -36,7 +37,8 @@ class RequestPasswordResetControllerTest(
     @Autowired private val membershipRepository: CompanyMembershipRepository,
     @Autowired private val subscriptionRepository: CompanySubscriptionRepository,
     @Autowired private val activationTokenRepository: ActivationTokenRepository,
-    @Autowired private val passwordResetTokenRepository: PasswordResetTokenRepository
+    @Autowired private val passwordResetTokenRepository: PasswordResetTokenRepository,
+    @Autowired private val requestThrottleService: RequestThrottleService
 ) {
 
     @MockkBean
@@ -49,6 +51,7 @@ class RequestPasswordResetControllerTest(
     fun cleanDatabase() {
         justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
         justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
+        requestThrottleService.clearAll()
         activationTokenRepository.deleteAll()
         passwordResetTokenRepository.deleteAll()
         membershipRepository.deleteAll()
@@ -93,5 +96,27 @@ class RequestPasswordResetControllerTest(
             }
 
         verify(exactly = 0) { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
+    }
+
+    @Test
+    fun `forgot password endpoint rate limits repeated requests`() {
+        repeat(5) {
+            mockMvc.post("/api/public/auth/forgot-password") {
+                contentType = MediaType.APPLICATION_JSON
+                content = objectMapper.writeValueAsString(RequestPasswordResetRequest("admin@acme.com"))
+            }
+                .andExpect {
+                    status { isOk() }
+                }
+        }
+
+        mockMvc.post("/api/public/auth/forgot-password") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(RequestPasswordResetRequest("admin@acme.com"))
+        }
+            .andExpect {
+                status { isTooManyRequests() }
+                jsonPath("$.message") { value("Too many password reset requests. Please wait and try again.") }
+            }
     }
 }

@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { LogoutButton } from "@/components/app/logout-button";
+import { CsrfTokenError, fetchCsrfToken } from "@/lib/security/csrf";
 
 type CompanyBackofficeData = {
   company: {
@@ -211,13 +212,15 @@ export function CompanyBackofficeScreen({ slug }: CompanyBackofficeScreenProps) 
     setIsSavingProfile(true);
 
     try {
+      const csrfToken = await fetchCsrfToken();
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080"}/api/app/company/${slug}/profile`,
         {
           method: "PUT",
           credentials: "include",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "X-CSRF-TOKEN": csrfToken
           },
           body: JSON.stringify({
             ...profileDraft,
@@ -273,7 +276,12 @@ export function CompanyBackofficeScreen({ slug }: CompanyBackofficeScreenProps) 
         type: "success",
         message: payload.message ?? "Company profile updated."
       });
-    } catch {
+    } catch (error) {
+      if (error instanceof CsrfTokenError && error.status === 401) {
+        router.replace("/en/login");
+        return;
+      }
+
       setProfileFeedback({
         type: "error",
         message: "The company profile could not be saved."

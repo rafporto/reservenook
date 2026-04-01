@@ -19,6 +19,7 @@ import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.CompanyRepository
 import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
+import com.reservenook.security.application.RequestThrottleService
 import io.kotest.matchers.collections.shouldHaveSize
 import io.mockk.justRun
 import io.mockk.verify
@@ -42,7 +43,8 @@ class ResendActivationEmailControllerTest(
     @Autowired private val userAccountRepository: UserAccountRepository,
     @Autowired private val membershipRepository: CompanyMembershipRepository,
     @Autowired private val subscriptionRepository: CompanySubscriptionRepository,
-    @Autowired private val activationTokenRepository: ActivationTokenRepository
+    @Autowired private val activationTokenRepository: ActivationTokenRepository,
+    @Autowired private val requestThrottleService: RequestThrottleService
 ) {
 
     @MockkBean
@@ -54,6 +56,7 @@ class ResendActivationEmailControllerTest(
     @BeforeEach
     fun cleanDatabase() {
         justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
+        requestThrottleService.clearAll()
         activationTokenRepository.deleteAll()
         membershipRepository.deleteAll()
         subscriptionRepository.deleteAll()
@@ -93,6 +96,30 @@ class ResendActivationEmailControllerTest(
             }
 
         verify(exactly = 0) { registrationMailSender.sendActivationEmail(any(), any(), any()) }
+    }
+
+    @Test
+    fun `resend endpoint rate limits repeated requests`() {
+        justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
+
+        repeat(5) {
+            mockMvc.post("/api/public/companies/activation/resend") {
+                contentType = MediaType.APPLICATION_JSON
+                content = objectMapper.writeValueAsString(ResendActivationEmailRequest("missing@acme.com"))
+            }
+                .andExpect {
+                    status { isOk() }
+                }
+        }
+
+        mockMvc.post("/api/public/companies/activation/resend") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(ResendActivationEmailRequest("missing@acme.com"))
+        }
+            .andExpect {
+                status { isTooManyRequests() }
+                jsonPath("$.message") { value("Too many activation email requests. Please wait and try again.") }
+            }
     }
 
     private fun seedPendingCompany(email: String, tokenCreatedAt: Instant) {

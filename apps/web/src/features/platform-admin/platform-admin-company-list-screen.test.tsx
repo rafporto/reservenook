@@ -92,6 +92,13 @@ describe("PlatformAdminCompanyListScreen", () => {
 
   it("validates the policy form before save", async () => {
     const fetchSpy = vi.spyOn(global, "fetch").mockImplementation(async (input, init) => {
+      if (String(input).includes("/api/auth/csrf-token")) {
+        return new Response(JSON.stringify({ token: "csrf-token" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
       if (String(input).includes("/api/platform-admin/inactivity-policy") && init?.method === "PUT") {
         return new Response(
           JSON.stringify({
@@ -146,6 +153,13 @@ describe("PlatformAdminCompanyListScreen", () => {
 
   it("saves a valid policy update", async () => {
     vi.spyOn(global, "fetch").mockImplementation(async (input, init) => {
+      if (String(input).includes("/api/auth/csrf-token")) {
+        return new Response(JSON.stringify({ token: "csrf-token" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
       if (String(input).includes("/api/platform-admin/inactivity-policy") && init?.method === "PUT") {
         return new Response(
           JSON.stringify({
@@ -197,5 +211,9 @@ describe("PlatformAdminCompanyListScreen", () => {
 
     expect(putCall).toBeDefined();
     expect(putCall?.[1]?.body).toBe(JSON.stringify({ inactivityThresholdDays: 120, deletionWarningLeadDays: 21 }));
+    expect(putCall?.[1]?.headers).toEqual({
+      "Content-Type": "application/json",
+      "X-CSRF-TOKEN": "csrf-token"
+    });
   });
 });

@@ -154,6 +154,17 @@ describe("CompanyBackofficeScreen", () => {
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
+            token: "csrf-token"
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
             message: "Company profile updated.",
             company: {
               companyName: "Acme Wellness Studio",
@@ -212,10 +223,14 @@ describe("CompanyBackofficeScreen", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save company profile" }));
 
     await waitFor(() => {
-      expect(fetchSpy).toHaveBeenCalledTimes(2);
+      expect(fetchSpy).toHaveBeenCalledTimes(3);
     });
 
     expect(await screen.findByText("Company profile updated.")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Acme Wellness Studio" })).toBeInTheDocument();
+    expect(fetchSpy.mock.calls[2]?.[1]?.headers).toEqual({
+      "Content-Type": "application/json",
+      "X-CSRF-TOKEN": "csrf-token"
+    });
   });
 });

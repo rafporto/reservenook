@@ -11,6 +11,7 @@ import com.reservenook.registration.domain.UserStatus
 import com.reservenook.registration.infrastructure.ActivationTokenRepository
 import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
+import com.reservenook.security.application.RequestThrottleService
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.justRun
@@ -26,6 +27,7 @@ class ResendActivationEmailServiceTest {
     private val companyMembershipRepository = mockk<CompanyMembershipRepository>()
     private val activationTokenRepository = mockk<ActivationTokenRepository>()
     private val registrationMailSender = mockk<RegistrationMailSender>()
+    private val requestThrottleService = mockk<RequestThrottleService>(relaxed = true)
     private val registrationProperties = RegistrationProperties(
         publicBaseUrl = "http://localhost:3000",
         activationTokenHours = 48,
@@ -37,7 +39,8 @@ class ResendActivationEmailServiceTest {
         companyMembershipRepository = companyMembershipRepository,
         activationTokenRepository = activationTokenRepository,
         registrationMailSender = registrationMailSender,
-        registrationProperties = registrationProperties
+        registrationProperties = registrationProperties,
+        requestThrottleService = requestThrottleService
     )
 
     @Test
@@ -54,7 +57,7 @@ class ResendActivationEmailServiceTest {
         every { activationTokenRepository.save(capture(newTokenSlot)) } answers { firstArg() }
         justRun { registrationMailSender.sendActivationEmail(any(), any(), any()) }
 
-        val result = service.resend("Admin@Acme.com")
+        val result = service.resend("Admin@Acme.com", "127.0.0.1|admin@acme.com")
 
         result.message shouldBe "If the account is pending activation, a new activation email will be sent."
         (existingToken.usedAt != null) shouldBe true
@@ -72,7 +75,7 @@ class ResendActivationEmailServiceTest {
     fun `resend returns neutral response for unknown email`() {
         every { userAccountRepository.findByEmail("unknown@acme.com") } returns null
 
-        val result = service.resend("unknown@acme.com")
+        val result = service.resend("unknown@acme.com", "127.0.0.1|unknown@acme.com")
 
         result.message shouldBe "If the account is pending activation, a new activation email will be sent."
         verify(exactly = 0) { registrationMailSender.sendActivationEmail(any(), any(), any()) }
@@ -88,7 +91,7 @@ class ResendActivationEmailServiceTest {
         every { companyMembershipRepository.findFirstByUserId(2L) } returns membership
         every { activationTokenRepository.findFirstByUserIdOrderByCreatedAtDesc(2L) } returns recentToken
 
-        val result = service.resend("admin@acme.com")
+        val result = service.resend("admin@acme.com", "127.0.0.1|admin@acme.com")
 
         result.message shouldBe "If the account is pending activation, a new activation email will be sent."
         verify(exactly = 0) { activationTokenRepository.save(any()) }

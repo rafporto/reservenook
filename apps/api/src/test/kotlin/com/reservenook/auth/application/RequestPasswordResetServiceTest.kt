@@ -12,6 +12,7 @@ import com.reservenook.registration.domain.UserAccount
 import com.reservenook.registration.domain.UserStatus
 import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
+import com.reservenook.security.application.RequestThrottleService
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.justRun
@@ -27,6 +28,7 @@ class RequestPasswordResetServiceTest {
     private val companyMembershipRepository = mockk<CompanyMembershipRepository>()
     private val passwordResetTokenRepository = mockk<PasswordResetTokenRepository>()
     private val passwordResetMailSender = mockk<PasswordResetMailSender>()
+    private val requestThrottleService = mockk<RequestThrottleService>(relaxed = true)
     private val registrationProperties = RegistrationProperties(
         publicBaseUrl = "http://localhost:3000",
         activationTokenHours = 48,
@@ -40,7 +42,8 @@ class RequestPasswordResetServiceTest {
         companyMembershipRepository = companyMembershipRepository,
         passwordResetTokenRepository = passwordResetTokenRepository,
         passwordResetMailSender = passwordResetMailSender,
-        registrationProperties = registrationProperties
+        registrationProperties = registrationProperties,
+        requestThrottleService = requestThrottleService
     )
 
     @Test
@@ -63,7 +66,7 @@ class RequestPasswordResetServiceTest {
         every { passwordResetTokenRepository.save(capture(tokenSlot)) } answers { firstArg() }
         justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
 
-        val result = service.request("Admin@Acme.com")
+        val result = service.request("Admin@Acme.com", "127.0.0.1|admin@acme.com")
 
         result.message shouldBe "If the account is eligible, a password reset email will be sent."
         (existingToken.usedAt != null) shouldBe true
@@ -81,7 +84,7 @@ class RequestPasswordResetServiceTest {
     fun `request returns neutral response for unknown account`() {
         every { userAccountRepository.findByEmail("missing@acme.com") } returns null
 
-        val result = service.request("missing@acme.com")
+        val result = service.request("missing@acme.com", "127.0.0.1|missing@acme.com")
 
         result.message shouldBe "If the account is eligible, a password reset email will be sent."
         verify(exactly = 0) { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
@@ -103,7 +106,7 @@ class RequestPasswordResetServiceTest {
         every { companyMembershipRepository.findFirstByUserId(2L) } returns membership
         every { passwordResetTokenRepository.findFirstByUserIdOrderByCreatedAtDesc(2L) } returns recentToken
 
-        val result = service.request("admin@acme.com")
+        val result = service.request("admin@acme.com", "127.0.0.1|admin@acme.com")
 
         result.message shouldBe "If the account is eligible, a password reset email will be sent."
         verify(exactly = 0) { passwordResetTokenRepository.save(any()) }

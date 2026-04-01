@@ -463,3 +463,33 @@ At the end of the work, produce:
 - regression tests added
 - residual risks not yet addressed
 - recommended next security improvements
+
+## Implemented Baseline
+
+The first hardening pass is now implemented with automated regression coverage.
+
+Completed controls:
+
+- public auth abuse throttling for login, forgot-password, and resend-activation requests
+- generic login failure handling to reduce account-state enumeration
+- CSRF protection for authenticated state-changing endpoints
+- explicit authenticated CSRF token endpoint for the web client
+- tighter session-cookie defaults with `HttpOnly` and `SameSite=Lax`
+
+Current regression coverage includes:
+
+- repeated failed login attempts are blocked with `429 Too Many Requests`
+- repeated forgot-password requests are blocked with `429 Too Many Requests`
+- repeated resend-activation requests are blocked with `429 Too Many Requests`
+- activation-blocked login attempts return the same generic invalid-credentials response as other login failures
+- authenticated logout requires a valid CSRF token
+- company profile updates require a valid CSRF token
+- platform-admin inactivity-policy updates require a valid CSRF token
+
+Remaining high-priority items for the next pass:
+
+- invalidate active sessions after password reset and other high-risk account changes
+- broaden abuse controls beyond per-email or per-client combinations
+- add security logging and audit coverage for abuse events
+- review browser security headers such as CSP and frame protections
+- extend hardening tests across the remaining Phase 2 configuration surfaces as they are implemented
