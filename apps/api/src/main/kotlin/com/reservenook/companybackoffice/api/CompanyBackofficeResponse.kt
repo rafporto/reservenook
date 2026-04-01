@@ -8,6 +8,10 @@ data class CompanyBackofficeResponse(
     val businessHours: List<CompanyBackofficeBusinessHourSummary>,
     val closureDates: List<CompanyBackofficeClosureDateSummary>,
     val notificationPreferences: CompanyBackofficeNotificationPreferencesSummary,
+    val bookingNotificationTriggers: CompanyBackofficeBookingNotificationTriggersSummary,
+    val customerContacts: List<CompanyBackofficeCustomerContactSummary>,
+    val bookings: List<CompanyBackofficeBookingSummary>,
+    val bookingAudit: List<CompanyBackofficeBookingAuditSummary>,
     val staffUsers: List<CompanyBackofficeStaffUserSummary>,
     val customerQuestions: List<CompanyBackofficeCustomerQuestionSummary>,
     val widgetSettings: CompanyBackofficeWidgetSettingsSummary,
@@ -72,6 +76,50 @@ data class CompanyBackofficeNotificationPreferencesSummary(
     val notifyOnNewBooking: Boolean,
     val notifyOnCancellation: Boolean,
     val notifyDailySummary: Boolean
+)
+
+data class CompanyBackofficeBookingNotificationTriggersSummary(
+    val destinationEmail: String?,
+    val notifyOnNewBooking: Boolean,
+    val notifyOnBookingConfirmed: Boolean,
+    val notifyOnCancellation: Boolean,
+    val notifyOnBookingCompleted: Boolean,
+    val notifyOnBookingNoShow: Boolean
+)
+
+data class CompanyBackofficeCustomerContactSummary(
+    val id: Long,
+    val fullName: String,
+    val email: String,
+    val phone: String?,
+    val preferredLanguage: String?,
+    val notes: String?,
+    val createdAt: String,
+    val updatedAt: String
+)
+
+data class CompanyBackofficeBookingSummary(
+    val id: Long,
+    val customerContactId: Long,
+    val customerName: String,
+    val customerEmail: String,
+    val status: String,
+    val source: String,
+    val requestSummary: String?,
+    val preferredDate: String?,
+    val internalNote: String?,
+    val createdAt: String,
+    val updatedAt: String
+)
+
+data class CompanyBackofficeBookingAuditSummary(
+    val id: Long,
+    val bookingId: Long,
+    val actionType: String,
+    val actorEmail: String?,
+    val outcome: String,
+    val details: String?,
+    val createdAt: String
 )
 
 data class CompanyBackofficeStaffUserSummary(
@@ -176,6 +224,36 @@ data class UpdateCompanyNotificationPreferencesRequest(
     val notifyDailySummary: Boolean
 )
 
+data class UpdateBookingNotificationTriggersRequest(
+    val destinationEmail: String,
+    val notifyOnNewBooking: Boolean,
+    val notifyOnBookingConfirmed: Boolean,
+    val notifyOnCancellation: Boolean,
+    val notifyOnBookingCompleted: Boolean,
+    val notifyOnBookingNoShow: Boolean
+)
+
+data class CreateCustomerContactRequest(
+    val fullName: String,
+    val email: String,
+    val phone: String?,
+    val preferredLanguage: String?,
+    val notes: String?
+)
+
+data class UpdateCustomerContactRequest(
+    val fullName: String,
+    val email: String,
+    val phone: String?,
+    val preferredLanguage: String?,
+    val notes: String?
+)
+
+data class UpdateBookingStatusRequest(
+    val status: String,
+    val internalNote: String?
+)
+
 data class CreateStaffUserRequest(
     val fullName: String,
     val email: String,
@@ -237,6 +315,38 @@ data class UpdateCompanyClosureDatesResponse(
 data class UpdateCompanyNotificationPreferencesResponse(
     val message: String,
     val notificationPreferences: CompanyBackofficeNotificationPreferencesSummary
+)
+
+data class UpdateBookingNotificationTriggersResponse(
+    val message: String,
+    val bookingNotificationTriggers: CompanyBackofficeBookingNotificationTriggersSummary
+)
+
+data class CustomerContactsResponse(
+    val customerContacts: List<CompanyBackofficeCustomerContactSummary>
+)
+
+data class CreateCustomerContactResponse(
+    val message: String,
+    val customerContact: CompanyBackofficeCustomerContactSummary
+)
+
+data class UpdateCustomerContactResponse(
+    val message: String,
+    val customerContact: CompanyBackofficeCustomerContactSummary
+)
+
+data class BookingsResponse(
+    val bookings: List<CompanyBackofficeBookingSummary>
+)
+
+data class UpdateBookingStatusResponse(
+    val message: String,
+    val booking: CompanyBackofficeBookingSummary
+)
+
+data class BookingAuditResponse(
+    val bookingAudit: List<CompanyBackofficeBookingAuditSummary>
 )
 
 data class StaffUsersResponse(

@@ -13,13 +13,17 @@ class CompanyAdminAccessService(
     private val companyMembershipRepository: CompanyMembershipRepository
 ) {
 
-    fun requireCompanyAdmin(principal: AppAuthenticatedUser, requestedSlug: String): CompanyMembership {
+    fun requireCompanyMember(principal: AppAuthenticatedUser, requestedSlug: String): CompanyMembership {
         if (principal.isPlatformAdmin) {
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied.")
         }
 
-        val membership = companyMembershipRepository.findFirstByUserEmailAndCompanySlug(principal.email, requestedSlug)
+        return companyMembershipRepository.findFirstByUserEmailAndCompanySlug(principal.email, requestedSlug)
             ?: throw ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied.")
+    }
+
+    fun requireCompanyAdmin(principal: AppAuthenticatedUser, requestedSlug: String): CompanyMembership {
+        val membership = requireCompanyMember(principal, requestedSlug)
 
         if (membership.role != CompanyRole.COMPANY_ADMIN) {
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied.")

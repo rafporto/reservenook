@@ -34,8 +34,8 @@ The platform is planned as:
 
 ## Current App Scaffolds
 
-- `apps/web` now includes a branded localized public marketing surface, improved auth/onboarding UX, SEO assets such as route metadata, `robots.txt`, and `sitemap.xml`, and the completed Phase 2 tenant backoffice for profile, branding, localization, business hours, closure dates, notification preferences, staff management, customer questions, and widget settings, plus defensive browser headers, a pragmatic Content Security Policy, and optional HSTS support for secure deployments
-- `apps/api` now includes the Phase 1 registration, auth, platform-admin policy, inactive-company lifecycle baseline, inactivity notification wiring, pending-deletion warning flow, automated company deletion, the completed Phase 2 company-configuration endpoints and persistence model, and the current security-hardening baseline for layered public auth throttling with database-backed counters, CSRF-protected authenticated mutations, password-reset and inactive-tenant session revocation, explicit idle and absolute session timeouts, recent-auth protection for sensitive admin changes, defensive browser headers, persisted security audit events, an explicit Content Security Policy, and optional HSTS support for secure deployments
+- `apps/web` now includes a branded localized public marketing surface, improved auth/onboarding UX, SEO assets such as route metadata, `robots.txt`, and `sitemap.xml`, the completed Phase 2 tenant backoffice for profile, branding, localization, business hours, closure dates, notification preferences, staff management, customer questions, and widget settings, and the Phase 3 shared booking baseline for customer contacts, booking history, booking audit visibility, booking trigger management, and a localized public booking-request page, plus defensive browser headers, a pragmatic Content Security Policy, and optional HSTS support for secure deployments
+- `apps/api` now includes the Phase 1 registration, auth, platform-admin policy, inactive-company lifecycle baseline, inactivity notification wiring, pending-deletion warning flow, automated company deletion, the completed Phase 2 company-configuration endpoints and persistence model, the Phase 3 shared booking infrastructure for customer contacts, bookings, booking audit events, booking notification triggers, and public booking intake, and the current security-hardening baseline for layered public auth throttling with database-backed counters, CSRF-protected authenticated mutations, password-reset and inactive-tenant session revocation, explicit idle and absolute session timeouts, recent-auth protection for sensitive admin changes, defensive browser headers, persisted security audit events, an explicit Content Security Policy, and optional HSTS support for secure deployments
 
 ## Local Commands
 
@@ -98,6 +98,7 @@ Useful checks:
 - login page: `http://localhost:3000/en/login`
 - forgot password page: `http://localhost:3000/en/forgot-password`
 - reset password page: `http://localhost:3000/en/reset-password?token=...`
+- public booking page: `http://localhost:3000/en/book/{company-slug}`
 - company backoffice route: `http://localhost:3000/app/company/{slug}`
 - platform admin route: `http://localhost:3000/platform-admin`
 - company backoffice placeholder: `http://localhost:3000/app/company/<company-slug>`
@@ -116,6 +117,13 @@ Useful checks:
 - company business hours endpoint: `PUT http://localhost:8080/api/app/company/{slug}/business-hours`
 - company closure dates endpoint: `PUT http://localhost:8080/api/app/company/{slug}/closure-dates`
 - company notification preferences endpoint: `PUT http://localhost:8080/api/app/company/{slug}/notification-preferences`
+- booking notification triggers endpoint: `PUT http://localhost:8080/api/app/company/{slug}/booking-notification-triggers`
+- customer contacts endpoint: `GET|POST|PUT http://localhost:8080/api/app/company/{slug}/customer-contacts`
+- bookings endpoint: `GET http://localhost:8080/api/app/company/{slug}/bookings`
+- booking status endpoint: `PUT http://localhost:8080/api/app/company/{slug}/bookings/{bookingId}/status`
+- booking audit endpoint: `GET http://localhost:8080/api/app/company/{slug}/booking-audit`
+- public booking config endpoint: `GET http://localhost:8080/api/public/companies/{slug}/booking-intake-config`
+- public booking intake endpoint: `POST http://localhost:8080/api/public/companies/{slug}/booking-intake`
 - company staff list endpoint: `GET http://localhost:8080/api/app/company/{slug}/staff`
 - company staff create endpoint: `POST http://localhost:8080/api/app/company/{slug}/staff`
 - company staff update endpoint: `PUT http://localhost:8080/api/app/company/{slug}/staff/{membershipId}`

@@ -88,6 +88,15 @@ class Company(
     @Column(name = "notify_daily_summary", nullable = false)
     var notifyDailySummary: Boolean = false,
 
+    @Column(name = "notify_on_booking_confirmed", nullable = false)
+    var notifyOnBookingConfirmed: Boolean = true,
+
+    @Column(name = "notify_on_booking_completed", nullable = false)
+    var notifyOnBookingCompleted: Boolean = false,
+
+    @Column(name = "notify_on_booking_no_show", nullable = false)
+    var notifyOnBookingNoShow: Boolean = false,
+
     @Column(name = "widget_cta_label")
     var widgetCtaLabel: String? = null,
 

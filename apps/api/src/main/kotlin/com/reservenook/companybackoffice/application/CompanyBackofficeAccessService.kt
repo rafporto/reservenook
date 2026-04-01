@@ -1,5 +1,8 @@
 package com.reservenook.companybackoffice.application
 
+import com.reservenook.booking.infrastructure.BookingAuditEventRepository
+import com.reservenook.booking.infrastructure.BookingRepository
+import com.reservenook.booking.infrastructure.CustomerContactRepository
 import com.reservenook.auth.application.AppAuthenticatedUser
 import com.reservenook.companybackoffice.api.CompanyBackofficeAreaSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeOperationsSummary
@@ -20,7 +23,10 @@ class CompanyBackofficeAccessService(
     private val companySubscriptionRepository: CompanySubscriptionRepository,
     private val companyBusinessHourRepository: CompanyBusinessHourRepository,
     private val companyClosureDateRepository: CompanyClosureDateRepository,
-    private val companyCustomerQuestionRepository: CompanyCustomerQuestionRepository
+    private val companyCustomerQuestionRepository: CompanyCustomerQuestionRepository,
+    private val customerContactRepository: CustomerContactRepository,
+    private val bookingRepository: BookingRepository,
+    private val bookingAuditEventRepository: BookingAuditEventRepository
 ) {
 
     fun getBackoffice(principal: AppAuthenticatedUser, requestedSlug: String): CompanyBackofficeResponse {
@@ -38,6 +44,10 @@ class CompanyBackofficeAccessService(
             businessHours = companyBusinessHourRepository.findAllByCompanyIdOrderByDayOfWeekAscDisplayOrderAsc(companyId).map { it.toSummary() },
             closureDates = companyClosureDateRepository.findAllByCompanyIdOrderByStartsOnAsc(companyId).map { it.toSummary() },
             notificationPreferences = company.toNotificationPreferencesSummary(),
+            bookingNotificationTriggers = company.toBookingNotificationTriggersSummary(),
+            customerContacts = customerContactRepository.findAllByCompanyIdOrderByCreatedAtAsc(companyId).map { it.toSummary() },
+            bookings = bookingRepository.findAllByCompanyIdOrderByCreatedAtDesc(companyId).map { it.toSummary() },
+            bookingAudit = bookingAuditEventRepository.findAllByCompanyIdOrderByCreatedAtDesc(companyId).map { it.toSummary() },
             staffUsers = allMemberships.sortedBy { it.createdAt }.map { it.toStaffSummary() },
             customerQuestions = companyCustomerQuestionRepository.findAllByCompanyIdOrderByDisplayOrderAsc(companyId).map { it.toSummary() },
             widgetSettings = company.toWidgetSettingsSummary(),
@@ -88,6 +98,30 @@ class CompanyBackofficeAccessService(
                     key = "notifications",
                     title = "Notification preferences",
                     description = "Control which shared operational emails the company wants to receive and where.",
+                    status = "available"
+                ),
+                CompanyBackofficeAreaSummary(
+                    key = "contacts",
+                    title = "Customer contacts",
+                    description = "Manage tenant-owned customer identities before appointment, class, and restaurant modules are introduced.",
+                    status = "available"
+                ),
+                CompanyBackofficeAreaSummary(
+                    key = "bookings",
+                    title = "Booking history",
+                    description = "Review shared booking records and status history in one tenant-safe list.",
+                    status = "available"
+                ),
+                CompanyBackofficeAreaSummary(
+                    key = "booking-triggers",
+                    title = "Booking notification triggers",
+                    description = "Control which booking lifecycle changes send operational notifications.",
+                    status = "available"
+                ),
+                CompanyBackofficeAreaSummary(
+                    key = "booking-audit",
+                    title = "Booking audit trail",
+                    description = "Inspect who changed booking state and when across the shared booking baseline.",
                     status = "available"
                 ),
                 CompanyBackofficeAreaSummary(

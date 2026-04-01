@@ -152,6 +152,17 @@ The implemented Phase 2 baseline adds explicit tenant-owned configuration aggreg
 - widget settings are modeled as tenant-owned embed configuration with domain allow-list validation
 - staff management remains identity-plus-membership based, with `CompanyMembership` carrying the tenant role and the linked `User` carrying credential state
 
+## Phase 3 Shared Booking Aggregates
+
+The implemented Phase 3 baseline adds reusable tenant-owned booking concepts before the specialized appointment, class, and restaurant modules.
+
+- `CustomerContact` stores tenant-owned customer identity, language preference, and operational notes
+- `Booking` stores the shared booking request record with customer linkage, source, status, preferred date, and internal note fields
+- `BookingStatus` is aligned across the shared booking baseline so later modules can reuse the same lifecycle vocabulary
+- `BookingAuditEvent` stores immutable tenant-scoped operational history for booking creation and booking-status changes
+- booking notification triggers live on `Company` and extend the Phase 2 notification-routing baseline with booking-specific event toggles
+- the public booking intake flow reuses tenant customer questions and widget enablement to decide whether anonymous booking requests can be accepted
+
 ### Audit and Compliance
 
 Responsibilities:

@@ -50,14 +50,62 @@ function backofficePayload() {
       notifyOnCancellation: false,
       notifyDailySummary: true
     },
+    bookingNotificationTriggers: {
+      destinationEmail: "alerts@acme.com",
+      notifyOnNewBooking: true,
+      notifyOnBookingConfirmed: true,
+      notifyOnCancellation: false,
+      notifyOnBookingCompleted: false,
+      notifyOnBookingNoShow: false
+    },
+    customerContacts: [
+      {
+        id: 11,
+        fullName: "Alex Guest",
+        email: "alex@example.com",
+        phone: "+49 30 111 2222",
+        preferredLanguage: "en",
+        notes: "Prefers email updates.",
+        createdAt: "2026-03-31T10:00:00Z",
+        updatedAt: "2026-03-31T10:00:00Z"
+      }
+    ],
+    bookings: [
+      {
+        id: 15,
+        customerContactId: 11,
+        customerName: "Alex Guest",
+        customerEmail: "alex@example.com",
+        status: "PENDING",
+        source: "PUBLIC_WEB",
+        requestSummary: "Initial consultation",
+        preferredDate: "2026-04-05",
+        internalNote: null,
+        createdAt: "2026-03-31T10:00:00Z",
+        updatedAt: "2026-03-31T10:00:00Z"
+      }
+    ],
+    bookingAudit: [
+      {
+        id: 21,
+        bookingId: 15,
+        actionType: "BOOKING_CREATED",
+        actorEmail: "alex@example.com",
+        outcome: "SUCCESS",
+        details: "PUBLIC_WEB",
+        createdAt: "2026-03-31T10:00:00Z"
+      }
+    ],
     staffUsers: [
       {
         membershipId: 1,
+        userId: 1,
         fullName: "Admin User",
         email: "admin@acme.com",
         role: "COMPANY_ADMIN",
         status: "ACTIVE",
-        emailVerified: true
+        emailVerified: true,
+        createdAt: "2026-03-31T10:00:00Z"
       }
     ],
     customerQuestions: [
@@ -182,11 +230,13 @@ describe("CompanyBackofficeScreen", () => {
             message: "Staff user created.",
             staffUser: {
               membershipId: 2,
+              userId: 2,
               fullName: "Support Agent",
               email: "staff@acme.com",
               role: "STAFF",
               status: "ACTIVE",
-              emailVerified: true
+              emailVerified: true,
+              createdAt: "2026-03-31T10:00:00Z"
             }
           }),
           { status: 200, headers: { "Content-Type": "application/json" } }

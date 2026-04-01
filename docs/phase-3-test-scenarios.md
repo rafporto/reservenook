@@ -151,3 +151,16 @@ Apply these checks to every public or authenticated Phase 3 endpoint:
 - repeated public submissions are rate-limited
 - input validation does not rely on the client only
 - inactive-tenant and unknown-tenant responses do not leak more information than policy allows
+
+## Current Regression Coverage
+
+The implemented Phase 3 baseline currently includes automated coverage for:
+
+- tenant-scoped customer-contact creation and update through authenticated company routes
+- company-staff access to contact and booking operations, while booking-audit reads remain admin-only
+- booking notification trigger updates with authenticated company-admin access
+- booking status transitions recorded through the protected booking endpoint
+- booking audit visibility through tenant-scoped backoffice routes
+- public booking-config reads for active widget-enabled tenants only
+- public booking-intake creation of tenant-scoped contact, booking, and booking-audit records
+- public booking-intake abuse throttling returning `429 Too Many Requests`

@@ -5,6 +5,15 @@ import com.ninjasquad.springmockk.MockkBean
 import com.reservenook.auth.application.AppAuthenticatedUser
 import com.reservenook.auth.api.LoginRequest
 import com.reservenook.auth.application.PasswordResetMailSender
+import com.reservenook.booking.domain.Booking
+import com.reservenook.booking.domain.BookingAuditActionType
+import com.reservenook.booking.domain.BookingAuditEvent
+import com.reservenook.booking.domain.BookingSource
+import com.reservenook.booking.domain.BookingStatus
+import com.reservenook.booking.domain.CustomerContact
+import com.reservenook.booking.infrastructure.BookingAuditEventRepository
+import com.reservenook.booking.infrastructure.BookingRepository
+import com.reservenook.booking.infrastructure.CustomerContactRepository
 import com.reservenook.registration.application.RegistrationMailSender
 import com.reservenook.registration.domain.BusinessType
 import com.reservenook.registration.domain.Company
@@ -53,6 +62,9 @@ class CompanyBackofficeControllerTest(
     @Autowired private val userAccountRepository: UserAccountRepository,
     @Autowired private val membershipRepository: CompanyMembershipRepository,
     @Autowired private val subscriptionRepository: CompanySubscriptionRepository,
+    @Autowired private val customerContactRepository: CustomerContactRepository,
+    @Autowired private val bookingRepository: BookingRepository,
+    @Autowired private val bookingAuditEventRepository: BookingAuditEventRepository,
     @Autowired private val requestThrottleService: RequestThrottleService,
     @Autowired private val securityAuditEventRepository: SecurityAuditEventRepository,
     @Autowired private val passwordEncoder: PasswordEncoder
@@ -72,6 +84,9 @@ class CompanyBackofficeControllerTest(
         justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
         requestThrottleService.clearAll()
         securityAuditEventRepository.deleteAll()
+        bookingAuditEventRepository.deleteAll()
+        bookingRepository.deleteAll()
+        customerContactRepository.deleteAll()
         membershipRepository.deleteAll()
         subscriptionRepository.deleteAll()
         userAccountRepository.deleteAll()
@@ -396,6 +411,126 @@ class CompanyBackofficeControllerTest(
     }
 
     @Test
+    fun `company admin can manage phase 3 contacts bookings and audit`() {
+        val admin = seedCompanyAdmin(slug = "acme-wellness", email = companyAdminEmail, password = "SecurePass123")
+        val seededBooking = seedBooking("acme-wellness", "Jamie Guest", "jamie@guest.com")
+        val session = loginCompanyAdminSession(companyAdminEmail, "SecurePass123")
+
+        mockMvc.post("/api/app/company/acme-wellness/customer-contacts") {
+            with(csrf().asHeader())
+            this.session = session
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "fullName":"Alex Prospect",
+                  "email":"alex@prospect.com",
+                  "phone":"+49 30 222 3333",
+                  "preferredLanguage":"de",
+                  "notes":"Prefers weekday mornings."
+                }
+            """.trimIndent()
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.customerContact.fullName") { value("Alex Prospect") }
+        }
+
+        val contact = customerContactRepository.findFirstByCompanyIdAndNormalizedEmail(
+            requireNotNull(companyRepository.findBySlug("acme-wellness")?.id),
+            "alex@prospect.com"
+        ) ?: error("Expected saved contact")
+
+        mockMvc.put("/api/app/company/acme-wellness/customer-contacts/${requireNotNull(contact.id)}") {
+            with(csrf().asHeader())
+            this.session = session
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "fullName":"Alex Prospect Updated",
+                  "email":"alex@prospect.com",
+                  "phone":"+49 30 999 8888",
+                  "preferredLanguage":"en",
+                  "notes":"Updated notes."
+                }
+            """.trimIndent()
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.customerContact.fullName") { value("Alex Prospect Updated") }
+        }
+
+        mockMvc.put("/api/app/company/acme-wellness/booking-notification-triggers") {
+            with(csrf().asHeader())
+            this.session = session
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "destinationEmail":"booking-alerts@acme.com",
+                  "notifyOnNewBooking":true,
+                  "notifyOnBookingConfirmed":true,
+                  "notifyOnCancellation":true,
+                  "notifyOnBookingCompleted":true,
+                  "notifyOnBookingNoShow":false
+                }
+            """.trimIndent()
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.bookingNotificationTriggers.notifyOnBookingCompleted") { value(true) }
+        }
+
+        mockMvc.put("/api/app/company/acme-wellness/bookings/${requireNotNull(seededBooking.id)}/status") {
+            with(csrf().asHeader())
+            this.session = session
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = """{"status":"CONFIRMED","internalNote":"Confirmed by front desk."}"""
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.booking.status") { value("CONFIRMED") }
+        }
+
+        mockMvc.get("/api/app/company/acme-wellness/booking-audit") {
+            this.session = session
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.bookingAudit.length()") { value(2) }
+        }
+    }
+
+    @Test
+    fun `company staff can manage contacts and bookings but not booking audit`() {
+        val admin = seedCompanyAdmin(slug = "acme-wellness", email = companyAdminEmail, password = "SecurePass123")
+        val staff = seedCompanyUser(
+            slug = "acme-wellness",
+            email = "staff-phase3@acme.com",
+            password = "SecurePass123",
+            role = CompanyRole.STAFF
+        )
+        val seededBooking = seedBooking("acme-wellness", "Taylor Guest", "taylor@guest.com")
+        val session = authenticatedCompanyStaffSession(requireNotNull(staff.id), "staff-phase3@acme.com", "acme-wellness")
+
+        mockMvc.get("/api/app/company/acme-wellness/customer-contacts") {
+            this.session = session
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.customerContacts.length()") { value(1) }
+        }
+
+        mockMvc.put("/api/app/company/acme-wellness/bookings/${requireNotNull(seededBooking.id)}/status") {
+            with(csrf().asHeader())
+            this.session = session
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = """{"status":"CONFIRMED","internalNote":"Handled by staff."}"""
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.booking.status") { value("CONFIRMED") }
+        }
+
+        mockMvc.get("/api/app/company/acme-wellness/booking-audit") {
+            this.session = session
+        }.andExpect {
+            status { isForbidden() }
+        }
+    }
+
+    @Test
     fun `company staff cannot access admin backoffice routes`() {
         val staff = seedCompanyUser(
             slug = "acme-wellness",
@@ -661,16 +796,17 @@ class CompanyBackofficeControllerTest(
     }
 
     private fun seedCompanyUser(slug: String, email: String, password: String, role: CompanyRole): UserAccount {
-        val company = companyRepository.save(
-            Company(
-                name = slug.split("-").joinToString(" ") { part -> part.replaceFirstChar(Char::titlecase) },
-                businessType = BusinessType.APPOINTMENT,
-                slug = slug,
-                status = CompanyStatus.ACTIVE,
-                defaultLanguage = "en",
-                defaultLocale = "en-US"
+        val company = companyRepository.findBySlug(slug)
+            ?: companyRepository.save(
+                Company(
+                    name = slug.split("-").joinToString(" ") { part -> part.replaceFirstChar(Char::titlecase) },
+                    businessType = BusinessType.APPOINTMENT,
+                    slug = slug,
+                    status = CompanyStatus.ACTIVE,
+                    defaultLanguage = "en",
+                    defaultLocale = "en-US"
+                )
             )
-        )
 
         val user = userAccountRepository.save(
             UserAccount(
@@ -689,15 +825,49 @@ class CompanyBackofficeControllerTest(
             )
         )
 
-        subscriptionRepository.save(
-            CompanySubscription(
-                company = company,
-                planType = PlanType.TRIAL,
-                startsAt = Instant.now(),
-                expiresAt = Instant.now().plusSeconds(604800)
+        if (subscriptionRepository.findFirstByCompanyIdOrderByExpiresAtDesc(requireNotNull(company.id)) == null) {
+            subscriptionRepository.save(
+                CompanySubscription(
+                    company = company,
+                    planType = PlanType.TRIAL,
+                    startsAt = Instant.now(),
+                    expiresAt = Instant.now().plusSeconds(604800)
+                )
             )
-        )
+        }
 
         return user
+    }
+
+    private fun seedBooking(slug: String, fullName: String, email: String): Booking {
+        val company = companyRepository.findBySlug(slug) ?: error("Expected company")
+        val contact = customerContactRepository.save(
+            CustomerContact(
+                company = company,
+                fullName = fullName,
+                email = email,
+                normalizedEmail = email.lowercase()
+            )
+        )
+        val booking = bookingRepository.save(
+            Booking(
+                company = company,
+                customerContact = contact,
+                status = BookingStatus.PENDING,
+                source = BookingSource.PUBLIC_WEB,
+                requestSummary = "Initial request"
+            )
+        )
+        bookingAuditEventRepository.save(
+            BookingAuditEvent(
+                booking = booking,
+                company = company,
+                actionType = BookingAuditActionType.BOOKING_CREATED,
+                actorEmail = email,
+                outcome = com.reservenook.security.domain.SecurityAuditOutcome.SUCCESS,
+                details = "PUBLIC_WEB"
+            )
+        )
+        return booking
     }
 }

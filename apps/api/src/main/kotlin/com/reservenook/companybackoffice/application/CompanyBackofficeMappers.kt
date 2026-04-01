@@ -1,8 +1,12 @@
 package com.reservenook.companybackoffice.application
 
 import com.reservenook.companybackoffice.api.CompanyBackofficeBrandingSummary
+import com.reservenook.companybackoffice.api.CompanyBackofficeBookingAuditSummary
+import com.reservenook.companybackoffice.api.CompanyBackofficeBookingNotificationTriggersSummary
+import com.reservenook.companybackoffice.api.CompanyBackofficeBookingSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeBusinessHourSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeClosureDateSummary
+import com.reservenook.companybackoffice.api.CompanyBackofficeCustomerContactSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeCompanySummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeCustomerQuestionSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeLocalizationSummary
@@ -10,6 +14,9 @@ import com.reservenook.companybackoffice.api.CompanyBackofficeNotificationPrefer
 import com.reservenook.companybackoffice.api.CompanyBackofficeProfileSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeStaffUserSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeWidgetSettingsSummary
+import com.reservenook.booking.domain.Booking
+import com.reservenook.booking.domain.BookingAuditEvent
+import com.reservenook.booking.domain.CustomerContact
 import com.reservenook.companybackoffice.domain.CompanyBusinessHour
 import com.reservenook.companybackoffice.domain.CompanyClosureDate
 import com.reservenook.companybackoffice.domain.CompanyCustomerQuestion
@@ -66,6 +73,15 @@ fun Company.toNotificationPreferencesSummary() = CompanyBackofficeNotificationPr
     notifyDailySummary = notifyDailySummary
 )
 
+fun Company.toBookingNotificationTriggersSummary() = CompanyBackofficeBookingNotificationTriggersSummary(
+    destinationEmail = notificationDestinationEmail,
+    notifyOnNewBooking = notifyOnNewBooking,
+    notifyOnBookingConfirmed = notifyOnBookingConfirmed,
+    notifyOnCancellation = notifyOnCancellation,
+    notifyOnBookingCompleted = notifyOnBookingCompleted,
+    notifyOnBookingNoShow = notifyOnBookingNoShow
+)
+
 fun Company.toWidgetSettingsSummary() = CompanyBackofficeWidgetSettingsSummary(
     ctaLabel = widgetCtaLabel,
     widgetEnabled = widgetEnabled,
@@ -114,5 +130,40 @@ fun CompanyMembership.toStaffSummary() = CompanyBackofficeStaffUserSummary(
     role = role.name,
     status = user.status.name,
     emailVerified = user.emailVerified,
+    createdAt = createdAt.toString()
+)
+
+fun CustomerContact.toSummary() = CompanyBackofficeCustomerContactSummary(
+    id = requireNotNull(id),
+    fullName = fullName,
+    email = email,
+    phone = phone,
+    preferredLanguage = preferredLanguage,
+    notes = notes,
+    createdAt = createdAt.toString(),
+    updatedAt = updatedAt.toString()
+)
+
+fun Booking.toSummary() = CompanyBackofficeBookingSummary(
+    id = requireNotNull(id),
+    customerContactId = requireNotNull(customerContact.id),
+    customerName = customerContact.fullName,
+    customerEmail = customerContact.email,
+    status = status.name,
+    source = source.name,
+    requestSummary = requestSummary,
+    preferredDate = preferredDate?.toString(),
+    internalNote = internalNote,
+    createdAt = createdAt.toString(),
+    updatedAt = updatedAt.toString()
+)
+
+fun BookingAuditEvent.toSummary() = CompanyBackofficeBookingAuditSummary(
+    id = requireNotNull(id),
+    bookingId = requireNotNull(booking.id),
+    actionType = actionType.name,
+    actorEmail = actorEmail,
+    outcome = outcome.name,
+    details = details,
     createdAt = createdAt.toString()
 )
