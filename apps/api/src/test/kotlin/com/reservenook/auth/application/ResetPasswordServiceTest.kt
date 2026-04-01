@@ -34,7 +34,8 @@ class ResetPasswordServiceTest {
             email = "admin@acme.com",
             passwordHash = "old-hash",
             status = UserStatus.ACTIVE,
-            emailVerified = true
+            emailVerified = true,
+            passwordVersion = 0
         )
         val token = PasswordResetToken(
             id = 20L,
@@ -52,6 +53,7 @@ class ResetPasswordServiceTest {
 
         result.redirectTo shouldBe "/en/login"
         user.passwordHash shouldBe "new-hash"
+        user.passwordVersion shouldBe 1
         (token.usedAt != null) shouldBe true
         verify(exactly = 1) { passwordEncoder.encode("NewSecurePass123") }
     }
@@ -74,7 +76,8 @@ class ResetPasswordServiceTest {
             email = "admin@acme.com",
             passwordHash = "old-hash",
             status = UserStatus.ACTIVE,
-            emailVerified = true
+            emailVerified = true,
+            passwordVersion = 0
         )
         val token = PasswordResetToken(
             id = 20L,
@@ -98,7 +101,8 @@ class ResetPasswordServiceTest {
             email = "admin@acme.com",
             passwordHash = "old-hash",
             status = UserStatus.ACTIVE,
-            emailVerified = true
+            emailVerified = true,
+            passwordVersion = 0
         )
         val currentToken = PasswordResetToken(
             id = 20L,

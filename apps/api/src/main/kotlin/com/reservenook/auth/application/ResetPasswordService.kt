@@ -39,6 +39,7 @@ class ResetPasswordService(
             }
 
         user.passwordHash = passwordEncoder.encode(password)
+        user.passwordVersion += 1
         resetToken.usedAt = now
 
         passwordResetTokenRepository.findAllByUserIdAndUsedAtIsNull(requireNotNull(user.id))

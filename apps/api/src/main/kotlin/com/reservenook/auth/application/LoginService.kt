@@ -56,7 +56,8 @@ class LoginService(
                 authenticatedUser = AppAuthenticatedUser(
                     userId = requireNotNull(user.id),
                     email = user.email,
-                    isPlatformAdmin = true
+                    isPlatformAdmin = true,
+                    passwordVersion = user.passwordVersion
                 ),
                 redirectTo = "/platform-admin"
             )
@@ -78,7 +79,8 @@ class LoginService(
                     userId = requireNotNull(user.id),
                     email = user.email,
                     isPlatformAdmin = false,
-                    companySlug = membership.company.slug
+                    companySlug = membership.company.slug,
+                    passwordVersion = user.passwordVersion
                 ),
                 redirectTo = "/app/company/${membership.company.slug}"
             )

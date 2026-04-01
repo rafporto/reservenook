@@ -1,5 +1,6 @@
 package com.reservenook.config
 
+import com.reservenook.security.application.SessionCredentialVersionFilter
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.context.annotation.Bean
@@ -10,6 +11,7 @@ import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.authentication.HttpStatusEntryPoint
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.authentication.AnonymousAuthenticationFilter
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
@@ -18,7 +20,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 @Configuration
 class SecurityConfiguration(
     @Value("\${NEXT_PUBLIC_APP_URL:http://localhost:3000}")
-    private val frontendOrigin: String
+    private val frontendOrigin: String,
+    private val sessionCredentialVersionFilter: SessionCredentialVersionFilter
 ) {
 
     @Bean
@@ -35,6 +38,7 @@ class SecurityConfiguration(
                 it.requestMatchers("/actuator/health", "/api/public/**").permitAll()
                     .anyRequest().authenticated()
             }
+            .addFilterAfter(sessionCredentialVersionFilter, AnonymousAuthenticationFilter::class.java)
             .httpBasic { it.disable() }
             .formLogin { it.disable() }
 

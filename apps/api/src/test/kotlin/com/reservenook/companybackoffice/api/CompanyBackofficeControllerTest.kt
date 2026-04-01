@@ -65,7 +65,7 @@ class CompanyBackofficeControllerTest(
 
     @Test
     fun `company admin can access own tenant backoffice`() {
-        seedCompanyAdmin(
+        val admin = seedCompanyAdmin(
             slug = "acme-wellness",
             email = "admin@acme.com",
             password = "SecurePass123"
@@ -74,7 +74,11 @@ class CompanyBackofficeControllerTest(
         company.contactEmail = "hello@acme.com"
         companyRepository.save(company)
 
-        val session = authenticatedCompanyAdminSession(userId = 1L, email = "admin@acme.com", companySlug = "acme-wellness")
+        val session = authenticatedCompanyAdminSession(
+            userId = requireNotNull(admin.id),
+            email = "admin@acme.com",
+            companySlug = "acme-wellness"
+        )
 
         mockMvc.get("/api/app/company/acme-wellness/backoffice") {
             this.session = session
@@ -94,7 +98,7 @@ class CompanyBackofficeControllerTest(
 
     @Test
     fun `company admin can update own tenant profile`() {
-        seedCompanyAdmin(
+        val admin = seedCompanyAdmin(
             slug = "acme-wellness",
             email = "admin@acme.com",
             password = "SecurePass123"
@@ -109,7 +113,11 @@ class CompanyBackofficeControllerTest(
         company.countryCode = "DE"
         companyRepository.save(company)
 
-        val session = authenticatedCompanyAdminSession(userId = 1L, email = "admin@acme.com", companySlug = "acme-wellness")
+        val session = authenticatedCompanyAdminSession(
+            userId = requireNotNull(admin.id),
+            email = "admin@acme.com",
+            companySlug = "acme-wellness"
+        )
 
         mockMvc.put("/api/app/company/acme-wellness/profile") {
             this.session = session
@@ -140,7 +148,7 @@ class CompanyBackofficeControllerTest(
 
     @Test
     fun `company admin cannot update another tenant profile`() {
-        seedCompanyAdmin(
+        val admin = seedCompanyAdmin(
             slug = "acme-wellness",
             email = "admin@acme.com",
             password = "SecurePass123"
@@ -151,7 +159,11 @@ class CompanyBackofficeControllerTest(
             password = "SecurePass123"
         )
 
-        val session = authenticatedCompanyAdminSession(userId = 1L, email = "admin@acme.com", companySlug = "acme-wellness")
+        val session = authenticatedCompanyAdminSession(
+            userId = requireNotNull(admin.id),
+            email = "admin@acme.com",
+            companySlug = "acme-wellness"
+        )
 
         mockMvc.put("/api/app/company/other-company/profile") {
             this.session = session
@@ -178,13 +190,17 @@ class CompanyBackofficeControllerTest(
 
     @Test
     fun `company profile update requires csrf token`() {
-        seedCompanyAdmin(
+        val admin = seedCompanyAdmin(
             slug = "acme-wellness",
             email = "admin@acme.com",
             password = "SecurePass123"
         )
 
-        val session = authenticatedCompanyAdminSession(userId = 1L, email = "admin@acme.com", companySlug = "acme-wellness")
+        val session = authenticatedCompanyAdminSession(
+            userId = requireNotNull(admin.id),
+            email = "admin@acme.com",
+            companySlug = "acme-wellness"
+        )
 
         mockMvc.put("/api/app/company/acme-wellness/profile") {
             this.session = session
@@ -210,7 +226,7 @@ class CompanyBackofficeControllerTest(
 
     @Test
     fun `company admin cannot access another tenant backoffice`() {
-        seedCompanyAdmin(
+        val admin = seedCompanyAdmin(
             slug = "acme-wellness",
             email = "admin@acme.com",
             password = "SecurePass123"
@@ -221,7 +237,11 @@ class CompanyBackofficeControllerTest(
             password = "SecurePass123"
         )
 
-        val session = authenticatedCompanyAdminSession(userId = 1L, email = "admin@acme.com", companySlug = "acme-wellness")
+        val session = authenticatedCompanyAdminSession(
+            userId = requireNotNull(admin.id),
+            email = "admin@acme.com",
+            companySlug = "acme-wellness"
+        )
 
         mockMvc.get("/api/app/company/other-company/backoffice") {
             this.session = session
@@ -259,7 +279,7 @@ class CompanyBackofficeControllerTest(
         }
     }
 
-    private fun seedCompanyAdmin(slug: String, email: String, password: String) {
+    private fun seedCompanyAdmin(slug: String, email: String, password: String): UserAccount {
         val company = companyRepository.save(
             Company(
                 name = slug.split("-").joinToString(" ") { part -> part.replaceFirstChar(Char::titlecase) },
@@ -296,5 +316,7 @@ class CompanyBackofficeControllerTest(
                 expiresAt = Instant.now().plusSeconds(604800)
             )
         )
+
+        return user
     }
 }

@@ -33,6 +33,9 @@ class UserAccount(
     @Column(name = "is_platform_admin", nullable = false)
     var isPlatformAdmin: Boolean = false,
 
+    @Column(name = "password_version", nullable = false)
+    var passwordVersion: Int = 0,
+
     @Column(name = "created_at", nullable = false)
     var createdAt: Instant = Instant.now()
 )

@@ -6,6 +6,13 @@ import com.reservenook.auth.application.PasswordResetMailSender
 import com.reservenook.auth.domain.PasswordResetToken
 import com.reservenook.auth.infrastructure.PasswordResetTokenRepository
 import com.reservenook.registration.application.RegistrationMailSender
+import com.reservenook.registration.domain.BusinessType
+import com.reservenook.registration.domain.Company
+import com.reservenook.registration.domain.CompanyMembership
+import com.reservenook.registration.domain.CompanyRole
+import com.reservenook.registration.domain.CompanyStatus
+import com.reservenook.registration.domain.CompanySubscription
+import com.reservenook.registration.domain.PlanType
 import com.reservenook.registration.domain.UserAccount
 import com.reservenook.registration.domain.UserStatus
 import com.reservenook.registration.infrastructure.ActivationTokenRepository
@@ -22,7 +29,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
+import org.springframework.mock.web.MockHttpSession
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
 import java.time.Instant
@@ -96,6 +105,113 @@ class ResetPasswordControllerTest(
         val updatedUser = userAccountRepository.findByEmail("admin@acme.com")!!
         passwordEncoder.matches("NewSecurePass123", updatedUser.passwordHash) shouldBe true
         passwordResetTokenRepository.findByToken("valid-token")!!.usedAt.shouldNotBeNull()
+    }
+
+    @Test
+    fun `reset password revokes authenticated sessions created before the password change`() {
+        val company = companyRepository.save(
+            Company(
+                name = "Acme Wellness",
+                businessType = BusinessType.APPOINTMENT,
+                slug = "acme-wellness",
+                status = CompanyStatus.ACTIVE,
+                defaultLanguage = "en",
+                defaultLocale = "en-US"
+            )
+        )
+        val user = userAccountRepository.save(
+            UserAccount(
+                email = "admin@acme.com",
+                passwordHash = passwordEncoder.encode("OldSecurePass123"),
+                status = UserStatus.ACTIVE,
+                emailVerified = true
+            )
+        )
+        membershipRepository.save(
+            CompanyMembership(
+                company = company,
+                user = user,
+                role = CompanyRole.COMPANY_ADMIN
+            )
+        )
+        subscriptionRepository.save(
+            CompanySubscription(
+                company = company,
+                planType = PlanType.TRIAL,
+                startsAt = Instant.now(),
+                expiresAt = Instant.now().plus(2, ChronoUnit.DAYS)
+            )
+        )
+        val token = passwordResetTokenRepository.save(
+            PasswordResetToken(
+                token = "valid-token",
+                user = user,
+                expiresAt = Instant.now().plus(2, ChronoUnit.HOURS)
+            )
+        )
+
+        val loginResult = mockMvc.post("/api/public/auth/login") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(
+                LoginRequest(
+                    email = "admin@acme.com",
+                    password = "OldSecurePass123"
+                )
+            )
+        }
+            .andExpect {
+                status { isOk() }
+            }
+            .andReturn()
+
+        val session = loginResult.request.session as MockHttpSession
+
+        mockMvc.post("/api/public/auth/reset-password") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(
+                ResetPasswordRequest(
+                    token = token.token,
+                    password = "NewSecurePass123"
+                )
+            )
+        }
+            .andExpect {
+                status { isOk() }
+            }
+
+        mockMvc.get("/api/auth/session") {
+            this.session = session
+        }
+            .andExpect {
+                status { isUnauthorized() }
+            }
+
+        mockMvc.post("/api/public/auth/login") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(
+                LoginRequest(
+                    email = "admin@acme.com",
+                    password = "OldSecurePass123"
+                )
+            )
+        }
+            .andExpect {
+                status { isUnauthorized() }
+            }
+
+        mockMvc.post("/api/public/auth/login") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(
+                LoginRequest(
+                    email = "admin@acme.com",
+                    password = "NewSecurePass123"
+                )
+            )
+        }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.redirectTo") { value("/app/company/acme-wellness") }
+            }
     }
 
     @Test

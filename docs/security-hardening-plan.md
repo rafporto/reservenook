@@ -475,6 +475,7 @@ Completed controls:
 - CSRF protection for authenticated state-changing endpoints
 - explicit authenticated CSRF token endpoint for the web client
 - tighter session-cookie defaults with `HttpOnly` and `SameSite=Lax`
+- password-reset-driven session revocation through credential-version checks on authenticated requests
 
 Current regression coverage includes:
 
@@ -485,10 +486,12 @@ Current regression coverage includes:
 - authenticated logout requires a valid CSRF token
 - company profile updates require a valid CSRF token
 - platform-admin inactivity-policy updates require a valid CSRF token
+- password reset revokes authenticated sessions created before the password change
+- old passwords fail after reset while the new password remains valid
 
 Remaining high-priority items for the next pass:
 
-- invalidate active sessions after password reset and other high-risk account changes
+- invalidate active sessions after other high-risk account changes beyond password reset
 - broaden abuse controls beyond per-email or per-client combinations
 - add security logging and audit coverage for abuse events
 - review browser security headers such as CSP and frame protections

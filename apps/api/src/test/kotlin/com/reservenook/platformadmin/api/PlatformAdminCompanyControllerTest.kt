@@ -92,9 +92,12 @@ class PlatformAdminCompanyControllerTest(
             planType = PlanType.PAID,
             expiresAt = Instant.parse("2027-03-20T00:00:00Z")
         )
-        seedPlatformAdmin(email = "platform@reservenook.com", password = "SecurePass123")
+        val platformAdmin = seedPlatformAdmin(email = "platform@reservenook.com", password = "SecurePass123")
 
-        val session = authenticatedPlatformAdminSession(userId = 1L, email = "platform@reservenook.com")
+        val session = authenticatedPlatformAdminSession(
+            userId = requireNotNull(platformAdmin.id),
+            email = "platform@reservenook.com"
+        )
 
         mockMvc.get("/api/platform-admin/companies") {
             this.session = session
@@ -118,9 +121,13 @@ class PlatformAdminCompanyControllerTest(
             planType = PlanType.TRIAL,
             expiresAt = Instant.parse("2026-04-05T00:00:00Z")
         )
-        seedCompanyAdmin(email = "admin@acme.com", password = "SecurePass123", slug = "acme-wellness")
+        val companyAdmin = seedCompanyAdmin(email = "admin@acme.com", password = "SecurePass123", slug = "acme-wellness")
 
-        val session = authenticatedCompanyAdminSession(userId = 2L, email = "admin@acme.com", companySlug = "acme-wellness")
+        val session = authenticatedCompanyAdminSession(
+            userId = requireNotNull(companyAdmin.id),
+            email = "admin@acme.com",
+            companySlug = "acme-wellness"
+        )
 
         mockMvc.get("/api/platform-admin/companies") {
             this.session = session
@@ -132,9 +139,12 @@ class PlatformAdminCompanyControllerTest(
 
     @Test
     fun `platform admin receives current inactivity policy`() {
-        seedPlatformAdmin(email = "platform@reservenook.com", password = "SecurePass123")
+        val platformAdmin = seedPlatformAdmin(email = "platform@reservenook.com", password = "SecurePass123")
 
-        val session = authenticatedPlatformAdminSession(userId = 1L, email = "platform@reservenook.com")
+        val session = authenticatedPlatformAdminSession(
+            userId = requireNotNull(platformAdmin.id),
+            email = "platform@reservenook.com"
+        )
 
         mockMvc.get("/api/platform-admin/inactivity-policy") {
             this.session = session
@@ -148,9 +158,12 @@ class PlatformAdminCompanyControllerTest(
 
     @Test
     fun `platform admin updates inactivity policy`() {
-        seedPlatformAdmin(email = "platform@reservenook.com", password = "SecurePass123")
+        val platformAdmin = seedPlatformAdmin(email = "platform@reservenook.com", password = "SecurePass123")
 
-        val session = authenticatedPlatformAdminSession(userId = 1L, email = "platform@reservenook.com")
+        val session = authenticatedPlatformAdminSession(
+            userId = requireNotNull(platformAdmin.id),
+            email = "platform@reservenook.com"
+        )
 
         mockMvc.put("/api/platform-admin/inactivity-policy") {
             this.session = session
@@ -173,9 +186,12 @@ class PlatformAdminCompanyControllerTest(
 
     @Test
     fun `invalid inactivity policy update is rejected`() {
-        seedPlatformAdmin(email = "platform@reservenook.com", password = "SecurePass123")
+        val platformAdmin = seedPlatformAdmin(email = "platform@reservenook.com", password = "SecurePass123")
 
-        val session = authenticatedPlatformAdminSession(userId = 1L, email = "platform@reservenook.com")
+        val session = authenticatedPlatformAdminSession(
+            userId = requireNotNull(platformAdmin.id),
+            email = "platform@reservenook.com"
+        )
 
         mockMvc.put("/api/platform-admin/inactivity-policy") {
             this.session = session
@@ -196,9 +212,12 @@ class PlatformAdminCompanyControllerTest(
 
     @Test
     fun `platform admin update requires csrf token`() {
-        seedPlatformAdmin(email = "platform@reservenook.com", password = "SecurePass123")
+        val platformAdmin = seedPlatformAdmin(email = "platform@reservenook.com", password = "SecurePass123")
 
-        val session = authenticatedPlatformAdminSession(userId = 1L, email = "platform@reservenook.com")
+        val session = authenticatedPlatformAdminSession(
+            userId = requireNotNull(platformAdmin.id),
+            email = "platform@reservenook.com"
+        )
 
         mockMvc.put("/api/platform-admin/inactivity-policy") {
             this.session = session
@@ -254,8 +273,8 @@ class PlatformAdminCompanyControllerTest(
         }
     }
 
-    private fun seedPlatformAdmin(email: String, password: String) {
-        userAccountRepository.save(
+    private fun seedPlatformAdmin(email: String, password: String): UserAccount {
+        return userAccountRepository.save(
             UserAccount(
                 email = email,
                 passwordHash = passwordEncoder.encode(password),
@@ -266,7 +285,7 @@ class PlatformAdminCompanyControllerTest(
         )
     }
 
-    private fun seedCompanyAdmin(email: String, password: String, slug: String) {
+    private fun seedCompanyAdmin(email: String, password: String, slug: String): UserAccount {
         val company = companyRepository.findAll().first { it.slug == slug }
         val user = userAccountRepository.save(
             UserAccount(
@@ -284,6 +303,8 @@ class PlatformAdminCompanyControllerTest(
                 role = CompanyRole.COMPANY_ADMIN
             )
         )
+
+        return user
     }
 
     private fun seedCompany(
