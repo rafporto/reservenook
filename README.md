@@ -151,6 +151,18 @@ Project decisions and planning are documented in:
 - [docs/phase-1-test-scenarios.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-1-test-scenarios.md)
 - [docs/phase-2-use-cases.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-2-use-cases.md)
 - [docs/phase-2-test-scenarios.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-2-test-scenarios.md)
+- [docs/phase-3-use-cases.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-3-use-cases.md)
+- [docs/phase-3-test-scenarios.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-3-test-scenarios.md)
+- [docs/phase-4-use-cases.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-4-use-cases.md)
+- [docs/phase-4-test-scenarios.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-4-test-scenarios.md)
+- [docs/phase-5-use-cases.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-5-use-cases.md)
+- [docs/phase-5-test-scenarios.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-5-test-scenarios.md)
+- [docs/phase-6-use-cases.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-6-use-cases.md)
+- [docs/phase-6-test-scenarios.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-6-test-scenarios.md)
+- [docs/phase-7-use-cases.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-7-use-cases.md)
+- [docs/phase-7-test-scenarios.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-7-test-scenarios.md)
+- [docs/phase-8-use-cases.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-8-use-cases.md)
+- [docs/phase-8-test-scenarios.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-8-test-scenarios.md)
 - [docs/security-hardening-plan.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\security-hardening-plan.md)
 
 ## Working Rule
