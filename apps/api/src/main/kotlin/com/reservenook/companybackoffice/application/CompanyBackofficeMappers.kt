@@ -4,6 +4,8 @@ import com.reservenook.companybackoffice.api.CompanyBackofficeBrandingSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeBookingAuditSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeBookingNotificationTriggersSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeBookingSummary
+import com.reservenook.companybackoffice.api.CompanyBackofficeAppointmentProviderSummary
+import com.reservenook.companybackoffice.api.CompanyBackofficeAppointmentServiceSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeBusinessHourSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeClosureDateSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeCustomerContactSummary
@@ -12,8 +14,13 @@ import com.reservenook.companybackoffice.api.CompanyBackofficeCustomerQuestionSu
 import com.reservenook.companybackoffice.api.CompanyBackofficeLocalizationSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeNotificationPreferencesSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeProfileSummary
+import com.reservenook.companybackoffice.api.CompanyBackofficeProviderAvailabilitySummary
+import com.reservenook.companybackoffice.api.CompanyBackofficeProviderScheduleSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeStaffUserSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeWidgetSettingsSummary
+import com.reservenook.appointment.domain.AppointmentProvider
+import com.reservenook.appointment.domain.AppointmentProviderAvailability
+import com.reservenook.appointment.domain.AppointmentService
 import com.reservenook.booking.domain.Booking
 import com.reservenook.booking.domain.BookingAuditEvent
 import com.reservenook.booking.domain.CustomerContact
@@ -166,4 +173,36 @@ fun BookingAuditEvent.toSummary() = CompanyBackofficeBookingAuditSummary(
     outcome = outcome.name,
     details = details,
     createdAt = createdAt.toString()
+)
+
+fun AppointmentService.toSummary() = CompanyBackofficeAppointmentServiceSummary(
+    id = requireNotNull(id),
+    name = name,
+    description = description,
+    durationMinutes = durationMinutes,
+    bufferMinutes = bufferMinutes,
+    priceLabel = priceLabel,
+    enabled = enabled,
+    autoConfirm = autoConfirm
+)
+
+fun AppointmentProvider.toSummary() = CompanyBackofficeAppointmentProviderSummary(
+    id = requireNotNull(id),
+    linkedUserId = linkedUser?.id,
+    displayName = displayName,
+    email = email,
+    active = active
+)
+
+fun AppointmentProviderAvailability.toSummary() = CompanyBackofficeProviderAvailabilitySummary(
+    dayOfWeek = dayOfWeek.name,
+    opensAt = opensAt.toString(),
+    closesAt = closesAt.toString(),
+    displayOrder = displayOrder
+)
+
+fun AppointmentProvider.toScheduleSummary(availability: List<AppointmentProviderAvailability>) = CompanyBackofficeProviderScheduleSummary(
+    providerId = requireNotNull(id),
+    providerName = displayName,
+    availability = availability.sortedWith(compareBy<AppointmentProviderAvailability> { it.dayOfWeek.ordinal }.thenBy { it.displayOrder }).map { it.toSummary() }
 )

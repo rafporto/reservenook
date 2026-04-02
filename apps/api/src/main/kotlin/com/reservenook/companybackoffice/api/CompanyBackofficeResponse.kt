@@ -12,6 +12,9 @@ data class CompanyBackofficeResponse(
     val customerContacts: List<CompanyBackofficeCustomerContactSummary>,
     val bookings: List<CompanyBackofficeBookingSummary>,
     val bookingAudit: List<CompanyBackofficeBookingAuditSummary>,
+    val appointmentServices: List<CompanyBackofficeAppointmentServiceSummary>,
+    val appointmentProviders: List<CompanyBackofficeAppointmentProviderSummary>,
+    val providerSchedules: List<CompanyBackofficeProviderScheduleSummary>,
     val staffUsers: List<CompanyBackofficeStaffUserSummary>,
     val customerQuestions: List<CompanyBackofficeCustomerQuestionSummary>,
     val widgetSettings: CompanyBackofficeWidgetSettingsSummary,
@@ -120,6 +123,38 @@ data class CompanyBackofficeBookingAuditSummary(
     val outcome: String,
     val details: String?,
     val createdAt: String
+)
+
+data class CompanyBackofficeAppointmentServiceSummary(
+    val id: Long,
+    val name: String,
+    val description: String?,
+    val durationMinutes: Int,
+    val bufferMinutes: Int,
+    val priceLabel: String?,
+    val enabled: Boolean,
+    val autoConfirm: Boolean
+)
+
+data class CompanyBackofficeAppointmentProviderSummary(
+    val id: Long,
+    val linkedUserId: Long?,
+    val displayName: String,
+    val email: String?,
+    val active: Boolean
+)
+
+data class CompanyBackofficeProviderAvailabilitySummary(
+    val dayOfWeek: String,
+    val opensAt: String,
+    val closesAt: String,
+    val displayOrder: Int
+)
+
+data class CompanyBackofficeProviderScheduleSummary(
+    val providerId: Long,
+    val providerName: String,
+    val availability: List<CompanyBackofficeProviderAvailabilitySummary>
 )
 
 data class CompanyBackofficeStaffUserSummary(
@@ -254,6 +289,34 @@ data class UpdateBookingStatusRequest(
     val internalNote: String?
 )
 
+data class UpsertAppointmentServiceRequest(
+    val name: String,
+    val description: String?,
+    val durationMinutes: Int,
+    val bufferMinutes: Int,
+    val priceLabel: String?,
+    val enabled: Boolean,
+    val autoConfirm: Boolean
+)
+
+data class UpsertAppointmentProviderRequest(
+    val linkedUserId: Long?,
+    val displayName: String,
+    val email: String?,
+    val active: Boolean
+)
+
+data class UpdateAppointmentProviderAvailabilityRequest(
+    val entries: List<UpdateAppointmentProviderAvailabilityEntryRequest>
+)
+
+data class UpdateAppointmentProviderAvailabilityEntryRequest(
+    val dayOfWeek: String,
+    val opensAt: String,
+    val closesAt: String,
+    val displayOrder: Int
+)
+
 data class CreateStaffUserRequest(
     val fullName: String,
     val email: String,
@@ -347,6 +410,30 @@ data class UpdateBookingStatusResponse(
 
 data class BookingAuditResponse(
     val bookingAudit: List<CompanyBackofficeBookingAuditSummary>
+)
+
+data class AppointmentServicesResponse(
+    val appointmentServices: List<CompanyBackofficeAppointmentServiceSummary>
+)
+
+data class UpsertAppointmentServiceResponse(
+    val message: String,
+    val appointmentService: CompanyBackofficeAppointmentServiceSummary
+)
+
+data class AppointmentProvidersResponse(
+    val appointmentProviders: List<CompanyBackofficeAppointmentProviderSummary>,
+    val providerSchedules: List<CompanyBackofficeProviderScheduleSummary>
+)
+
+data class UpsertAppointmentProviderResponse(
+    val message: String,
+    val appointmentProvider: CompanyBackofficeAppointmentProviderSummary
+)
+
+data class UpdateAppointmentProviderAvailabilityResponse(
+    val message: String,
+    val providerSchedule: CompanyBackofficeProviderScheduleSummary
 )
 
 data class StaffUsersResponse(

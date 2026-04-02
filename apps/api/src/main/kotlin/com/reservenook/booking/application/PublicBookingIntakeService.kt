@@ -1,5 +1,7 @@
 package com.reservenook.booking.application
 
+import com.reservenook.appointment.infrastructure.AppointmentServiceRepository
+import com.reservenook.booking.api.PublicAppointmentServiceSummary
 import com.reservenook.booking.api.PublicBookingIntakeConfigResponse
 import com.reservenook.booking.api.PublicBookingQuestionSummary
 import com.reservenook.booking.api.SubmitPublicBookingIntakeRequest
@@ -21,6 +23,7 @@ import org.springframework.web.server.ResponseStatusException
 class PublicBookingIntakeService(
     private val companyRepository: CompanyRepository,
     private val companyCustomerQuestionRepository: CompanyCustomerQuestionRepository,
+    private val appointmentServiceRepository: AppointmentServiceRepository,
     private val bookingInfrastructureService: BookingInfrastructureService,
     private val publicRequestAbuseGuard: PublicRequestAbuseGuard,
     private val securityAuditService: SecurityAuditService
@@ -32,6 +35,7 @@ class PublicBookingIntakeService(
         return PublicBookingIntakeConfigResponse(
             companyName = company.name,
             companySlug = company.slug,
+            businessType = company.businessType.name,
             displayName = company.brandDisplayName ?: company.name,
             defaultLanguage = company.defaultLanguage,
             defaultLocale = company.defaultLocale,
@@ -45,6 +49,17 @@ class PublicBookingIntakeService(
                         questionType = it.questionType.name,
                         required = it.required,
                         options = it.optionsText?.split("\n")?.map(String::trim)?.filter(String::isNotBlank) ?: emptyList()
+                    )
+                },
+            appointmentServices = appointmentServiceRepository.findAllByCompanyIdOrderByCreatedAtAsc(requireNotNull(company.id))
+                .filter { it.enabled }
+                .map {
+                    PublicAppointmentServiceSummary(
+                        id = requireNotNull(it.id),
+                        name = it.name,
+                        description = it.description,
+                        durationMinutes = it.durationMinutes,
+                        priceLabel = it.priceLabel
                     )
                 }
         )

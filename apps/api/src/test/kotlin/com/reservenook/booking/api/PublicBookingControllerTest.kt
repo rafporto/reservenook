@@ -1,10 +1,18 @@
 package com.reservenook.booking.api
 
 import com.ninjasquad.springmockk.MockkBean
+import com.reservenook.appointment.domain.AppointmentProvider
+import com.reservenook.appointment.domain.AppointmentProviderAvailability
+import com.reservenook.appointment.domain.AppointmentService
+import com.reservenook.appointment.infrastructure.AppointmentBookingRepository
+import com.reservenook.appointment.infrastructure.AppointmentProviderAvailabilityRepository
+import com.reservenook.appointment.infrastructure.AppointmentProviderRepository
+import com.reservenook.appointment.infrastructure.AppointmentServiceRepository
 import com.reservenook.auth.application.PasswordResetMailSender
 import com.reservenook.booking.infrastructure.BookingAuditEventRepository
 import com.reservenook.booking.infrastructure.BookingRepository
 import com.reservenook.booking.infrastructure.CustomerContactRepository
+import com.reservenook.companybackoffice.domain.BusinessDay
 import com.reservenook.companybackoffice.domain.CompanyCustomerQuestion
 import com.reservenook.companybackoffice.domain.CustomerQuestionType
 import com.reservenook.companybackoffice.infrastructure.CompanyCustomerQuestionRepository
@@ -24,6 +32,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
+import java.time.LocalTime
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -34,6 +43,10 @@ class PublicBookingControllerTest(
     @Autowired private val customerContactRepository: CustomerContactRepository,
     @Autowired private val bookingRepository: BookingRepository,
     @Autowired private val bookingAuditEventRepository: BookingAuditEventRepository,
+    @Autowired private val appointmentBookingRepository: AppointmentBookingRepository,
+    @Autowired private val appointmentServiceRepository: AppointmentServiceRepository,
+    @Autowired private val appointmentProviderRepository: AppointmentProviderRepository,
+    @Autowired private val appointmentProviderAvailabilityRepository: AppointmentProviderAvailabilityRepository,
     @Autowired private val requestThrottleService: RequestThrottleService
 ) {
 
@@ -49,6 +62,10 @@ class PublicBookingControllerTest(
         justRun { passwordResetMailSender.sendPasswordResetEmail(any(), any(), any()) }
         SecurityContextHolder.clearContext()
         requestThrottleService.clearAll()
+        appointmentBookingRepository.deleteAll()
+        appointmentProviderAvailabilityRepository.deleteAll()
+        appointmentProviderRepository.deleteAll()
+        appointmentServiceRepository.deleteAll()
         bookingAuditEventRepository.deleteAll()
         bookingRepository.deleteAll()
         customerContactRepository.deleteAll()
@@ -75,7 +92,9 @@ class PublicBookingControllerTest(
             .andExpect {
                 status { isOk() }
                 jsonPath("$.companySlug") { value("acme-booking") }
+                jsonPath("$.businessType") { value("APPOINTMENT") }
                 jsonPath("$.customerQuestions[0].label") { value("Preferred provider") }
+                jsonPath("$.appointmentServices.length()") { value(0) }
             }
     }
 
@@ -155,6 +174,97 @@ class PublicBookingControllerTest(
         }.andExpect {
             status { isTooManyRequests() }
         }
+    }
+
+    @Test
+    fun `public appointment availability returns enabled service slots`() {
+        val company = seedPublicBookingCompany(slug = "acme-booking", enabled = true)
+        val service = appointmentServiceRepository.save(
+            AppointmentService(
+                company = company,
+                name = "Initial consultation",
+                durationMinutes = 30,
+                bufferMinutes = 0,
+                enabled = true
+            )
+        )
+        val provider = appointmentProviderRepository.save(
+            AppointmentProvider(
+                company = company,
+                displayName = "Anna Therapist",
+                email = "anna@acme.com"
+            )
+        )
+        appointmentProviderAvailabilityRepository.save(
+            AppointmentProviderAvailability(
+                provider = provider,
+                dayOfWeek = BusinessDay.FRIDAY,
+                opensAt = LocalTime.of(9, 0),
+                closesAt = LocalTime.of(12, 0),
+                displayOrder = 0
+            )
+        )
+
+        mockMvc.get("/api/public/companies/acme-booking/appointments/availability") {
+            param("serviceId", requireNotNull(service.id).toString())
+            param("date", "2026-04-10")
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.slots.length()") { value(6) }
+            jsonPath("$.slots[0].providerName") { value("Anna Therapist") }
+        }
+    }
+
+    @Test
+    fun `public appointment booking creates tenant scoped appointment record`() {
+        val company = seedPublicBookingCompany(slug = "acme-booking", enabled = true)
+        val service = appointmentServiceRepository.save(
+            AppointmentService(
+                company = company,
+                name = "Initial consultation",
+                durationMinutes = 30,
+                bufferMinutes = 10,
+                enabled = true,
+                autoConfirm = true
+            )
+        )
+        val provider = appointmentProviderRepository.save(
+            AppointmentProvider(
+                company = company,
+                displayName = "Anna Therapist",
+                email = "anna@acme.com"
+            )
+        )
+        appointmentProviderAvailabilityRepository.save(
+            AppointmentProviderAvailability(
+                provider = provider,
+                dayOfWeek = BusinessDay.FRIDAY,
+                opensAt = LocalTime.of(9, 0),
+                closesAt = LocalTime.of(12, 0),
+                displayOrder = 0
+            )
+        )
+
+        mockMvc.post("/api/public/companies/acme-booking/appointments/book") {
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "fullName":"Alex Guest",
+                  "email":"alex@example.com",
+                  "phone":"+49 30 111 2222",
+                  "preferredLanguage":"en",
+                  "serviceId":${requireNotNull(service.id)},
+                  "providerId":${requireNotNull(provider.id)},
+                  "startsAt":"2026-04-10T09:00:00Z"
+                }
+            """.trimIndent()
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.booking.status") { value("CONFIRMED") }
+            jsonPath("$.booking.customerEmail") { value("alex@example.com") }
+        }
+
+        org.junit.jupiter.api.Assertions.assertEquals(1, appointmentBookingRepository.count())
     }
 
     private fun seedPublicBookingCompany(slug: String, enabled: Boolean): Company =

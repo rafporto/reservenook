@@ -8,6 +8,10 @@ class PublicRequestAbuseGuard(
     private val requestThrottleService: RequestThrottleService
 ) {
 
+    fun assertClientAllowed(scope: String, clientAddress: String) {
+        requestThrottleService.assertAllowed(scope, "client::$clientAddress", 20, Duration.ofMinutes(10))
+    }
+
     fun assertAllowed(scope: String, clientAddress: String, normalizedEmail: String) {
         requestThrottleService.assertAllowed(scope, "$clientAddress|$normalizedEmail", 5, Duration.ofMinutes(10))
         requestThrottleService.assertAllowed(scope, "client::$clientAddress", 10, Duration.ofMinutes(10))

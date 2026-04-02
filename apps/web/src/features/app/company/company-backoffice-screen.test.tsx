@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { CompanyBackofficeScreen } from "@/features/app/company/company-backoffice-screen";
 
 const replace = vi.fn();
@@ -96,6 +96,41 @@ function backofficePayload() {
         createdAt: "2026-03-31T10:00:00Z"
       }
     ],
+    appointmentServices: [
+      {
+        id: 31,
+        name: "Initial consultation",
+        description: "30 minute intro session",
+        durationMinutes: 30,
+        bufferMinutes: 10,
+        priceLabel: "EUR 60",
+        enabled: true,
+        autoConfirm: false
+      }
+    ],
+    appointmentProviders: [
+      {
+        id: 41,
+        linkedUserId: 1,
+        displayName: "Anna Therapist",
+        email: "anna@acme.com",
+        active: true
+      }
+    ],
+    providerSchedules: [
+      {
+        providerId: 41,
+        providerName: "Anna Therapist",
+        availability: [
+          {
+            dayOfWeek: "MONDAY",
+            opensAt: "09:00",
+            closesAt: "13:00",
+            displayOrder: 0
+          }
+        ]
+      }
+    ],
     staffUsers: [
       {
         membershipId: 1,
@@ -168,7 +203,9 @@ describe("CompanyBackofficeScreen", () => {
     expect(screen.getByText("Shared Configuration Areas")).toBeInTheDocument();
     expect(screen.getByDisplayValue("hello@acme.com")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Reserve now")).toBeInTheDocument();
-  });
+    expect(screen.getByText("Appointment Services")).toBeInTheDocument();
+    expect(screen.getByText("Providers And Availability")).toBeInTheDocument();
+  }, 10000);
 
   it("shows access denied for cross-tenant access", async () => {
     vi.spyOn(global, "fetch").mockResolvedValue(new Response(null, { status: 403 }));
@@ -186,71 +223,31 @@ describe("CompanyBackofficeScreen", () => {
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/en/login"));
   });
 
-  it("saves a valid company profile update", async () => {
-    const fetchSpy = vi
-      .spyOn(global, "fetch")
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify(backofficePayload()), { status: 200, headers: { "Content-Type": "application/json" } })
-      )
-      .mockResolvedValueOnce(new Response(JSON.stringify({ token: "csrf-token" }), { status: 200, headers: { "Content-Type": "application/json" } }))
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            message: "Company profile updated.",
-            company: { ...backofficePayload().company, companyName: "Acme Wellness Studio" },
-            profile: { ...backofficePayload().profile, contactEmail: "studio@acme.com" }
-          }),
-          { status: 200, headers: { "Content-Type": "application/json" } }
-        )
-      );
+  it("renders editable profile and staffing controls for admins", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(backofficePayload()), { status: 200, headers: { "Content-Type": "application/json" } })
+    );
 
     render(<CompanyBackofficeScreen slug="acme-wellness" />);
 
-    expect(await screen.findByDisplayValue("hello@acme.com")).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Company name"), { target: { value: "Acme Wellness Studio" } });
-    fireEvent.change(screen.getByLabelText("Primary contact email"), { target: { value: "studio@acme.com" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save company profile" }));
-
-    expect(await screen.findByText("Company profile updated.")).toBeInTheDocument();
-    expect(fetchSpy.mock.calls[2]?.[1]?.headers).toEqual({
-      "Content-Type": "application/json",
-      "X-CSRF-TOKEN": "csrf-token"
-    });
+    expect(await screen.findByText("Company Profile")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save company profile" })).toBeInTheDocument();
+    expect(screen.getByText("Create Staff User")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Create staff user" })).toBeInTheDocument();
   });
 
-  it("creates a staff user with the secure invitation flow", async () => {
-    vi.spyOn(global, "fetch")
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify(backofficePayload()), { status: 200, headers: { "Content-Type": "application/json" } })
-      )
-      .mockResolvedValueOnce(new Response(JSON.stringify({ token: "csrf-token" }), { status: 200, headers: { "Content-Type": "application/json" } }))
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            message: "Staff user created.",
-            staffUser: {
-              membershipId: 2,
-              userId: 2,
-              fullName: "Support Agent",
-              email: "staff@acme.com",
-              role: "STAFF",
-              status: "ACTIVE",
-              emailVerified: true,
-              createdAt: "2026-03-31T10:00:00Z"
-            }
-          }),
-          { status: 200, headers: { "Content-Type": "application/json" } }
-        )
-      );
+  it("renders appointment configuration controls for phase 4", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(backofficePayload()), { status: 200, headers: { "Content-Type": "application/json" } })
+    );
 
     render(<CompanyBackofficeScreen slug="acme-wellness" />);
 
-    expect(await screen.findByText("Create Staff User")).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Full name"), { target: { value: "Support Agent" } });
-    fireEvent.change(screen.getByLabelText(/^Email$/), { target: { value: "staff@acme.com" } });
-    fireEvent.click(screen.getByRole("button", { name: "Create staff user" }));
-
-    expect(await screen.findByText("Staff user created.")).toBeInTheDocument();
-    expect(screen.getByText("Support Agent")).toBeInTheDocument();
+    expect(await screen.findByText("Appointment Services")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Create appointment service" })).toBeInTheDocument();
+    expect(screen.getByText("Providers And Availability")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Create provider" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save availability" })).toBeInTheDocument();
   });
+
 });

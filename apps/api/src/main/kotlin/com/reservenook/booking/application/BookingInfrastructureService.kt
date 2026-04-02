@@ -39,6 +39,12 @@ class BookingInfrastructureService(
         return customerContactRepository.findAllByCompanyIdOrderByCreatedAtAsc(requireNotNull(membership.company.id)).map { it.toSummary() }
     }
 
+    @Transactional(readOnly = true)
+    fun findBookingEntity(bookingId: Long): Booking =
+        bookingRepository.findById(bookingId).orElseThrow { IllegalArgumentException("Booking could not be found.") }
+
+    fun toSummary(booking: Booking): CompanyBackofficeBookingSummary = booking.toSummary()
+
     @Transactional
     fun createCustomerContact(
         principal: AppAuthenticatedUser,
@@ -217,7 +223,7 @@ class BookingInfrastructureService(
         throw UnsupportedOperationException("Handled by PublicBookingIntakeService.")
     }
 
-    internal fun createBookingInternal(
+    fun createBookingInternal(
         companyId: Long,
         principal: AppAuthenticatedUser?,
         fullName: String,

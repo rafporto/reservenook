@@ -1,5 +1,8 @@
 package com.reservenook.companybackoffice.application
 
+import com.reservenook.appointment.infrastructure.AppointmentProviderAvailabilityRepository
+import com.reservenook.appointment.infrastructure.AppointmentProviderRepository
+import com.reservenook.appointment.infrastructure.AppointmentServiceRepository
 import com.reservenook.booking.infrastructure.BookingAuditEventRepository
 import com.reservenook.booking.infrastructure.BookingRepository
 import com.reservenook.booking.infrastructure.CustomerContactRepository
@@ -26,7 +29,10 @@ class CompanyBackofficeAccessService(
     private val companyCustomerQuestionRepository: CompanyCustomerQuestionRepository,
     private val customerContactRepository: CustomerContactRepository,
     private val bookingRepository: BookingRepository,
-    private val bookingAuditEventRepository: BookingAuditEventRepository
+    private val bookingAuditEventRepository: BookingAuditEventRepository,
+    private val appointmentServiceRepository: AppointmentServiceRepository,
+    private val appointmentProviderRepository: AppointmentProviderRepository,
+    private val appointmentProviderAvailabilityRepository: AppointmentProviderAvailabilityRepository
 ) {
 
     fun getBackoffice(principal: AppAuthenticatedUser, requestedSlug: String): CompanyBackofficeResponse {
@@ -35,6 +41,7 @@ class CompanyBackofficeAccessService(
         val companyId = requireNotNull(company.id)
         val allMemberships = companyMembershipRepository.findAllByCompanyId(companyId)
         val latestSubscription = companySubscriptionRepository.findFirstByCompanyIdOrderByExpiresAtDesc(companyId)
+        val providers = appointmentProviderRepository.findAllByCompanyIdOrderByCreatedAtAsc(companyId)
 
         return CompanyBackofficeResponse(
             company = company.toCompanySummary(),
@@ -48,6 +55,13 @@ class CompanyBackofficeAccessService(
             customerContacts = customerContactRepository.findAllByCompanyIdOrderByCreatedAtAsc(companyId).map { it.toSummary() },
             bookings = bookingRepository.findAllByCompanyIdOrderByCreatedAtDesc(companyId).map { it.toSummary() },
             bookingAudit = bookingAuditEventRepository.findAllByCompanyIdOrderByCreatedAtDesc(companyId).map { it.toSummary() },
+            appointmentServices = appointmentServiceRepository.findAllByCompanyIdOrderByCreatedAtAsc(companyId).map { it.toSummary() },
+            appointmentProviders = providers.map { it.toSummary() },
+            providerSchedules = providers.map { provider ->
+                provider.toScheduleSummary(
+                    appointmentProviderAvailabilityRepository.findAllByProviderIdOrderByDayOfWeekAscDisplayOrderAsc(requireNotNull(provider.id))
+                )
+            },
             staffUsers = allMemberships.sortedBy { it.createdAt }.map { it.toStaffSummary() },
             customerQuestions = companyCustomerQuestionRepository.findAllByCompanyIdOrderByDisplayOrderAsc(companyId).map { it.toSummary() },
             widgetSettings = company.toWidgetSettingsSummary(),
@@ -122,6 +136,24 @@ class CompanyBackofficeAccessService(
                     key = "booking-audit",
                     title = "Booking audit trail",
                     description = "Inspect who changed booking state and when across the shared booking baseline.",
+                    status = "available"
+                ),
+                CompanyBackofficeAreaSummary(
+                    key = "appointment-services",
+                    title = "Appointment services",
+                    description = "Define bookable appointment types with duration, buffers, and confirmation behavior.",
+                    status = "available"
+                ),
+                CompanyBackofficeAreaSummary(
+                    key = "appointment-providers",
+                    title = "Providers",
+                    description = "Manage provider identities, link them to tenant users, and expose only valid tenant-owned schedules.",
+                    status = "available"
+                ),
+                CompanyBackofficeAreaSummary(
+                    key = "provider-availability",
+                    title = "Provider availability",
+                    description = "Set provider working windows used to generate appointment slots inside tenant scope.",
                     status = "available"
                 ),
                 CompanyBackofficeAreaSummary(

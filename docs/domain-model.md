@@ -297,3 +297,18 @@ When implementation begins:
 - avoid premature generic abstractions across the three booking domains
 
 The platform is unified, but the business logic is not identical. The model should reflect that reality.
+## Phase 4 Appointment Module
+
+The appointment specialization extends the shared booking core with four tenant-scoped entities:
+
+- `AppointmentService` defines what can be booked, including duration, buffer, public availability, and manual-vs-auto confirmation behavior
+- `AppointmentProvider` represents the person or resource delivering the appointment and may optionally link to a tenant staff user
+- `AppointmentProviderAvailability` defines weekly provider working windows used to generate public slots
+- `AppointmentBooking` links a shared `Booking` record to the chosen appointment service, provider, and concrete start/end time
+
+Security and isolation rules for this module:
+
+- appointment services and providers are always scoped to one company
+- provider-to-user linking must stay inside the same tenant
+- public slot generation only exposes enabled services and concrete bookable slots, not internal blocked windows
+- provider self-schedule reads are limited to the linked provider identity rather than the full tenant booking dataset

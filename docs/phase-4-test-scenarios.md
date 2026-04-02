@@ -12,6 +12,13 @@ This document defines the implementation-ready test baseline for Phase 4: Appoin
 - end-to-end tests for the key appointment booking journey
 - security tests for public abuse protection, slot replay, tenant isolation, and provider-scope authorization
 
+## Implemented Baseline
+
+- `AppointmentControllerTest` covers admin management of appointment services, provider linking, provider availability updates, and provider self-schedule reads
+- `PublicBookingControllerTest` covers public appointment availability, public appointment booking creation, and the existing public booking-intake abuse throttling path
+- `public-booking-page.test.tsx` covers the public appointment selection flow from service selection through slot booking
+- `company-backoffice-screen.test.tsx` covers the Phase 4 admin surface presence for appointment services and provider availability controls
+
 ## UC-35 Manage Appointment Services
 
 ### Functional
