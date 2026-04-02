@@ -39,7 +39,10 @@ class CompanyDeletionService(
         val companiesToDelete = companyRepository.findAllByStatus(CompanyStatus.PENDING_DELETION)
             .filter { company ->
                 val deletionScheduledAt = company.deletionScheduledAt
-                deletionScheduledAt != null && !deletionScheduledAt.isAfter(now)
+                val legalHoldUntil = company.legalHoldUntil
+                deletionScheduledAt != null &&
+                    !deletionScheduledAt.isAfter(now) &&
+                    (legalHoldUntil == null || legalHoldUntil.isBefore(now))
             }
 
         companiesToDelete.forEach { company ->

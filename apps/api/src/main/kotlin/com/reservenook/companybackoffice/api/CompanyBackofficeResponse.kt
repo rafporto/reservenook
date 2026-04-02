@@ -28,6 +28,8 @@ data class CompanyBackofficeResponse(
     val customerQuestions: List<CompanyBackofficeCustomerQuestionSummary>,
     val widgetSettings: CompanyBackofficeWidgetSettingsSummary,
     val widgetUsage: CompanyBackofficeWidgetUsageSummary,
+    val securityAudit: List<CompanyBackofficeSecurityAuditSummary>,
+    val securitySummary: CompanyBackofficeSecuritySummary,
     val viewer: CompanyBackofficeViewerSummary,
     val operations: CompanyBackofficeOperationsSummary,
     val configurationAreas: List<CompanyBackofficeAreaSummary>
@@ -320,6 +322,24 @@ data class CompanyBackofficeWidgetUsageSummary(
     val recentOrigins: List<CompanyBackofficeWidgetUsageOriginSummary>
 )
 
+data class CompanyBackofficeSecurityAuditSummary(
+    val id: Long,
+    val eventType: String,
+    val outcome: String,
+    val actorEmail: String?,
+    val targetEmail: String?,
+    val details: String?,
+    val createdAt: String
+)
+
+data class CompanyBackofficeSecuritySummary(
+    val auditEventsLast24Hours: Int,
+    val rateLimitedEventsLast24Hours: Int,
+    val loginFailuresLast24Hours: Int,
+    val bookingEventsLast24Hours: Int,
+    val lifecycleEventsLast24Hours: Int
+)
+
 data class CompanyBackofficeViewerSummary(
     val role: String,
     val currentUserEmail: String
@@ -331,7 +351,8 @@ data class CompanyBackofficeOperationsSummary(
     val staffCount: Int,
     val adminCount: Int,
     val lastActivityAt: String,
-    val deletionScheduledAt: String?
+    val deletionScheduledAt: String?,
+    val legalHoldUntil: String?
 )
 
 data class CompanyBackofficeAreaSummary(

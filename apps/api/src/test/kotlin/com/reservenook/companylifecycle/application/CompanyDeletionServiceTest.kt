@@ -87,6 +87,19 @@ class CompanyDeletionServiceTest {
     }
 
     @Test
+    fun `legal hold company is skipped from deletion candidates`() {
+        val company = pendingDeletionCompany(Instant.parse("2026-03-30T12:00:00Z")).apply {
+            legalHoldUntil = Instant.parse("2026-04-30T12:00:00Z")
+        }
+        every { companyRepository.findAllByStatus(CompanyStatus.PENDING_DELETION) } returns listOf(company)
+
+        val result = service.deletePendingCompanies(Instant.parse("2026-03-30T12:00:00Z"))
+
+        result.deletedCompanies shouldBe 0
+        verify(exactly = 0) { companyRepository.delete(any()) }
+    }
+
+    @Test
     fun `failed deletion is recorded for retry`() {
         val company = pendingDeletionCompany(Instant.parse("2026-03-30T12:00:00Z"))
         val user = UserAccount(

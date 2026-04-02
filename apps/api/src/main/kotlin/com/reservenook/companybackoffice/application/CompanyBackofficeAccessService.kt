@@ -27,6 +27,7 @@ import com.reservenook.restaurant.infrastructure.RestaurantTableRepository
 import com.reservenook.registration.domain.CompanyRole
 import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
+import com.reservenook.security.application.SecurityAuditQueryService
 import com.reservenook.widget.application.WidgetUsageService
 import org.springframework.stereotype.Service
 
@@ -53,7 +54,8 @@ class CompanyBackofficeAccessService(
     private val restaurantTableCombinationRepository: RestaurantTableCombinationRepository,
     private val restaurantServicePeriodRepository: RestaurantServicePeriodRepository,
     private val restaurantReservationRepository: RestaurantReservationRepository,
-    private val widgetUsageService: WidgetUsageService
+    private val widgetUsageService: WidgetUsageService,
+    private val securityAuditQueryService: SecurityAuditQueryService
 ) {
 
     fun getBackoffice(principal: AppAuthenticatedUser, requestedSlug: String): CompanyBackofficeResponse {
@@ -114,6 +116,26 @@ class CompanyBackofficeAccessService(
                     }
                 )
             },
+            securityAudit = securityAuditQueryService.listCompanyAudit(principal, requestedSlug).map {
+                com.reservenook.companybackoffice.api.CompanyBackofficeSecurityAuditSummary(
+                    id = it.id,
+                    eventType = it.eventType,
+                    outcome = it.outcome,
+                    actorEmail = it.actorEmail,
+                    targetEmail = it.targetEmail,
+                    details = it.details,
+                    createdAt = it.createdAt
+                )
+            },
+            securitySummary = securityAuditQueryService.getCompanySummary(principal, requestedSlug).let {
+                com.reservenook.companybackoffice.api.CompanyBackofficeSecuritySummary(
+                    auditEventsLast24Hours = it.auditEventsLast24Hours,
+                    rateLimitedEventsLast24Hours = it.rateLimitedEventsLast24Hours,
+                    loginFailuresLast24Hours = it.loginFailuresLast24Hours,
+                    bookingEventsLast24Hours = it.bookingEventsLast24Hours,
+                    lifecycleEventsLast24Hours = it.lifecycleEventsLast24Hours
+                )
+            },
             viewer = CompanyBackofficeViewerSummary(
                 role = membership.role.name,
                 currentUserEmail = principal.email
@@ -124,7 +146,8 @@ class CompanyBackofficeAccessService(
                 staffCount = allMemberships.size,
                 adminCount = allMemberships.count { it.role == CompanyRole.COMPANY_ADMIN },
                 lastActivityAt = company.lastActivityAt.toString(),
-                deletionScheduledAt = company.deletionScheduledAt?.toString()
+                deletionScheduledAt = company.deletionScheduledAt?.toString(),
+                legalHoldUntil = company.legalHoldUntil?.toString()
             ),
             configurationAreas = listOf(
                 CompanyBackofficeAreaSummary(

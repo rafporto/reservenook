@@ -243,6 +243,22 @@ export type CompanyBackofficeData = {
       bookingCount: number;
     }>;
   };
+  securityAudit: Array<{
+    id: number;
+    eventType: string;
+    outcome: string;
+    actorEmail: string | null;
+    targetEmail: string | null;
+    details: string | null;
+    createdAt: string;
+  }>;
+  securitySummary: {
+    auditEventsLast24Hours: number;
+    rateLimitedEventsLast24Hours: number;
+    loginFailuresLast24Hours: number;
+    bookingEventsLast24Hours: number;
+    lifecycleEventsLast24Hours: number;
+  };
   viewer: { role: string; currentUserEmail: string };
   operations: {
     planType: string;
@@ -251,6 +267,7 @@ export type CompanyBackofficeData = {
     adminCount: number;
     lastActivityAt: string;
     deletionScheduledAt: string | null;
+    legalHoldUntil: string | null;
   };
   configurationAreas: Array<{ key: string; title: string; description: string; status: string }>;
 };

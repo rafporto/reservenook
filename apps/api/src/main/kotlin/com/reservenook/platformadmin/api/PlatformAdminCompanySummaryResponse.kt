@@ -6,5 +6,6 @@ data class PlatformAdminCompanySummaryResponse(
     val businessType: String,
     val activationStatus: String,
     val planType: String,
-    val expiresAt: String
+    val expiresAt: String,
+    val legalHoldUntil: String?
 )

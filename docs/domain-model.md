@@ -179,6 +179,8 @@ Core concepts:
 - DeletionRequest
 - DeletionExecution
 - InactivityPolicy
+- AbusePreventionPolicy
+- SecurityAuditEvent
 - CompanyDeletionEvent
 
 ## Appointment Domain
@@ -366,3 +368,19 @@ Security and isolation rules for this module:
 - widget tokens are short-lived, company-scoped, and validated again on embedded booking requests
 - embedded booking reuses the same server-side validation, abuse throttling, and tenant isolation rules as the hosted booking flow
 - widget pages allow framing, but the rest of the web app remains non-embeddable by default
+
+## Phase 8 Operational Maturity Baseline
+
+The operational-maturity baseline extends the shared platform with configuration and observability aggregates that stay aligned with the security model.
+
+- `AbusePreventionPolicy` is a persisted platform singleton that controls shared public-flow thresholds for login, recovery, availability, and booking abuse protection
+- `SecurityAuditEvent` is the durable cross-module audit record used for tenant-safe review and platform monitoring summaries
+- `Company.legalHoldUntil` is a retention control that pauses deletion execution and warning transitions while the hold remains active
+- `SecurityOperationsSummary` is a derived operational view over recent audit events for platform-admin and tenant backoffice monitoring
+
+Security and isolation rules for this baseline:
+
+- security-audit review remains scoped by tenant unless the actor is a platform admin
+- abuse thresholds are writable only by platform admins and remain protected by CSRF and recent-auth checks
+- legal-hold changes are auditable and prevent automated deletion while active
+- localization and accessibility hardening must not weaken CSRF, auth-state handling, or no-index rules on sensitive routes

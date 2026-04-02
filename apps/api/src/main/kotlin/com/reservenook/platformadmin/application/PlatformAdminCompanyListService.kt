@@ -34,7 +34,8 @@ class PlatformAdminCompanyListService(
                     businessType = company.businessType.name,
                     activationStatus = company.status.name,
                     planType = subscription.planType.name,
-                    expiresAt = subscription.expiresAt.toString()
+                    expiresAt = subscription.expiresAt.toString(),
+                    legalHoldUntil = company.legalHoldUntil?.toString()
                 )
             }
     }

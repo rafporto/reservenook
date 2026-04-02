@@ -51,6 +51,7 @@ class PlatformAdminCompanyControllerTest(
     @Autowired private val membershipRepository: CompanyMembershipRepository,
     @Autowired private val subscriptionRepository: CompanySubscriptionRepository,
     @Autowired private val inactivityPolicyRepository: com.reservenook.platformadmin.infrastructure.InactivityPolicyRepository,
+    @Autowired private val abusePreventionPolicyRepository: com.reservenook.platformadmin.infrastructure.AbusePreventionPolicyRepository,
     @Autowired private val securityAuditEventRepository: SecurityAuditEventRepository,
     @Autowired private val passwordEncoder: PasswordEncoder
 ) {
@@ -71,11 +72,24 @@ class PlatformAdminCompanyControllerTest(
         companyRepository.deleteAll()
         securityAuditEventRepository.deleteAll()
         inactivityPolicyRepository.deleteAll()
+        abusePreventionPolicyRepository.deleteAll()
         inactivityPolicyRepository.save(
             com.reservenook.platformadmin.domain.InactivityPolicy(
                 id = 1L,
                 inactivityThresholdDays = 90,
                 deletionWarningLeadDays = 14
+            )
+        )
+        abusePreventionPolicyRepository.save(
+            com.reservenook.platformadmin.domain.AbusePreventionPolicy(
+                id = 1L,
+                loginPairLimit = 5,
+                loginClientLimit = 10,
+                loginEmailLimit = 10,
+                publicWritePairLimit = 5,
+                publicWriteClientLimit = 10,
+                publicWriteEmailLimit = 10,
+                publicReadClientLimit = 20
             )
         )
     }
@@ -159,6 +173,21 @@ class PlatformAdminCompanyControllerTest(
                 status { isOk() }
                 jsonPath("$.inactivityThresholdDays") { value(90) }
                 jsonPath("$.deletionWarningLeadDays") { value(14) }
+            }
+    }
+
+    @Test
+    fun `platform admin receives current abuse policy`() {
+        val platformAdmin = seedPlatformAdmin(email = "platform@reservenook.com", password = "SecurePass123")
+        val session = authenticatedPlatformAdminSession(requireNotNull(platformAdmin.id), "platform@reservenook.com")
+
+        mockMvc.get("/api/platform-admin/abuse-policy") {
+            this.session = session
+        }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.loginPairLimit") { value(5) }
+                jsonPath("$.publicReadClientLimit") { value(20) }
             }
     }
 
@@ -267,6 +296,88 @@ class PlatformAdminCompanyControllerTest(
             .andExpect {
                 status { isUnauthorized() }
                 jsonPath("$.message") { value("Please sign in again before performing this sensitive action.") }
+            }
+    }
+
+    @Test
+    fun `platform admin updates abuse policy`() {
+        val platformAdmin = seedPlatformAdmin(email = "platform@reservenook.com", password = "SecurePass123")
+        val session = authenticatedPlatformAdminSession(requireNotNull(platformAdmin.id), "platform@reservenook.com")
+
+        mockMvc.put("/api/platform-admin/abuse-policy") {
+            with(csrf().asHeader())
+            this.session = session
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(
+                mapOf(
+                    "loginPairLimit" to 6,
+                    "loginClientLimit" to 12,
+                    "loginEmailLimit" to 12,
+                    "publicWritePairLimit" to 6,
+                    "publicWriteClientLimit" to 12,
+                    "publicWriteEmailLimit" to 12,
+                    "publicReadClientLimit" to 24
+                )
+            )
+        }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.policy.loginPairLimit") { value(6) }
+                jsonPath("$.policy.publicReadClientLimit") { value(24) }
+            }
+
+        securityAuditEventRepository.findAll().any { it.eventType == SecurityAuditEventType.ABUSE_POLICY_UPDATED } shouldBe true
+    }
+
+    @Test
+    fun `platform admin updates company legal hold`() {
+        seedCompany(
+            name = "Acme Wellness",
+            slug = "acme-wellness",
+            businessType = BusinessType.APPOINTMENT,
+            status = CompanyStatus.ACTIVE,
+            planType = PlanType.TRIAL,
+            expiresAt = Instant.parse("2026-04-05T00:00:00Z")
+        )
+        val platformAdmin = seedPlatformAdmin(email = "platform@reservenook.com", password = "SecurePass123")
+        val session = authenticatedPlatformAdminSession(requireNotNull(platformAdmin.id), "platform@reservenook.com")
+
+        mockMvc.put("/api/platform-admin/companies/acme-wellness/retention") {
+            with(csrf().asHeader())
+            this.session = session
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(
+                mapOf("legalHoldUntil" to "2026-06-01T10:00:00Z")
+            )
+        }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.legalHoldUntil") { value("2026-06-01T10:00:00Z") }
+            }
+
+        companyRepository.findBySlug("acme-wellness")?.legalHoldUntil shouldBe Instant.parse("2026-06-01T10:00:00Z")
+    }
+
+    @Test
+    fun `platform admin receives operations summary`() {
+        val platformAdmin = seedPlatformAdmin(email = "platform@reservenook.com", password = "SecurePass123")
+        securityAuditEventRepository.save(
+            com.reservenook.security.domain.SecurityAuditEvent(
+                eventType = SecurityAuditEventType.LOGIN_FAILURE,
+                outcome = com.reservenook.security.domain.SecurityAuditOutcome.FAILURE,
+                actorEmail = "operator@reservenook.com"
+            )
+        )
+        val session = authenticatedPlatformAdminSession(requireNotNull(platformAdmin.id), "platform@reservenook.com")
+
+        mockMvc.get("/api/platform-admin/operations-summary") {
+            this.session = session
+        }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.summary.auditEventsLast24Hours") { value(1) }
+                jsonPath("$.summary.loginFailuresLast24Hours") { value(1) }
+                jsonPath("$.securityAudit.length()") { value(1) }
             }
     }
 

@@ -118,6 +118,9 @@ class Company(
     @Column(name = "deletion_scheduled_at")
     var deletionScheduledAt: Instant? = null,
 
+    @Column(name = "legal_hold_until")
+    var legalHoldUntil: Instant? = null,
+
     @Column(name = "created_at", nullable = false)
     var createdAt: Instant = Instant.now()
 )

@@ -222,6 +222,24 @@ function backofficePayload() {
         }
       ]
     },
+    securityAudit: [
+      {
+        id: 91,
+        eventType: "LOGIN_FAILURE",
+        outcome: "FAILURE",
+        actorEmail: "admin@acme.com",
+        targetEmail: null,
+        details: "invalid credentials",
+        createdAt: "2026-03-31T10:15:00Z"
+      }
+    ],
+    securitySummary: {
+      auditEventsLast24Hours: 8,
+      rateLimitedEventsLast24Hours: 2,
+      loginFailuresLast24Hours: 1,
+      bookingEventsLast24Hours: 3,
+      lifecycleEventsLast24Hours: 0
+    },
     viewer: { role: "COMPANY_ADMIN", currentUserEmail: "admin@acme.com" },
     operations: {
       planType: "TRIAL",
@@ -229,7 +247,8 @@ function backofficePayload() {
       staffCount: 1,
       adminCount: 1,
       lastActivityAt: "2026-03-31T10:00:00Z",
-      deletionScheduledAt: null
+      deletionScheduledAt: null,
+      legalHoldUntil: null
     },
     configurationAreas: [
       {

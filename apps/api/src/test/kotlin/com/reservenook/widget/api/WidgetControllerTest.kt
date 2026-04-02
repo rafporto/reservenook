@@ -1,11 +1,13 @@
 package com.reservenook.widget.api
 
 import com.ninjasquad.springmockk.MockkBean
+import com.reservenook.appointment.infrastructure.AppointmentBookingRepository
 import com.reservenook.auth.application.AppAuthenticatedUser
 import com.reservenook.auth.application.PasswordResetMailSender
 import com.reservenook.booking.infrastructure.BookingAuditEventRepository
 import com.reservenook.booking.infrastructure.BookingRepository
 import com.reservenook.booking.infrastructure.CustomerContactRepository
+import com.reservenook.groupclass.infrastructure.ClassBookingRepository
 import com.reservenook.registration.application.RegistrationMailSender
 import com.reservenook.registration.domain.BusinessType
 import com.reservenook.registration.domain.Company
@@ -22,6 +24,8 @@ import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
 import com.reservenook.security.application.RequestThrottleService
 import com.reservenook.security.application.SessionSecurityAttributes
+import com.reservenook.restaurant.infrastructure.RestaurantReservationRepository
+import com.reservenook.restaurant.infrastructure.RestaurantReservationTableRepository
 import com.reservenook.widget.infrastructure.WidgetUsageEventRepository
 import io.mockk.justRun
 import org.junit.jupiter.api.BeforeEach
@@ -52,6 +56,10 @@ class WidgetControllerTest(
     @Autowired private val customerContactRepository: CustomerContactRepository,
     @Autowired private val bookingRepository: BookingRepository,
     @Autowired private val bookingAuditEventRepository: BookingAuditEventRepository,
+    @Autowired private val appointmentBookingRepository: AppointmentBookingRepository,
+    @Autowired private val classBookingRepository: ClassBookingRepository,
+    @Autowired private val restaurantReservationRepository: RestaurantReservationRepository,
+    @Autowired private val restaurantReservationTableRepository: RestaurantReservationTableRepository,
     @Autowired private val requestThrottleService: RequestThrottleService,
     @Autowired private val passwordEncoder: PasswordEncoder
 ) {
@@ -68,6 +76,10 @@ class WidgetControllerTest(
         SecurityContextHolder.clearContext()
         requestThrottleService.clearAll()
         widgetUsageEventRepository.deleteAll()
+        restaurantReservationTableRepository.deleteAll()
+        restaurantReservationRepository.deleteAll()
+        classBookingRepository.deleteAll()
+        appointmentBookingRepository.deleteAll()
         bookingAuditEventRepository.deleteAll()
         bookingRepository.deleteAll()
         customerContactRepository.deleteAll()

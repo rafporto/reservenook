@@ -42,7 +42,7 @@ class LoginService(
         val normalizedEmail = email.trim().lowercase()
         val clientAddress = RequestFingerprintResolver.resolveClientAddress(request)
         try {
-            publicRequestAbuseGuard.assertAllowed("login", clientAddress, normalizedEmail)
+            publicRequestAbuseGuard.assertLoginAllowed(clientAddress, normalizedEmail)
         } catch (exception: TooManyRequestsException) {
             securityAuditService.record(
                 eventType = SecurityAuditEventType.LOGIN_RATE_LIMITED,

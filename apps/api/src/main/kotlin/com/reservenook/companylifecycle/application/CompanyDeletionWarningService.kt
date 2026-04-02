@@ -40,7 +40,10 @@ class CompanyDeletionWarningService(
         val companiesToWarn = companyRepository.findAllByStatus(CompanyStatus.INACTIVE)
             .filter { company ->
                 val deletionScheduledAt = company.deletionScheduledAt
-                deletionScheduledAt != null && !deletionScheduledAt.isAfter(warningThreshold)
+                val legalHoldUntil = company.legalHoldUntil
+                deletionScheduledAt != null &&
+                    !deletionScheduledAt.isAfter(warningThreshold) &&
+                    (legalHoldUntil == null || legalHoldUntil.isBefore(now))
             }
 
         companiesToWarn.forEach { company ->
