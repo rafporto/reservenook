@@ -80,6 +80,8 @@ Practical expectations:
 - add regression coverage for authorization, cross-tenant abuse, token misuse, CSRF, and rate-limit behavior when relevant
 - do not introduce public or admin endpoints without explicitly checking enumeration, privilege escalation, and tenant-boundary risks
 - future phases should extend the same baseline to booking, payment, customer, and other sensitive flows as they are added
+- when a change introduces or expands operational risk, add monitoring or alerting with it instead of leaving operator visibility as a later follow-up
+- when public-flow performance is materially affected, add or update an executable smoke or performance check rather than relying only on subjective manual testing
 
 ## UI, Localization, and SEO Expectations
 

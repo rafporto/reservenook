@@ -377,6 +377,7 @@ class PlatformAdminCompanyControllerTest(
                 status { isOk() }
                 jsonPath("$.summary.auditEventsLast24Hours") { value(1) }
                 jsonPath("$.summary.loginFailuresLast24Hours") { value(1) }
+                jsonPath("$.summary.alertingEnabled") { value(false) }
                 jsonPath("$.securityAudit.length()") { value(1) }
             }
     }

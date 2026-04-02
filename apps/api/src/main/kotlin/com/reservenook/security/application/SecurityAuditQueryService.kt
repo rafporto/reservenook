@@ -2,6 +2,7 @@ package com.reservenook.security.application
 
 import com.reservenook.auth.application.AppAuthenticatedUser
 import com.reservenook.companybackoffice.application.CompanyAdminAccessService
+import com.reservenook.operations.application.OperationsAlertService
 import com.reservenook.security.domain.SecurityAuditEvent
 import com.reservenook.security.infrastructure.SecurityAuditEventRepository
 import org.springframework.http.HttpStatus
@@ -27,13 +28,16 @@ data class SecurityOperationsSummary(
     val loginFailuresLast24Hours: Int,
     val bookingEventsLast24Hours: Int,
     val lifecycleEventsLast24Hours: Int,
+    val alertingEnabled: Boolean,
+    val alertRecipient: String?,
     val latestCriticalEvents: List<SecurityAuditRecordSummary>
 )
 
 @Service
 class SecurityAuditQueryService(
     private val securityAuditEventRepository: SecurityAuditEventRepository,
-    private val companyAdminAccessService: CompanyAdminAccessService
+    private val companyAdminAccessService: CompanyAdminAccessService,
+    private val operationsAlertService: OperationsAlertService
 ) {
 
     fun listPlatformAudit(principal: AppAuthenticatedUser): List<SecurityAuditRecordSummary> {
@@ -72,6 +76,8 @@ class SecurityAuditQueryService(
         lifecycleEventsLast24Hours = events.count {
             it.eventType.name.startsWith("COMPANY_")
         },
+        alertingEnabled = operationsAlertService.isAlertingEnabled(),
+        alertRecipient = operationsAlertService.configuredRecipient(),
         latestCriticalEvents = events
             .sortedByDescending { it.createdAt }
             .take(10)

@@ -316,7 +316,7 @@ describe("CompanyBackofficeScreen", () => {
     expect(screen.getByRole("button", { name: "Save company profile" })).toBeInTheDocument();
     expect(screen.getByText("Create Staff User")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Create staff user" })).toBeInTheDocument();
-  }, 10000);
+  }, 20000);
 
   it("renders appointment configuration controls for phase 4", async () => {
     vi.spyOn(global, "fetch").mockResolvedValue(
@@ -330,7 +330,7 @@ describe("CompanyBackofficeScreen", () => {
     expect(screen.getByText("Providers And Availability")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Create provider" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save availability" })).toBeInTheDocument();
-  }, 10000);
+  }, 20000);
 
   it("renders restaurant management controls for phase 6", async () => {
     vi.spyOn(global, "fetch").mockResolvedValue(

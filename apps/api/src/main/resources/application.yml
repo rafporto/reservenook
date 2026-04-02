@@ -53,3 +53,9 @@ app:
         idle-timeout-seconds: ${SECURITY_IDLE_TIMEOUT_SECONDS:1800}
         absolute-timeout-seconds: ${SECURITY_ABSOLUTE_TIMEOUT_SECONDS:43200}
         recent-auth-window-seconds: ${SECURITY_RECENT_AUTH_WINDOW_SECONDS:900}
+    operations:
+        alerts:
+            enabled: ${OPERATIONS_ALERTS_ENABLED:false}
+            recipient-email: ${OPERATIONS_ALERTS_RECIPIENT_EMAIL:}
+            from-email: ${OPERATIONS_ALERTS_FROM_EMAIL:noreply@reservenook.local}
+            cooldown-minutes: ${OPERATIONS_ALERTS_COOLDOWN_MINUTES:30}

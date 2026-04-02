@@ -10,7 +10,8 @@
     "build:web": "npm run build --workspace web",
     "start:web": "npm run start --workspace web",
     "test:web": "npm run test --workspace web",
-    "lint:web": "npm run lint --workspace web"
+    "lint:web": "npm run lint --workspace web",
+    "perf:public-booking-smoke": "node scripts/performance/public-booking-smoke.mjs"
   },
   "dependencies": {
     "@types/jest": "^30.0.0"

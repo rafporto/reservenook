@@ -120,7 +120,9 @@ describe("PlatformAdminCompanyListScreen", () => {
               rateLimitedEventsLast24Hours: 3,
               loginFailuresLast24Hours: 2,
               bookingEventsLast24Hours: 4,
-              lifecycleEventsLast24Hours: 1
+              lifecycleEventsLast24Hours: 1,
+              alertingEnabled: true,
+              alertRecipient: "ops@reservenook.com"
             },
             securityAudit: [
               {
@@ -188,6 +190,8 @@ describe("PlatformAdminCompanyListScreen", () => {
     expect(screen.getByText("TRIAL")).toBeInTheDocument();
     expect(screen.getByDisplayValue("90")).toBeInTheDocument();
     expect(screen.getByText("Operational Monitoring")).toBeInTheDocument();
+    expect(screen.getByText("Operational alerts: enabled")).toBeInTheDocument();
+    expect(screen.getByText("Recipient: ops@reservenook.com")).toBeInTheDocument();
   });
 
   it("shows access denied for non platform users", async () => {

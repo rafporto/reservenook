@@ -127,6 +127,17 @@ class CompanyDeletionServiceTest {
                     it.failureReason == "Deletion failed"
             })
         }
+        verify(exactly = 1) {
+            securityAuditService.record(
+                eventType = com.reservenook.security.domain.SecurityAuditEventType.COMPANY_DELETION_FAILED,
+                outcome = com.reservenook.security.domain.SecurityAuditOutcome.FAILURE,
+                actorUserId = null,
+                actorEmail = null,
+                companySlug = "acme-wellness",
+                targetEmail = null,
+                details = "Deletion failed"
+            )
+        }
     }
 
     private fun pendingDeletionCompany(deletionScheduledAt: Instant) = Company(

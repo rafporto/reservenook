@@ -203,3 +203,19 @@ Continuous integration currently runs:
 End-to-end smoke tests should be added later once the first real vertical slice exists.
 
 CI should fail on broken tests. Test failures should be treated as release blockers unless explicitly waived for a documented reason.
+
+## Operational Verification
+
+Beyond the default CI baseline, production-oriented changes should also consider:
+
+- operational alert delivery verification in staging
+- lightweight performance smoke checks against public booking endpoints
+- accessibility review of user-critical flows before broad release
+
+The current performance smoke harness lives at:
+
+- `npm run perf:public-booking-smoke`
+
+Operational setup and runtime checks are documented in:
+
+- [operations-runbook.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\operations-runbook.md)

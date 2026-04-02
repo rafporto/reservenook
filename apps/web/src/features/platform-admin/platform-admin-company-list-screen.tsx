@@ -57,6 +57,8 @@ type SecuritySummary = {
   loginFailuresLast24Hours: number;
   bookingEventsLast24Hours: number;
   lifecycleEventsLast24Hours: number;
+  alertingEnabled: boolean;
+  alertRecipient: string | null;
 };
 
 type SecurityAuditRecord = {
@@ -544,6 +546,14 @@ export function PlatformAdminCompanyListScreen() {
                     <Typography>Login failures (24h): {state.operations.summary.loginFailuresLast24Hours}</Typography>
                     <Typography>Booking events (24h): {state.operations.summary.bookingEventsLast24Hours}</Typography>
                     <Typography>Lifecycle events (24h): {state.operations.summary.lifecycleEventsLast24Hours}</Typography>
+                  </Stack>
+                  <Stack spacing={0.5}>
+                    <Typography>
+                      Operational alerts: {state.operations.summary.alertingEnabled ? "enabled" : "disabled"}
+                    </Typography>
+                    <Typography color="text.secondary">
+                      Recipient: {state.operations.summary.alertRecipient ?? "No recipient configured"}
+                    </Typography>
                   </Stack>
                   <Table size="small" aria-label="Recent security audit">
                     <TableHead>
