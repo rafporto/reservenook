@@ -1,6 +1,10 @@
 package com.reservenook.companybackoffice.application
 
 import com.reservenook.companybackoffice.api.CompanyBackofficeBrandingSummary
+import com.reservenook.companybackoffice.api.CompanyBackofficeClassBookingSummary
+import com.reservenook.companybackoffice.api.CompanyBackofficeClassInstructorSummary
+import com.reservenook.companybackoffice.api.CompanyBackofficeClassSessionSummary
+import com.reservenook.companybackoffice.api.CompanyBackofficeClassTypeSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeBookingAuditSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeBookingNotificationTriggersSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeBookingSummary
@@ -27,6 +31,10 @@ import com.reservenook.booking.domain.CustomerContact
 import com.reservenook.companybackoffice.domain.CompanyBusinessHour
 import com.reservenook.companybackoffice.domain.CompanyClosureDate
 import com.reservenook.companybackoffice.domain.CompanyCustomerQuestion
+import com.reservenook.groupclass.domain.ClassBooking
+import com.reservenook.groupclass.domain.ClassInstructor
+import com.reservenook.groupclass.domain.ClassSession
+import com.reservenook.groupclass.domain.ClassType
 import com.reservenook.registration.domain.Company
 import com.reservenook.registration.domain.CompanyMembership
 
@@ -205,4 +213,50 @@ fun AppointmentProvider.toScheduleSummary(availability: List<AppointmentProvider
     providerId = requireNotNull(id),
     providerName = displayName,
     availability = availability.sortedWith(compareBy<AppointmentProviderAvailability> { it.dayOfWeek.ordinal }.thenBy { it.displayOrder }).map { it.toSummary() }
+)
+
+fun ClassType.toSummary() = CompanyBackofficeClassTypeSummary(
+    id = requireNotNull(id),
+    name = name,
+    description = description,
+    durationMinutes = durationMinutes,
+    defaultCapacity = defaultCapacity,
+    active = active,
+    autoConfirm = autoConfirm
+)
+
+fun ClassInstructor.toSummary() = CompanyBackofficeClassInstructorSummary(
+    id = requireNotNull(id),
+    linkedUserId = linkedUser?.id,
+    displayName = displayName,
+    email = email,
+    active = active
+)
+
+fun ClassSession.toSummary(confirmedCount: Int, waitlistCount: Int) = CompanyBackofficeClassSessionSummary(
+    id = requireNotNull(id),
+    classTypeId = requireNotNull(classType.id),
+    classTypeName = classType.name,
+    instructorId = requireNotNull(instructor.id),
+    instructorName = instructor.displayName,
+    startsAt = startsAt.toString(),
+    endsAt = endsAt.toString(),
+    capacity = capacity,
+    status = status.name,
+    confirmedCount = confirmedCount,
+    waitlistCount = waitlistCount
+)
+
+fun ClassBooking.toSummary() = CompanyBackofficeClassBookingSummary(
+    id = requireNotNull(id),
+    bookingId = requireNotNull(booking.id),
+    classSessionId = requireNotNull(classSession.id),
+    classTypeName = classSession.classType.name,
+    instructorName = classSession.instructor.displayName,
+    customerName = booking.customerContact.fullName,
+    customerEmail = booking.customerContact.email,
+    status = status.name,
+    waitlistPosition = waitlistPosition,
+    startsAt = classSession.startsAt.toString(),
+    createdAt = createdAt.toString()
 )

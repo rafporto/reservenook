@@ -9,6 +9,7 @@ import { buildDrafts } from "@/features/app/company/company-backoffice-drafts";
 import { AppointmentPanels } from "@/features/app/company/company-appointment-panels";
 import { ApiMessageResponse, CompanyBackofficeData, Drafts, Feedback, State } from "@/features/app/company/company-backoffice-types";
 import { BookingAuditPanel, ContactAndBookingPanels } from "@/features/app/company/company-booking-panels";
+import { ClassManagementPanels } from "@/features/app/company/company-class-panels";
 import { LocalizationAndNotificationPanels } from "@/features/app/company/company-localization-panels";
 import { CompanyOverviewPanels, ConfigurationAreasPanel } from "@/features/app/company/company-overview-panels";
 import { ProfileAndBrandingPanels } from "@/features/app/company/company-profile-panels";
@@ -183,6 +184,7 @@ export function CompanyBackofficeScreen({ slug }: Props) {
           <BookingAuditPanel data={state.data} />
           <SchedulingPanels {...panelProps} />
           <AppointmentPanels {...panelProps} />
+          <ClassManagementPanels {...panelProps} />
           <StaffPanels {...panelProps} />
           <CustomerQuestionsAndWidgetPanels {...panelProps} />
           <ConfigurationAreasPanel data={state.data} />

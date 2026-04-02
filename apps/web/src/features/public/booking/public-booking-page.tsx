@@ -31,6 +31,13 @@ type PublicBookingConfig = {
     durationMinutes: number;
     priceLabel: string | null;
   }>;
+  classTypes: Array<{
+    id: number;
+    name: string;
+    description: string | null;
+    durationMinutes: number;
+    defaultCapacity: number;
+  }>;
 };
 
 type PublicAppointmentSlot = {
@@ -39,6 +46,18 @@ type PublicAppointmentSlot = {
   providerName: string;
   startsAt: string;
   endsAt: string;
+};
+
+type PublicClassSession = {
+  sessionId: number;
+  classTypeId: number;
+  classTypeName: string;
+  instructorId: number;
+  instructorName: string;
+  startsAt: string;
+  endsAt: string;
+  remainingCapacity: number;
+  waitlistOpen: boolean;
 };
 
 const copy: Record<SupportedLocale, Record<string, string>> = {
@@ -60,7 +79,14 @@ const copy: Record<SupportedLocale, Record<string, string>> = {
     availableSlots: "Available slots",
     noSlots: "No appointment slots are available for the selected date.",
     loadingSlots: "Checking appointment availability...",
+    loadingClasses: "Checking class availability...",
     chooseSlot: "Choose a time slot",
+    classType: "Class type",
+    availableClasses: "Upcoming classes",
+    noClasses: "No class sessions are available right now.",
+    classSubmit: "Book class",
+    classSuccess: "Your class booking request has been received.",
+    invalidClass: "Please provide a valid full name, email address, class type, and session.",
     submit: "Send booking request",
     appointmentSubmit: "Book appointment",
     submitting: "Sending request...",
@@ -87,7 +113,14 @@ const copy: Record<SupportedLocale, Record<string, string>> = {
     availableSlots: "Verfugbare Zeitfenster",
     noSlots: "Fur das gewahlte Datum sind keine Termine verfugbar.",
     loadingSlots: "Terminverfugbarkeit wird gepruft...",
+    loadingClasses: "Kursverfugbarkeit wird gepruft...",
     chooseSlot: "Zeitfenster auswahlen",
+    classType: "Kurstyp",
+    availableClasses: "Kommende Kurse",
+    noClasses: "Derzeit sind keine Kurstermine verfugbar.",
+    classSubmit: "Kurs buchen",
+    classSuccess: "Ihre Kursbuchung wurde empfangen.",
+    invalidClass: "Bitte geben Sie einen gultigen Namen, eine gultige E-Mail-Adresse, einen Kurstyp und einen Termin an.",
     submit: "Buchungsanfrage senden",
     appointmentSubmit: "Termin buchen",
     submitting: "Anfrage wird gesendet...",
@@ -114,7 +147,14 @@ const copy: Record<SupportedLocale, Record<string, string>> = {
     availableSlots: "Horarios disponiveis",
     noSlots: "Nao ha horarios disponiveis para a data selecionada.",
     loadingSlots: "A verificar disponibilidade...",
+    loadingClasses: "A verificar turmas disponiveis...",
     chooseSlot: "Escolha um horario",
+    classType: "Tipo de aula",
+    availableClasses: "Aulas disponiveis",
+    noClasses: "Nao ha aulas disponiveis neste momento.",
+    classSubmit: "Reservar aula",
+    classSuccess: "O seu pedido de reserva para a aula foi recebido.",
+    invalidClass: "Indique um nome, email, tipo de aula e sessao validos.",
     submit: "Enviar pedido de reserva",
     appointmentSubmit: "Marcar atendimento",
     submitting: "A enviar pedido...",
@@ -143,6 +183,8 @@ export function PublicBookingPage({ locale, slug }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slots, setSlots] = useState<PublicAppointmentSlot[]>([]);
+  const [loadingClasses, setLoadingClasses] = useState(false);
+  const [classSessions, setClassSessions] = useState<PublicClassSession[]>([]);
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -152,11 +194,17 @@ export function PublicBookingPage({ locale, slug }: Props) {
     notes: "",
     serviceId: "",
     appointmentDate: "",
-    selectedSlotStartsAt: ""
+    selectedSlotStartsAt: "",
+    classTypeId: "",
+    selectedClassSessionId: ""
   });
 
   const isAppointmentFlow = useMemo(
     () => config?.businessType === "APPOINTMENT" && (config.appointmentServices?.length ?? 0) > 0,
+    [config]
+  );
+  const isClassFlow = useMemo(
+    () => config?.businessType === "CLASS" && (config.classTypes?.length ?? 0) > 0,
     [config]
   );
 
@@ -185,6 +233,41 @@ export function PublicBookingPage({ locale, slug }: Props) {
       active = false;
     };
   }, [slug]);
+
+  useEffect(() => {
+    if (!isClassFlow || !form.classTypeId) {
+      setClassSessions([]);
+      return;
+    }
+    let active = true;
+    setLoadingClasses(true);
+    (async () => {
+      try {
+        const params = new URLSearchParams({ classTypeId: form.classTypeId });
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080"}/api/public/companies/${slug}/classes/availability?${params.toString()}`, {
+          credentials: "include"
+        });
+        if (!active) return;
+        if (!response.ok) {
+          setClassSessions([]);
+          return;
+        }
+        const payload = (await response.json()) as { sessions: PublicClassSession[] };
+        setClassSessions(payload.sessions);
+      } catch {
+        if (active) {
+          setClassSessions([]);
+        }
+      } finally {
+        if (active) {
+          setLoadingClasses(false);
+        }
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [form.classTypeId, isClassFlow, slug]);
 
   useEffect(() => {
     if (!isAppointmentFlow || !form.serviceId || !form.appointmentDate) {
@@ -266,11 +349,20 @@ export function PublicBookingPage({ locale, slug }: Props) {
               return;
             }
           }
+          if (isClassFlow) {
+            const selectedSession = classSessions.find((session) => String(session.sessionId) === form.selectedClassSessionId);
+            if (!form.classTypeId || selectedSession == null) {
+              setFeedback({ type: "error", message: messages.invalidClass });
+              return;
+            }
+          }
 
           setSubmitting(true);
           try {
             const endpoint = isAppointmentFlow
               ? `/api/public/companies/${slug}/appointments/book`
+              : isClassFlow
+                ? `/api/public/companies/${slug}/classes/book`
               : `/api/public/companies/${slug}/booking-intake`;
             const body = isAppointmentFlow
               ? (() => {
@@ -285,6 +377,14 @@ export function PublicBookingPage({ locale, slug }: Props) {
                     startsAt: selectedSlot?.startsAt
                   };
                 })()
+              : isClassFlow
+                ? {
+                    fullName: form.fullName.trim(),
+                    email: form.email.trim(),
+                    phone: form.phone.trim() || null,
+                    preferredLanguage: locale,
+                    sessionId: Number(form.selectedClassSessionId)
+                  }
               : {
                   fullName: form.fullName.trim(),
                   email: form.email.trim(),
@@ -307,7 +407,7 @@ export function PublicBookingPage({ locale, slug }: Props) {
             }
             setFeedback({
               type: "success",
-              message: payload?.message ?? (isAppointmentFlow ? messages.appointmentSuccess : messages.success)
+              message: payload?.message ?? (isAppointmentFlow ? messages.appointmentSuccess : isClassFlow ? messages.classSuccess : messages.success)
             });
             setForm({
               fullName: "",
@@ -318,9 +418,12 @@ export function PublicBookingPage({ locale, slug }: Props) {
               notes: "",
               serviceId: "",
               appointmentDate: "",
-              selectedSlotStartsAt: ""
+              selectedSlotStartsAt: "",
+              classTypeId: "",
+              selectedClassSessionId: ""
             });
             setSlots([]);
+            setClassSessions([]);
           } catch {
             setFeedback({ type: "error", message: messages.unavailable });
           } finally {
@@ -370,6 +473,44 @@ export function PublicBookingPage({ locale, slug }: Props) {
                 </Stack>
               </Stack>
             </>
+          ) : isClassFlow ? (
+            <>
+              <TextField label={messages.classType} value={form.classTypeId} onChange={(event) => setForm((current) => ({
+                ...current,
+                classTypeId: event.target.value,
+                selectedClassSessionId: ""
+              }))} select fullWidth SelectProps={{ native: true }}>
+                <option value=""></option>
+                {config.classTypes.map((classType) => (
+                  <option key={classType.id} value={String(classType.id)}>
+                    {classType.name} ({classType.durationMinutes} min)
+                  </option>
+                ))}
+              </TextField>
+              <Stack spacing={1}>
+                <Typography variant="subtitle1">{messages.availableClasses}</Typography>
+                {loadingClasses ? <Typography color="text.secondary">{messages.loadingClasses}</Typography> : null}
+                {!loadingClasses && form.classTypeId && classSessions.length === 0 ? (
+                  <Typography color="text.secondary">{messages.noClasses}</Typography>
+                ) : null}
+                <Stack spacing={1}>
+                  {classSessions.map((session) => (
+                    <Button
+                      key={session.sessionId}
+                      type="button"
+                      variant={form.selectedClassSessionId === String(session.sessionId) ? "contained" : "outlined"}
+                      onClick={() => setForm((current) => ({ ...current, selectedClassSessionId: String(session.sessionId) }))}
+                    >
+                      {new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }).format(new Date(session.startsAt))}
+                      {" · "}
+                      {session.instructorName}
+                      {" · "}
+                      {session.remainingCapacity > 0 ? `${session.remainingCapacity} left` : "Waitlist"}
+                    </Button>
+                  ))}
+                </Stack>
+              </Stack>
+            </>
           ) : (
             <>
               <TextField label={messages.summary} value={form.requestSummary} onChange={(event) => setForm((current) => ({ ...current, requestSummary: event.target.value }))} fullWidth />
@@ -383,8 +524,8 @@ export function PublicBookingPage({ locale, slug }: Props) {
             </>
           )}
 
-          <Button type="submit" variant="contained" disabled={submitting || (isAppointmentFlow && loadingSlots)}>
-            {submitting ? messages.submitting : (isAppointmentFlow ? messages.appointmentSubmit : (config.ctaLabel || messages.submit))}
+          <Button type="submit" variant="contained" disabled={submitting || (isAppointmentFlow && loadingSlots) || (isClassFlow && loadingClasses)}>
+            {submitting ? messages.submitting : (isAppointmentFlow ? messages.appointmentSubmit : isClassFlow ? messages.classSubmit : (config.ctaLabel || messages.submit))}
           </Button>
         </Stack>
       </Stack>

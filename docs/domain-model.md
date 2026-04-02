@@ -312,3 +312,21 @@ Security and isolation rules for this module:
 - provider-to-user linking must stay inside the same tenant
 - public slot generation only exposes enabled services and concrete bookable slots, not internal blocked windows
 - provider self-schedule reads are limited to the linked provider identity rather than the full tenant booking dataset
+
+## Phase 5 Group Classes Module
+
+The group-classes specialization extends the shared booking core with four tenant-scoped entities:
+
+- `ClassType` defines a reusable class template including duration, default capacity, and manual-vs-auto confirmation behavior
+- `ClassInstructor` represents the instructor identity for group sessions and may optionally link to a tenant staff user
+- `ClassSession` defines a dated scheduled instance of a class type with instructor, time window, capacity, and lifecycle status
+- `ClassBooking` links a shared `Booking` record to one concrete class session and tracks enrollment state such as confirmed, waitlisted, cancelled, attended, or no-show
+
+Security and isolation rules for this module:
+
+- class types, instructors, sessions, and class bookings are always scoped to one company
+- instructor-to-user linking must stay inside the same tenant
+- public class availability only exposes upcoming bookable sessions plus remaining capacity, not broader operational data
+- public class booking must enforce duplicate-booking protection and server-side capacity handling
+- waitlist promotion must remain safe when a confirmed booking is cancelled
+- instructor schedule reads are limited to the linked instructor identity rather than the full tenant dataset

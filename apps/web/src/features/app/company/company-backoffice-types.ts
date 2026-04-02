@@ -117,6 +117,48 @@ export type CompanyBackofficeData = {
       displayOrder: number;
     }>;
   }>;
+  classTypes: Array<{
+    id: number;
+    name: string;
+    description: string | null;
+    durationMinutes: number;
+    defaultCapacity: number;
+    active: boolean;
+    autoConfirm: boolean;
+  }>;
+  classInstructors: Array<{
+    id: number;
+    linkedUserId: number | null;
+    displayName: string;
+    email: string | null;
+    active: boolean;
+  }>;
+  classSessions: Array<{
+    id: number;
+    classTypeId: number;
+    classTypeName: string;
+    instructorId: number;
+    instructorName: string;
+    startsAt: string;
+    endsAt: string;
+    capacity: number;
+    status: string;
+    confirmedCount: number;
+    waitlistCount: number;
+  }>;
+  classBookings: Array<{
+    id: number;
+    bookingId: number;
+    classSessionId: number;
+    classTypeName: string;
+    instructorName: string;
+    customerName: string;
+    customerEmail: string;
+    status: string;
+    waitlistPosition: number | null;
+    startsAt: string;
+    createdAt: string;
+  }>;
   staffUsers: Array<{
     membershipId: number;
     userId?: number;
@@ -258,6 +300,53 @@ export type Drafts = {
     email: string;
     active: boolean;
   }>;
+  classTypeCreate: {
+    name: string;
+    description: string;
+    durationMinutes: string;
+    defaultCapacity: string;
+    active: boolean;
+    autoConfirm: boolean;
+  };
+  classTypeUpdate: Record<number, {
+    name: string;
+    description: string;
+    durationMinutes: string;
+    defaultCapacity: string;
+    active: boolean;
+    autoConfirm: boolean;
+  }>;
+  classInstructorCreate: {
+    linkedUserId: string;
+    displayName: string;
+    email: string;
+    active: boolean;
+  };
+  classInstructorUpdate: Record<number, {
+    linkedUserId: string;
+    displayName: string;
+    email: string;
+    active: boolean;
+  }>;
+  classSessionCreate: {
+    classTypeId: string;
+    instructorId: string;
+    startsAt: string;
+    endsAt: string;
+    capacity: string;
+    status: string;
+  };
+  classSessionUpdate: Record<number, {
+    classTypeId: string;
+    instructorId: string;
+    startsAt: string;
+    endsAt: string;
+    capacity: string;
+    status: string;
+  }>;
+  classBookingUpdate: Record<number, {
+    status: string;
+  }>;
   providerAvailabilityUpdate: Record<number, Array<{
     dayOfWeek: string;
     opensAt: string;
@@ -288,6 +377,8 @@ export const days = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SA
 export const roles = ["COMPANY_ADMIN", "STAFF"];
 export const statuses = ["ACTIVE", "INACTIVE"];
 export const bookingStatuses = ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED", "NO_SHOW"];
+export const classBookingStatuses = ["CONFIRMED", "WAITLISTED", "CANCELLED", "ATTENDED", "NO_SHOW"];
+export const classSessionStatuses = ["SCHEDULED", "CANCELLED"];
 export const questionTypes = ["SHORT_TEXT", "LONG_TEXT", "SINGLE_SELECT", "CHECKBOX"];
 export const widgetThemes = ["minimal", "soft", "contrast"];
 

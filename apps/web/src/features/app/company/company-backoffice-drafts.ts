@@ -98,6 +98,53 @@ export function buildDrafts(data: CompanyBackofficeData): Drafts {
       email: provider.email ?? "",
       active: provider.active
     }])),
+    classTypeCreate: {
+      name: "",
+      description: "",
+      durationMinutes: "45",
+      defaultCapacity: "12",
+      active: true,
+      autoConfirm: false
+    },
+    classTypeUpdate: Object.fromEntries((data.classTypes ?? []).map((classType) => [classType.id, {
+      name: classType.name,
+      description: classType.description ?? "",
+      durationMinutes: String(classType.durationMinutes),
+      defaultCapacity: String(classType.defaultCapacity),
+      active: classType.active,
+      autoConfirm: classType.autoConfirm
+    }])),
+    classInstructorCreate: {
+      linkedUserId: "",
+      displayName: "",
+      email: "",
+      active: true
+    },
+    classInstructorUpdate: Object.fromEntries((data.classInstructors ?? []).map((instructor) => [instructor.id, {
+      linkedUserId: instructor.linkedUserId != null ? String(instructor.linkedUserId) : "",
+      displayName: instructor.displayName,
+      email: instructor.email ?? "",
+      active: instructor.active
+    }])),
+    classSessionCreate: {
+      classTypeId: data.classTypes?.[0] != null ? String(data.classTypes[0].id) : "",
+      instructorId: data.classInstructors?.[0] != null ? String(data.classInstructors[0].id) : "",
+      startsAt: "",
+      endsAt: "",
+      capacity: data.classTypes?.[0] != null ? String(data.classTypes[0].defaultCapacity) : "12",
+      status: "SCHEDULED"
+    },
+    classSessionUpdate: Object.fromEntries((data.classSessions ?? []).map((session) => [session.id, {
+      classTypeId: String(session.classTypeId),
+      instructorId: String(session.instructorId),
+      startsAt: session.startsAt.slice(0, 16),
+      endsAt: session.endsAt.slice(0, 16),
+      capacity: String(session.capacity),
+      status: session.status
+    }])),
+    classBookingUpdate: Object.fromEntries((data.classBookings ?? []).map((booking) => [booking.id, {
+      status: booking.status
+    }])),
     providerAvailabilityUpdate: Object.fromEntries(data.providerSchedules.map((schedule) => [schedule.providerId, schedule.availability.map((entry) => ({
       dayOfWeek: entry.dayOfWeek,
       opensAt: entry.opensAt,

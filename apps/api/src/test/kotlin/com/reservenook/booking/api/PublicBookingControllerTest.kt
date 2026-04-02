@@ -16,6 +16,16 @@ import com.reservenook.companybackoffice.domain.BusinessDay
 import com.reservenook.companybackoffice.domain.CompanyCustomerQuestion
 import com.reservenook.companybackoffice.domain.CustomerQuestionType
 import com.reservenook.companybackoffice.infrastructure.CompanyCustomerQuestionRepository
+import com.reservenook.groupclass.domain.ClassBooking
+import com.reservenook.groupclass.domain.ClassBookingStatus
+import com.reservenook.groupclass.domain.ClassInstructor
+import com.reservenook.groupclass.domain.ClassSession
+import com.reservenook.groupclass.domain.ClassSessionStatus
+import com.reservenook.groupclass.domain.ClassType
+import com.reservenook.groupclass.infrastructure.ClassBookingRepository
+import com.reservenook.groupclass.infrastructure.ClassInstructorRepository
+import com.reservenook.groupclass.infrastructure.ClassSessionRepository
+import com.reservenook.groupclass.infrastructure.ClassTypeRepository
 import com.reservenook.registration.application.RegistrationMailSender
 import com.reservenook.registration.domain.BusinessType
 import com.reservenook.registration.domain.Company
@@ -47,6 +57,10 @@ class PublicBookingControllerTest(
     @Autowired private val appointmentServiceRepository: AppointmentServiceRepository,
     @Autowired private val appointmentProviderRepository: AppointmentProviderRepository,
     @Autowired private val appointmentProviderAvailabilityRepository: AppointmentProviderAvailabilityRepository,
+    @Autowired private val classTypeRepository: ClassTypeRepository,
+    @Autowired private val classInstructorRepository: ClassInstructorRepository,
+    @Autowired private val classSessionRepository: ClassSessionRepository,
+    @Autowired private val classBookingRepository: ClassBookingRepository,
     @Autowired private val requestThrottleService: RequestThrottleService
 ) {
 
@@ -66,6 +80,10 @@ class PublicBookingControllerTest(
         appointmentProviderAvailabilityRepository.deleteAll()
         appointmentProviderRepository.deleteAll()
         appointmentServiceRepository.deleteAll()
+        classBookingRepository.deleteAll()
+        classSessionRepository.deleteAll()
+        classInstructorRepository.deleteAll()
+        classTypeRepository.deleteAll()
         bookingAuditEventRepository.deleteAll()
         bookingRepository.deleteAll()
         customerContactRepository.deleteAll()
@@ -267,11 +285,124 @@ class PublicBookingControllerTest(
         org.junit.jupiter.api.Assertions.assertEquals(1, appointmentBookingRepository.count())
     }
 
-    private fun seedPublicBookingCompany(slug: String, enabled: Boolean): Company =
+    @Test
+    fun `public class availability returns upcoming sessions`() {
+        val company = seedPublicBookingCompany(slug = "acme-classes", enabled = true, businessType = BusinessType.CLASS)
+        val classType = classTypeRepository.save(
+            ClassType(
+                company = company,
+                name = "Morning Yoga",
+                durationMinutes = 60,
+                defaultCapacity = 2,
+                active = true
+            )
+        )
+        val instructor = classInstructorRepository.save(
+            ClassInstructor(
+                company = company,
+                displayName = "Lena Coach",
+                email = "lena@acme.com"
+            )
+        )
+        classSessionRepository.save(
+            ClassSession(
+                company = company,
+                classType = classType,
+                instructor = instructor,
+                startsAt = java.time.Instant.parse("2026-04-10T09:00:00Z"),
+                endsAt = java.time.Instant.parse("2026-04-10T10:00:00Z"),
+                capacity = 2,
+                status = ClassSessionStatus.SCHEDULED
+            )
+        )
+
+        mockMvc.get("/api/public/companies/acme-classes/classes/availability") {
+            param("classTypeId", requireNotNull(classType.id).toString())
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.sessions.length()") { value(1) }
+            jsonPath("$.sessions[0].classTypeName") { value("Morning Yoga") }
+            jsonPath("$.sessions[0].remainingCapacity") { value(2) }
+        }
+    }
+
+    @Test
+    fun `public class booking waitlists when the session is full`() {
+        val company = seedPublicBookingCompany(slug = "acme-classes", enabled = true, businessType = BusinessType.CLASS)
+        val classType = classTypeRepository.save(
+            ClassType(
+                company = company,
+                name = "Morning Yoga",
+                durationMinutes = 60,
+                defaultCapacity = 1,
+                active = true
+            )
+        )
+        val instructor = classInstructorRepository.save(
+            ClassInstructor(
+                company = company,
+                displayName = "Lena Coach",
+                email = "lena@acme.com"
+            )
+        )
+        val session = classSessionRepository.save(
+            ClassSession(
+                company = company,
+                classType = classType,
+                instructor = instructor,
+                startsAt = java.time.Instant.parse("2026-04-10T09:00:00Z"),
+                endsAt = java.time.Instant.parse("2026-04-10T10:00:00Z"),
+                capacity = 1,
+                status = ClassSessionStatus.SCHEDULED
+            )
+        )
+        val firstBooking = bookingRepository.save(
+            com.reservenook.booking.domain.Booking(
+                company = company,
+                customerContact = customerContactRepository.save(
+                    com.reservenook.booking.domain.CustomerContact(
+                        company = company,
+                        fullName = "Existing Student",
+                        email = "existing@example.com",
+                        normalizedEmail = "existing@example.com"
+                    )
+                ),
+                status = com.reservenook.booking.domain.BookingStatus.CONFIRMED,
+                source = com.reservenook.booking.domain.BookingSource.PUBLIC_WEB
+            )
+        )
+        classBookingRepository.save(
+            ClassBooking(
+                booking = firstBooking,
+                company = company,
+                classSession = session,
+                status = ClassBookingStatus.CONFIRMED
+            )
+        )
+
+        mockMvc.post("/api/public/companies/acme-classes/classes/book") {
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "fullName":"Alex Guest",
+                  "email":"alex@example.com",
+                  "phone":"+49 30 111 2222",
+                  "preferredLanguage":"en",
+                  "sessionId":${requireNotNull(session.id)}
+                }
+            """.trimIndent()
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.classBooking.status") { value("WAITLISTED") }
+            jsonPath("$.classBooking.waitlistPosition") { value(1) }
+        }
+    }
+
+    private fun seedPublicBookingCompany(slug: String, enabled: Boolean, businessType: BusinessType = BusinessType.APPOINTMENT): Company =
         companyRepository.save(
             Company(
                 name = "Acme Booking",
-                businessType = BusinessType.APPOINTMENT,
+                businessType = businessType,
                 slug = slug,
                 status = CompanyStatus.ACTIVE,
                 defaultLanguage = "en",

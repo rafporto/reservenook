@@ -15,6 +15,10 @@ data class CompanyBackofficeResponse(
     val appointmentServices: List<CompanyBackofficeAppointmentServiceSummary>,
     val appointmentProviders: List<CompanyBackofficeAppointmentProviderSummary>,
     val providerSchedules: List<CompanyBackofficeProviderScheduleSummary>,
+    val classTypes: List<CompanyBackofficeClassTypeSummary>,
+    val classInstructors: List<CompanyBackofficeClassInstructorSummary>,
+    val classSessions: List<CompanyBackofficeClassSessionSummary>,
+    val classBookings: List<CompanyBackofficeClassBookingSummary>,
     val staffUsers: List<CompanyBackofficeStaffUserSummary>,
     val customerQuestions: List<CompanyBackofficeCustomerQuestionSummary>,
     val widgetSettings: CompanyBackofficeWidgetSettingsSummary,
@@ -155,6 +159,52 @@ data class CompanyBackofficeProviderScheduleSummary(
     val providerId: Long,
     val providerName: String,
     val availability: List<CompanyBackofficeProviderAvailabilitySummary>
+)
+
+data class CompanyBackofficeClassTypeSummary(
+    val id: Long,
+    val name: String,
+    val description: String?,
+    val durationMinutes: Int,
+    val defaultCapacity: Int,
+    val active: Boolean,
+    val autoConfirm: Boolean
+)
+
+data class CompanyBackofficeClassInstructorSummary(
+    val id: Long,
+    val linkedUserId: Long?,
+    val displayName: String,
+    val email: String?,
+    val active: Boolean
+)
+
+data class CompanyBackofficeClassSessionSummary(
+    val id: Long,
+    val classTypeId: Long,
+    val classTypeName: String,
+    val instructorId: Long,
+    val instructorName: String,
+    val startsAt: String,
+    val endsAt: String,
+    val capacity: Int,
+    val status: String,
+    val confirmedCount: Int,
+    val waitlistCount: Int
+)
+
+data class CompanyBackofficeClassBookingSummary(
+    val id: Long,
+    val bookingId: Long,
+    val classSessionId: Long,
+    val classTypeName: String,
+    val instructorName: String,
+    val customerName: String,
+    val customerEmail: String,
+    val status: String,
+    val waitlistPosition: Int?,
+    val startsAt: String,
+    val createdAt: String
 )
 
 data class CompanyBackofficeStaffUserSummary(
@@ -323,6 +373,35 @@ data class CreateStaffUserRequest(
     val role: String
 )
 
+data class UpsertClassTypeRequest(
+    val name: String,
+    val description: String?,
+    val durationMinutes: Int,
+    val defaultCapacity: Int,
+    val active: Boolean,
+    val autoConfirm: Boolean
+)
+
+data class UpsertClassInstructorRequest(
+    val linkedUserId: Long?,
+    val displayName: String,
+    val email: String?,
+    val active: Boolean
+)
+
+data class UpsertClassSessionRequest(
+    val classTypeId: Long,
+    val instructorId: Long,
+    val startsAt: String,
+    val endsAt: String,
+    val capacity: Int,
+    val status: String
+)
+
+data class UpdateClassBookingOutcomeRequest(
+    val status: String
+)
+
 data class UpdateStaffUserRequest(
     val role: String,
     val status: String
@@ -434,6 +513,42 @@ data class UpsertAppointmentProviderResponse(
 data class UpdateAppointmentProviderAvailabilityResponse(
     val message: String,
     val providerSchedule: CompanyBackofficeProviderScheduleSummary
+)
+
+data class ClassTypesResponse(
+    val classTypes: List<CompanyBackofficeClassTypeSummary>
+)
+
+data class UpsertClassTypeResponse(
+    val message: String,
+    val classType: CompanyBackofficeClassTypeSummary
+)
+
+data class ClassInstructorsResponse(
+    val classInstructors: List<CompanyBackofficeClassInstructorSummary>
+)
+
+data class UpsertClassInstructorResponse(
+    val message: String,
+    val classInstructor: CompanyBackofficeClassInstructorSummary
+)
+
+data class ClassSessionsResponse(
+    val classSessions: List<CompanyBackofficeClassSessionSummary>
+)
+
+data class UpsertClassSessionResponse(
+    val message: String,
+    val classSession: CompanyBackofficeClassSessionSummary
+)
+
+data class ClassBookingsResponse(
+    val classBookings: List<CompanyBackofficeClassBookingSummary>
+)
+
+data class UpdateClassBookingOutcomeResponse(
+    val message: String,
+    val classBooking: CompanyBackofficeClassBookingSummary
 )
 
 data class StaffUsersResponse(

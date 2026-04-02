@@ -2,6 +2,7 @@ package com.reservenook.booking.api
 
 import com.reservenook.appointment.application.AppointmentConfigurationService
 import com.reservenook.booking.application.PublicBookingIntakeService
+import com.reservenook.groupclass.application.GroupClassConfigurationService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -13,7 +14,8 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class PublicBookingController(
     private val publicBookingIntakeService: PublicBookingIntakeService,
-    private val appointmentConfigurationService: AppointmentConfigurationService
+    private val appointmentConfigurationService: AppointmentConfigurationService,
+    private val groupClassConfigurationService: GroupClassConfigurationService
 ) {
 
     @GetMapping("/api/public/companies/{slug}/booking-intake-config")
@@ -72,6 +74,41 @@ class PublicBookingController(
             startsAtIso = request.startsAt
         )
     )
+
+    @GetMapping("/api/public/companies/{slug}/classes/availability")
+    fun classAvailability(
+        @PathVariable slug: String,
+        @RequestHeader(value = "X-Forwarded-For", required = false) forwardedFor: String?,
+        @RequestHeader(value = "X-Real-IP", required = false) realIp: String?,
+        @RequestParam classTypeId: Long,
+        servletRequest: jakarta.servlet.http.HttpServletRequest
+    ) = PublicClassAvailabilityResponse(
+        sessions = groupClassConfigurationService.getPublicAvailability(
+            slug = slug,
+            classTypeId = classTypeId,
+            clientAddress = forwardedFor?.substringBefore(",")?.trim() ?: realIp?.trim() ?: servletRequest.remoteAddr
+        )
+    )
+
+    @PostMapping("/api/public/companies/{slug}/classes/book")
+    fun bookClass(
+        @PathVariable slug: String,
+        @RequestHeader(value = "X-Forwarded-For", required = false) forwardedFor: String?,
+        @RequestHeader(value = "X-Real-IP", required = false) realIp: String?,
+        @RequestBody request: BookPublicClassRequest,
+        servletRequest: jakarta.servlet.http.HttpServletRequest
+    ) = BookPublicClassResponse(
+        message = "Your class booking request has been received.",
+        classBooking = groupClassConfigurationService.bookPublicClass(
+            slug = slug,
+            clientAddress = forwardedFor?.substringBefore(",")?.trim() ?: realIp?.trim() ?: servletRequest.remoteAddr,
+            sessionId = request.sessionId,
+            fullName = request.fullName,
+            email = request.email,
+            phone = request.phone,
+            preferredLanguage = request.preferredLanguage
+        )
+    )
 }
 
 data class PublicBookingIntakeConfigResponse(
@@ -84,7 +121,8 @@ data class PublicBookingIntakeConfigResponse(
     val ctaLabel: String,
     val bookingEnabled: Boolean,
     val customerQuestions: List<PublicBookingQuestionSummary>,
-    val appointmentServices: List<PublicAppointmentServiceSummary>
+    val appointmentServices: List<PublicAppointmentServiceSummary>,
+    val classTypes: List<PublicClassTypeSummary>
 )
 
 data class PublicBookingQuestionSummary(
@@ -100,6 +138,14 @@ data class PublicAppointmentServiceSummary(
     val description: String?,
     val durationMinutes: Int,
     val priceLabel: String?
+)
+
+data class PublicClassTypeSummary(
+    val id: Long,
+    val name: String,
+    val description: String?,
+    val durationMinutes: Int,
+    val defaultCapacity: Int
 )
 
 data class SubmitPublicBookingIntakeRequest(
@@ -120,6 +166,10 @@ data class PublicAppointmentAvailabilityResponse(
     val slots: List<com.reservenook.appointment.application.PublicAppointmentSlotSummary>
 )
 
+data class PublicClassAvailabilityResponse(
+    val sessions: List<com.reservenook.groupclass.application.PublicClassSessionSummary>
+)
+
 data class BookPublicAppointmentRequest(
     val fullName: String,
     val email: String,
@@ -133,4 +183,17 @@ data class BookPublicAppointmentRequest(
 data class BookPublicAppointmentResponse(
     val message: String,
     val booking: com.reservenook.companybackoffice.api.CompanyBackofficeBookingSummary
+)
+
+data class BookPublicClassRequest(
+    val fullName: String,
+    val email: String,
+    val phone: String?,
+    val preferredLanguage: String?,
+    val sessionId: Long
+)
+
+data class BookPublicClassResponse(
+    val message: String,
+    val classBooking: com.reservenook.companybackoffice.api.CompanyBackofficeClassBookingSummary
 )

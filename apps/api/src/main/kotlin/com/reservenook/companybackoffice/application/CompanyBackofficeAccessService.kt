@@ -14,6 +14,11 @@ import com.reservenook.companybackoffice.api.CompanyBackofficeViewerSummary
 import com.reservenook.companybackoffice.infrastructure.CompanyBusinessHourRepository
 import com.reservenook.companybackoffice.infrastructure.CompanyClosureDateRepository
 import com.reservenook.companybackoffice.infrastructure.CompanyCustomerQuestionRepository
+import com.reservenook.groupclass.domain.ClassBookingStatus
+import com.reservenook.groupclass.infrastructure.ClassBookingRepository
+import com.reservenook.groupclass.infrastructure.ClassInstructorRepository
+import com.reservenook.groupclass.infrastructure.ClassSessionRepository
+import com.reservenook.groupclass.infrastructure.ClassTypeRepository
 import com.reservenook.registration.domain.CompanyRole
 import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
@@ -32,7 +37,11 @@ class CompanyBackofficeAccessService(
     private val bookingAuditEventRepository: BookingAuditEventRepository,
     private val appointmentServiceRepository: AppointmentServiceRepository,
     private val appointmentProviderRepository: AppointmentProviderRepository,
-    private val appointmentProviderAvailabilityRepository: AppointmentProviderAvailabilityRepository
+    private val appointmentProviderAvailabilityRepository: AppointmentProviderAvailabilityRepository,
+    private val classTypeRepository: ClassTypeRepository,
+    private val classInstructorRepository: ClassInstructorRepository,
+    private val classSessionRepository: ClassSessionRepository,
+    private val classBookingRepository: ClassBookingRepository
 ) {
 
     fun getBackoffice(principal: AppAuthenticatedUser, requestedSlug: String): CompanyBackofficeResponse {
@@ -42,6 +51,7 @@ class CompanyBackofficeAccessService(
         val allMemberships = companyMembershipRepository.findAllByCompanyId(companyId)
         val latestSubscription = companySubscriptionRepository.findFirstByCompanyIdOrderByExpiresAtDesc(companyId)
         val providers = appointmentProviderRepository.findAllByCompanyIdOrderByCreatedAtAsc(companyId)
+        val classSessions = classSessionRepository.findAllByCompanyIdOrderByStartsAtAsc(companyId)
 
         return CompanyBackofficeResponse(
             company = company.toCompanySummary(),
@@ -62,6 +72,15 @@ class CompanyBackofficeAccessService(
                     appointmentProviderAvailabilityRepository.findAllByProviderIdOrderByDayOfWeekAscDisplayOrderAsc(requireNotNull(provider.id))
                 )
             },
+            classTypes = classTypeRepository.findAllByCompanyIdOrderByCreatedAtAsc(companyId).map { it.toSummary() },
+            classInstructors = classInstructorRepository.findAllByCompanyIdOrderByCreatedAtAsc(companyId).map { it.toSummary() },
+            classSessions = classSessions.map { session ->
+                session.toSummary(
+                    confirmedCount = classBookingRepository.countByClassSessionIdAndStatusIn(requireNotNull(session.id), listOf(ClassBookingStatus.CONFIRMED, ClassBookingStatus.ATTENDED, ClassBookingStatus.NO_SHOW)).toInt(),
+                    waitlistCount = classBookingRepository.countByClassSessionIdAndStatusIn(requireNotNull(session.id), listOf(ClassBookingStatus.WAITLISTED)).toInt()
+                )
+            },
+            classBookings = classBookingRepository.findAllByCompanyIdOrderByCreatedAtDesc(companyId).map { it.toSummary() },
             staffUsers = allMemberships.sortedBy { it.createdAt }.map { it.toStaffSummary() },
             customerQuestions = companyCustomerQuestionRepository.findAllByCompanyIdOrderByDisplayOrderAsc(companyId).map { it.toSummary() },
             widgetSettings = company.toWidgetSettingsSummary(),
@@ -154,6 +173,30 @@ class CompanyBackofficeAccessService(
                     key = "provider-availability",
                     title = "Provider availability",
                     description = "Set provider working windows used to generate appointment slots inside tenant scope.",
+                    status = "available"
+                ),
+                CompanyBackofficeAreaSummary(
+                    key = "class-types",
+                    title = "Class types",
+                    description = "Define reusable class templates with duration, capacity, and confirmation behavior.",
+                    status = "available"
+                ),
+                CompanyBackofficeAreaSummary(
+                    key = "class-instructors",
+                    title = "Class instructors",
+                    description = "Manage instructors and link them to tenant users without exposing other tenant memberships.",
+                    status = "available"
+                ),
+                CompanyBackofficeAreaSummary(
+                    key = "class-sessions",
+                    title = "Class sessions",
+                    description = "Schedule dated class sessions with overlap-safe instructor assignment and explicit capacity.",
+                    status = "available"
+                ),
+                CompanyBackofficeAreaSummary(
+                    key = "class-bookings",
+                    title = "Class bookings",
+                    description = "Review class enrollment, waitlists, and attendance-safe booking outcomes.",
                     status = "available"
                 ),
                 CompanyBackofficeAreaSummary(

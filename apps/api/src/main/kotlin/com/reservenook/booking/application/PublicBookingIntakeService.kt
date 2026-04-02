@@ -4,10 +4,12 @@ import com.reservenook.appointment.infrastructure.AppointmentServiceRepository
 import com.reservenook.booking.api.PublicAppointmentServiceSummary
 import com.reservenook.booking.api.PublicBookingIntakeConfigResponse
 import com.reservenook.booking.api.PublicBookingQuestionSummary
+import com.reservenook.booking.api.PublicClassTypeSummary
 import com.reservenook.booking.api.SubmitPublicBookingIntakeRequest
 import com.reservenook.booking.api.SubmitPublicBookingIntakeResponse
 import com.reservenook.booking.domain.BookingSource
 import com.reservenook.companybackoffice.infrastructure.CompanyCustomerQuestionRepository
+import com.reservenook.groupclass.infrastructure.ClassTypeRepository
 import com.reservenook.registration.domain.CompanyStatus
 import com.reservenook.registration.infrastructure.CompanyRepository
 import com.reservenook.security.application.PublicRequestAbuseGuard
@@ -24,6 +26,7 @@ class PublicBookingIntakeService(
     private val companyRepository: CompanyRepository,
     private val companyCustomerQuestionRepository: CompanyCustomerQuestionRepository,
     private val appointmentServiceRepository: AppointmentServiceRepository,
+    private val classTypeRepository: ClassTypeRepository,
     private val bookingInfrastructureService: BookingInfrastructureService,
     private val publicRequestAbuseGuard: PublicRequestAbuseGuard,
     private val securityAuditService: SecurityAuditService
@@ -60,6 +63,16 @@ class PublicBookingIntakeService(
                         description = it.description,
                         durationMinutes = it.durationMinutes,
                         priceLabel = it.priceLabel
+                    )
+                },
+            classTypes = classTypeRepository.findAllByCompanyIdAndActiveTrueOrderByNameAsc(requireNotNull(company.id))
+                .map {
+                    PublicClassTypeSummary(
+                        id = requireNotNull(it.id),
+                        name = it.name,
+                        description = it.description,
+                        durationMinutes = it.durationMinutes,
+                        defaultCapacity = it.defaultCapacity
                     )
                 }
         )

@@ -34,8 +34,8 @@ The platform is planned as:
 
 ## Current App Scaffolds
 
-- `apps/web` now includes a branded localized public marketing surface, improved auth/onboarding UX, SEO assets such as route metadata, `robots.txt`, and `sitemap.xml`, the completed Phase 2 tenant backoffice for profile, branding, localization, business hours, closure dates, notification preferences, staff management, customer questions, and widget settings, the Phase 3 shared booking baseline for customer contacts, booking history, booking audit visibility, booking trigger management, and a localized public booking-request page, and the Phase 4 appointment module UI for appointment services, provider setup, provider availability, and public slot-based appointment booking, plus defensive browser headers, a pragmatic Content Security Policy, and optional HSTS support for secure deployments
-- `apps/api` now includes the Phase 1 registration, auth, platform-admin policy, inactive-company lifecycle baseline, inactivity notification wiring, pending-deletion warning flow, automated company deletion, the completed Phase 2 company-configuration endpoints and persistence model, the Phase 3 shared booking infrastructure for customer contacts, bookings, booking audit events, booking notification triggers, and public booking intake, the Phase 4 appointment module for tenant-scoped services, providers, provider availability, slot generation, appointment booking, manual confirmation, and provider self-schedule reads, and the current security-hardening baseline for layered public auth throttling with database-backed counters, CSRF-protected authenticated mutations, password-reset and inactive-tenant session revocation, explicit idle and absolute session timeouts, recent-auth protection for sensitive admin changes, defensive browser headers, persisted security audit events, an explicit Content Security Policy, and optional HSTS support for secure deployments
+- `apps/web` now includes a branded localized public marketing surface, improved auth/onboarding UX, SEO assets such as route metadata, `robots.txt`, and `sitemap.xml`, the completed Phase 2 tenant backoffice for profile, branding, localization, business hours, closure dates, notification preferences, staff management, customer questions, and widget settings, the Phase 3 shared booking baseline for customer contacts, booking history, booking audit visibility, booking trigger management, and a localized public booking-request page, the Phase 4 appointment module UI for appointment services, provider setup, provider availability, and public slot-based appointment booking, and the Phase 5 group-classes UI for class types, instructors, class sessions, class booking outcomes, and public class-session booking, plus defensive browser headers, a pragmatic Content Security Policy, and optional HSTS support for secure deployments
+- `apps/api` now includes the Phase 1 registration, auth, platform-admin policy, inactive-company lifecycle baseline, inactivity notification wiring, pending-deletion warning flow, automated company deletion, the completed Phase 2 company-configuration endpoints and persistence model, the Phase 3 shared booking infrastructure for customer contacts, bookings, booking audit events, booking notification triggers, and public booking intake, the Phase 4 appointment module for tenant-scoped services, providers, provider availability, slot generation, appointment booking, manual confirmation, and provider self-schedule reads, the Phase 5 group-classes module for tenant-scoped class types, instructors, scheduled sessions, capacity-safe public booking, waitlisting, and instructor schedule reads, and the current security-hardening baseline for layered public auth throttling with database-backed counters, CSRF-protected authenticated mutations, password-reset and inactive-tenant session revocation, explicit idle and absolute session timeouts, recent-auth protection for sensitive admin changes, defensive browser headers, persisted security audit events, an explicit Content Security Policy, and optional HSTS support for secure deployments
 
 ## Local Commands
 
@@ -124,11 +124,19 @@ Useful checks:
 - booking audit endpoint: `GET http://localhost:8080/api/app/company/{slug}/booking-audit`
 - public booking config endpoint: `GET http://localhost:8080/api/public/companies/{slug}/booking-intake-config`
 - public booking intake endpoint: `POST http://localhost:8080/api/public/companies/{slug}/booking-intake`
+- public class availability endpoint: `GET http://localhost:8080/api/public/companies/{slug}/classes/availability`
+- public class booking endpoint: `POST http://localhost:8080/api/public/companies/{slug}/classes/book`
 - company staff list endpoint: `GET http://localhost:8080/api/app/company/{slug}/staff`
 - company staff create endpoint: `POST http://localhost:8080/api/app/company/{slug}/staff`
 - company staff update endpoint: `PUT http://localhost:8080/api/app/company/{slug}/staff/{membershipId}`
 - company customer questions endpoint: `PUT http://localhost:8080/api/app/company/{slug}/customer-questions`
 - company widget settings endpoint: `PUT http://localhost:8080/api/app/company/{slug}/widget-settings`
+- class types endpoint: `GET|POST|PUT http://localhost:8080/api/app/company/{slug}/class-types`
+- class instructors endpoint: `GET|POST|PUT http://localhost:8080/api/app/company/{slug}/class-instructors`
+- class sessions endpoint: `GET|POST|PUT http://localhost:8080/api/app/company/{slug}/class-sessions`
+- class bookings endpoint: `GET http://localhost:8080/api/app/company/{slug}/class-bookings`
+- class booking outcome endpoint: `PUT http://localhost:8080/api/app/company/{slug}/class-bookings/{classBookingId}/status`
+- instructor class schedule endpoint: `GET http://localhost:8080/api/app/company/{slug}/class-instructors/me/sessions`
 - platform admin companies endpoint: `GET http://localhost:8080/api/platform-admin/companies`
 - inactivity policy endpoints: `GET` and `PUT http://localhost:8080/api/platform-admin/inactivity-policy`
 - session endpoint: `GET http://localhost:8080/api/auth/session`
