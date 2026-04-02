@@ -82,4 +82,39 @@ describe("PublicBookingPage", () => {
     expect(await screen.findByText("Your class booking request has been received.")).toBeInTheDocument();
     await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(3));
   });
+
+  it("renders restaurant availability and submits a valid reservation", async () => {
+    const fetchSpy = vi.spyOn(global, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        companyName: "Acme Bistro",
+        companySlug: "acme-bistro",
+        businessType: "RESTAURANT",
+        displayName: "Acme Bistro",
+        defaultLanguage: "en",
+        defaultLocale: "en-US",
+        ctaLabel: "Reserve now",
+        bookingEnabled: true,
+        customerQuestions: [],
+        appointmentServices: [],
+        classTypes: []
+      }), { status: 200, headers: { "Content-Type": "application/json" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        slots: [{ startsAt: "2026-04-10T18:00:00Z", servicePeriodId: 7, servicePeriodName: "Dinner", partySize: 2 }]
+      }), { status: 200, headers: { "Content-Type": "application/json" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ message: "Your restaurant reservation has been received." }), { status: 200, headers: { "Content-Type": "application/json" } }));
+
+    render(<PublicBookingPage locale="en" slug="acme-bistro" />);
+
+    expect(await screen.findByText("Request a booking")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Full name"), { target: { value: "Alex Guest" } });
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "alex@example.com" } });
+    fireEvent.change(screen.getByLabelText("Party size"), { target: { value: "2" } });
+    fireEvent.change(screen.getByLabelText("Reservation date"), { target: { value: "2026-04-10" } });
+    expect(await screen.findByRole("button", { name: /Dinner/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Dinner/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Reserve table" }));
+
+    expect(await screen.findByText("Your restaurant reservation has been received.")).toBeInTheDocument();
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(3));
+  });
 });

@@ -19,6 +19,11 @@ import com.reservenook.groupclass.infrastructure.ClassBookingRepository
 import com.reservenook.groupclass.infrastructure.ClassInstructorRepository
 import com.reservenook.groupclass.infrastructure.ClassSessionRepository
 import com.reservenook.groupclass.infrastructure.ClassTypeRepository
+import com.reservenook.restaurant.infrastructure.DiningAreaRepository
+import com.reservenook.restaurant.infrastructure.RestaurantReservationRepository
+import com.reservenook.restaurant.infrastructure.RestaurantServicePeriodRepository
+import com.reservenook.restaurant.infrastructure.RestaurantTableCombinationRepository
+import com.reservenook.restaurant.infrastructure.RestaurantTableRepository
 import com.reservenook.registration.domain.CompanyRole
 import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
@@ -41,7 +46,12 @@ class CompanyBackofficeAccessService(
     private val classTypeRepository: ClassTypeRepository,
     private val classInstructorRepository: ClassInstructorRepository,
     private val classSessionRepository: ClassSessionRepository,
-    private val classBookingRepository: ClassBookingRepository
+    private val classBookingRepository: ClassBookingRepository,
+    private val diningAreaRepository: DiningAreaRepository,
+    private val restaurantTableRepository: RestaurantTableRepository,
+    private val restaurantTableCombinationRepository: RestaurantTableCombinationRepository,
+    private val restaurantServicePeriodRepository: RestaurantServicePeriodRepository,
+    private val restaurantReservationRepository: RestaurantReservationRepository
 ) {
 
     fun getBackoffice(principal: AppAuthenticatedUser, requestedSlug: String): CompanyBackofficeResponse {
@@ -81,6 +91,11 @@ class CompanyBackofficeAccessService(
                 )
             },
             classBookings = classBookingRepository.findAllByCompanyIdOrderByCreatedAtDesc(companyId).map { it.toSummary() },
+            diningAreas = diningAreaRepository.findAllByCompanyIdOrderByDisplayOrderAscCreatedAtAsc(companyId).map { it.toSummary() },
+            restaurantTables = restaurantTableRepository.findAllByCompanyIdOrderByCreatedAtAsc(companyId).map { it.toSummary() },
+            restaurantTableCombinations = restaurantTableCombinationRepository.findAllByCompanyIdOrderByCreatedAtAsc(companyId).map { it.toSummary() },
+            restaurantServicePeriods = restaurantServicePeriodRepository.findAllByCompanyIdOrderByDayOfWeekAscOpensAtAsc(companyId).map { it.toSummary() },
+            restaurantReservations = restaurantReservationRepository.findAllByCompanyIdOrderByReservedAtAsc(companyId).map { it.toSummary() },
             staffUsers = allMemberships.sortedBy { it.createdAt }.map { it.toStaffSummary() },
             customerQuestions = companyCustomerQuestionRepository.findAllByCompanyIdOrderByDisplayOrderAsc(companyId).map { it.toSummary() },
             widgetSettings = company.toWidgetSettingsSummary(),
@@ -197,6 +212,36 @@ class CompanyBackofficeAccessService(
                     key = "class-bookings",
                     title = "Class bookings",
                     description = "Review class enrollment, waitlists, and attendance-safe booking outcomes.",
+                    status = "available"
+                ),
+                CompanyBackofficeAreaSummary(
+                    key = "dining-areas",
+                    title = "Dining areas",
+                    description = "Organize the restaurant floor into tenant-scoped seating areas such as patio, bar, and main hall.",
+                    status = "available"
+                ),
+                CompanyBackofficeAreaSummary(
+                    key = "restaurant-tables",
+                    title = "Restaurant tables",
+                    description = "Manage restaurant tables with explicit party-size rules and area assignments.",
+                    status = "available"
+                ),
+                CompanyBackofficeAreaSummary(
+                    key = "restaurant-combinations",
+                    title = "Combinable tables",
+                    description = "Define safe table combinations for larger parties without leaking cross-tenant inventory.",
+                    status = "available"
+                ),
+                CompanyBackofficeAreaSummary(
+                    key = "restaurant-service-periods",
+                    title = "Restaurant service periods",
+                    description = "Configure reservation windows, slot cadence, and party-size rules for lunch and dinner services.",
+                    status = "available"
+                ),
+                CompanyBackofficeAreaSummary(
+                    key = "restaurant-reservations",
+                    title = "Restaurant reservations",
+                    description = "Review reservation outcomes and keep table assignments consistent for current and upcoming services.",
                     status = "available"
                 ),
                 CompanyBackofficeAreaSummary(

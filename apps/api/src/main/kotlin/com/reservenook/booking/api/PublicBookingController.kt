@@ -3,6 +3,7 @@ package com.reservenook.booking.api
 import com.reservenook.appointment.application.AppointmentConfigurationService
 import com.reservenook.booking.application.PublicBookingIntakeService
 import com.reservenook.groupclass.application.GroupClassConfigurationService
+import com.reservenook.restaurant.application.RestaurantConfigurationService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -15,7 +16,8 @@ import org.springframework.web.bind.annotation.RestController
 class PublicBookingController(
     private val publicBookingIntakeService: PublicBookingIntakeService,
     private val appointmentConfigurationService: AppointmentConfigurationService,
-    private val groupClassConfigurationService: GroupClassConfigurationService
+    private val groupClassConfigurationService: GroupClassConfigurationService,
+    private val restaurantConfigurationService: RestaurantConfigurationService
 ) {
 
     @GetMapping("/api/public/companies/{slug}/booking-intake-config")
@@ -109,6 +111,44 @@ class PublicBookingController(
             preferredLanguage = request.preferredLanguage
         )
     )
+
+    @GetMapping("/api/public/companies/{slug}/restaurant/availability")
+    fun restaurantAvailability(
+        @PathVariable slug: String,
+        @RequestHeader(value = "X-Forwarded-For", required = false) forwardedFor: String?,
+        @RequestHeader(value = "X-Real-IP", required = false) realIp: String?,
+        @RequestParam date: String,
+        @RequestParam partySize: Int,
+        servletRequest: jakarta.servlet.http.HttpServletRequest
+    ) = PublicRestaurantAvailabilityResponse(
+        slots = restaurantConfigurationService.getPublicAvailability(
+            slug = slug,
+            date = date,
+            partySize = partySize,
+            clientAddress = forwardedFor?.substringBefore(",")?.trim() ?: realIp?.trim() ?: servletRequest.remoteAddr
+        )
+    )
+
+    @PostMapping("/api/public/companies/{slug}/restaurant/book")
+    fun bookRestaurantReservation(
+        @PathVariable slug: String,
+        @RequestHeader(value = "X-Forwarded-For", required = false) forwardedFor: String?,
+        @RequestHeader(value = "X-Real-IP", required = false) realIp: String?,
+        @RequestBody request: BookPublicRestaurantReservationRequest,
+        servletRequest: jakarta.servlet.http.HttpServletRequest
+    ) = BookPublicRestaurantReservationResponse(
+        message = "Your restaurant reservation has been received.",
+        restaurantReservation = restaurantConfigurationService.bookPublicReservation(
+            slug = slug,
+            clientAddress = forwardedFor?.substringBefore(",")?.trim() ?: realIp?.trim() ?: servletRequest.remoteAddr,
+            fullName = request.fullName,
+            email = request.email,
+            phone = request.phone,
+            preferredLanguage = request.preferredLanguage,
+            partySize = request.partySize,
+            startsAt = request.startsAt
+        )
+    )
 }
 
 data class PublicBookingIntakeConfigResponse(
@@ -170,6 +210,10 @@ data class PublicClassAvailabilityResponse(
     val sessions: List<com.reservenook.groupclass.application.PublicClassSessionSummary>
 )
 
+data class PublicRestaurantAvailabilityResponse(
+    val slots: List<com.reservenook.restaurant.application.PublicRestaurantAvailabilitySummary>
+)
+
 data class BookPublicAppointmentRequest(
     val fullName: String,
     val email: String,
@@ -196,4 +240,18 @@ data class BookPublicClassRequest(
 data class BookPublicClassResponse(
     val message: String,
     val classBooking: com.reservenook.companybackoffice.api.CompanyBackofficeClassBookingSummary
+)
+
+data class BookPublicRestaurantReservationRequest(
+    val fullName: String,
+    val email: String,
+    val phone: String?,
+    val preferredLanguage: String?,
+    val partySize: Int,
+    val startsAt: String
+)
+
+data class BookPublicRestaurantReservationResponse(
+    val message: String,
+    val restaurantReservation: com.reservenook.companybackoffice.api.CompanyBackofficeRestaurantReservationSummary
 )

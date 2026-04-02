@@ -14,6 +14,11 @@ This document defines the implementation and verification baseline for Phase 6: 
 
 ## UC-49 to UC-52 Configuration Flows
 
+### Implemented Coverage
+
+- backend integration coverage for admin creation of dining areas, restaurant tables, and service periods
+- frontend coverage for restaurant management panels in the shared company backoffice
+
 ### Security
 
 - non-admin writes are denied
@@ -21,6 +26,11 @@ This document defines the implementation and verification baseline for Phase 6: 
 - audit events are recorded for operational policy changes
 
 ## UC-53 Compute Restaurant Availability
+
+### Implemented Coverage
+
+- backend integration coverage for party-size-aware public availability based on tables and service periods
+- frontend coverage for public restaurant slot selection
 
 ### Security
 
@@ -40,6 +50,11 @@ This document defines the implementation and verification baseline for Phase 6: 
 - concurrent reservation attempts preserve consistency
 - public abuse throttling is active
 
+### Implemented Coverage
+
+- backend integration coverage for public reservation creation with server-side table assignment
+- backend transactional assignment uses locked active tables before persisting the reservation
+
 ## UC-55 Manage Reservation Outcomes
 
 ### Security
@@ -47,9 +62,17 @@ This document defines the implementation and verification baseline for Phase 6: 
 - unauthorized outcome changes are denied
 - reservation state changes are audited
 
+### Implemented Coverage
+
+- backend integration coverage for staff-operated reservation status updates inside tenant scope
+
 ## UC-56 Restaurant Staff Views Operational Floorbook
 
 ### Security
 
 - staff can view only current-tenant floorbook data
 - customer details shown follow role policy
+
+### Implemented Coverage
+
+- backend integration coverage for tenant-scoped floorbook reads by staff users

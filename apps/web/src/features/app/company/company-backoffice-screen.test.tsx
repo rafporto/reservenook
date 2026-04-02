@@ -131,6 +131,58 @@ function backofficePayload() {
         ]
       }
     ],
+    diningAreas: [
+      {
+        id: 51,
+        name: "Main Hall",
+        displayOrder: 0,
+        active: true
+      }
+    ],
+    restaurantTables: [
+      {
+        id: 61,
+        diningAreaId: 51,
+        diningAreaName: "Main Hall",
+        label: "T1",
+        minPartySize: 1,
+        maxPartySize: 4,
+        active: true
+      }
+    ],
+    restaurantTableCombinations: [],
+    restaurantServicePeriods: [
+      {
+        id: 71,
+        name: "Dinner",
+        dayOfWeek: "FRIDAY",
+        opensAt: "18:00",
+        closesAt: "22:00",
+        slotIntervalMinutes: 30,
+        reservationDurationMinutes: 90,
+        minPartySize: 1,
+        maxPartySize: 6,
+        bookingWindowDays: 30,
+        active: true
+      }
+    ],
+    restaurantReservations: [
+      {
+        id: 81,
+        bookingId: 15,
+        customerName: "Alex Guest",
+        customerEmail: "alex@example.com",
+        servicePeriodName: "Dinner",
+        reservedAt: "2026-04-10T18:00:00Z",
+        reservedUntil: "2026-04-10T19:30:00Z",
+        partySize: 2,
+        status: "CONFIRMED",
+        tableIds: [61],
+        tableLabels: ["T1"],
+        areaNames: ["Main Hall"],
+        createdAt: "2026-03-31T10:00:00Z"
+      }
+    ],
     staffUsers: [
       {
         membershipId: 1,
@@ -248,6 +300,19 @@ describe("CompanyBackofficeScreen", () => {
     expect(screen.getByText("Providers And Availability")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Create provider" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save availability" })).toBeInTheDocument();
+  });
+
+  it("renders restaurant management controls for phase 6", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(backofficePayload()), { status: 200, headers: { "Content-Type": "application/json" } })
+    );
+
+    render(<CompanyBackofficeScreen slug="acme-wellness" />);
+
+    expect(await screen.findByText("Dining Areas")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Create dining area" })).toBeInTheDocument();
+    expect(screen.getByText("Restaurant Tables")).toBeInTheDocument();
+    expect(screen.getByText("Reservations And Floorbook")).toBeInTheDocument();
   });
 
 });

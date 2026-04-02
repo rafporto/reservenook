@@ -330,3 +330,22 @@ Security and isolation rules for this module:
 - public class booking must enforce duplicate-booking protection and server-side capacity handling
 - waitlist promotion must remain safe when a confirmed booking is cancelled
 - instructor schedule reads are limited to the linked instructor identity rather than the full tenant dataset
+
+## Phase 6 Restaurant Module
+
+The restaurant specialization extends the shared booking core with six tenant-scoped entities:
+
+- `DiningArea` defines the operational areas of the venue such as patio, bar, and main hall
+- `RestaurantTable` defines the reservable tables with explicit area ownership and party-size range
+- `RestaurantTableCombination` defines valid two-table combinations for larger parties
+- `RestaurantServicePeriod` defines reservation windows, slot cadence, duration, and party-size policy for one day-of-week service
+- `RestaurantReservation` links a shared `Booking` record to a concrete restaurant reservation time, service period, party size, and outcome status
+- `RestaurantReservationTable` links one reservation to the concrete table assignment set chosen by the availability algorithm or staff reseating action
+
+Security and isolation rules for this module:
+
+- dining areas, tables, combinations, service periods, and reservations are always scoped to one company
+- public availability only exposes bookable times and service-period labels, not the internal table assignment decision
+- public reservation booking must recompute availability server-side and assign tables inside one transaction
+- staff floorbook reads are limited to current-tenant reservations
+- admin-only writes remain protected by recent-auth and CSRF, while staff can operate reservation outcomes only inside their own tenant

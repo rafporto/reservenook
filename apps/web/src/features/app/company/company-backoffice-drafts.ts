@@ -145,6 +145,62 @@ export function buildDrafts(data: CompanyBackofficeData): Drafts {
     classBookingUpdate: Object.fromEntries((data.classBookings ?? []).map((booking) => [booking.id, {
       status: booking.status
     }])),
+    diningAreaCreate: {
+      name: "",
+      displayOrder: String(data.diningAreas?.length ?? 0),
+      active: true
+    },
+    diningAreaUpdate: Object.fromEntries((data.diningAreas ?? []).map((area) => [area.id, {
+      name: area.name,
+      displayOrder: String(area.displayOrder),
+      active: area.active
+    }])),
+    restaurantTableCreate: {
+      diningAreaId: data.diningAreas?.[0] != null ? String(data.diningAreas[0].id) : "",
+      label: "",
+      minPartySize: "1",
+      maxPartySize: "4",
+      active: true
+    },
+    restaurantTableUpdate: Object.fromEntries((data.restaurantTables ?? []).map((table) => [table.id, {
+      diningAreaId: String(table.diningAreaId),
+      label: table.label,
+      minPartySize: String(table.minPartySize),
+      maxPartySize: String(table.maxPartySize),
+      active: table.active
+    }])),
+    restaurantTableCombinations: (data.restaurantTableCombinations ?? []).map((entry) => ({
+      primaryTableId: String(entry.primaryTableId),
+      secondaryTableId: String(entry.secondaryTableId)
+    })),
+    restaurantServicePeriodCreate: {
+      name: "",
+      dayOfWeek: "MONDAY",
+      opensAt: "18:00",
+      closesAt: "22:00",
+      slotIntervalMinutes: "30",
+      reservationDurationMinutes: "90",
+      minPartySize: "1",
+      maxPartySize: "6",
+      bookingWindowDays: "30",
+      active: true
+    },
+    restaurantServicePeriodUpdate: Object.fromEntries((data.restaurantServicePeriods ?? []).map((period) => [period.id, {
+      name: period.name,
+      dayOfWeek: period.dayOfWeek,
+      opensAt: period.opensAt,
+      closesAt: period.closesAt,
+      slotIntervalMinutes: String(period.slotIntervalMinutes),
+      reservationDurationMinutes: String(period.reservationDurationMinutes),
+      minPartySize: String(period.minPartySize),
+      maxPartySize: String(period.maxPartySize),
+      bookingWindowDays: String(period.bookingWindowDays),
+      active: period.active
+    }])),
+    restaurantReservationUpdate: Object.fromEntries((data.restaurantReservations ?? []).map((reservation) => [reservation.id, {
+      status: reservation.status,
+      tableIdsText: reservation.tableIds.join(", ")
+    }])),
     providerAvailabilityUpdate: Object.fromEntries(data.providerSchedules.map((schedule) => [schedule.providerId, schedule.availability.map((entry) => ({
       dayOfWeek: entry.dayOfWeek,
       opensAt: entry.opensAt,

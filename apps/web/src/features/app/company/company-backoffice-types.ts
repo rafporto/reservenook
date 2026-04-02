@@ -159,6 +159,56 @@ export type CompanyBackofficeData = {
     startsAt: string;
     createdAt: string;
   }>;
+  diningAreas: Array<{
+    id: number;
+    name: string;
+    displayOrder: number;
+    active: boolean;
+  }>;
+  restaurantTables: Array<{
+    id: number;
+    diningAreaId: number;
+    diningAreaName: string;
+    label: string;
+    minPartySize: number;
+    maxPartySize: number;
+    active: boolean;
+  }>;
+  restaurantTableCombinations: Array<{
+    id: number;
+    primaryTableId: number;
+    primaryTableLabel: string;
+    secondaryTableId: number;
+    secondaryTableLabel: string;
+  }>;
+  restaurantServicePeriods: Array<{
+    id: number;
+    name: string;
+    dayOfWeek: string;
+    opensAt: string;
+    closesAt: string;
+    slotIntervalMinutes: number;
+    reservationDurationMinutes: number;
+    minPartySize: number;
+    maxPartySize: number;
+    bookingWindowDays: number;
+    active: boolean;
+  }>;
+  restaurantReservations: Array<{
+    id: number;
+    bookingId: number;
+    customerName: string;
+    customerEmail: string;
+    servicePeriodName: string;
+    reservedAt: string;
+    reservedUntil: string;
+    partySize: number;
+    status: string;
+    tableIds: number[];
+    tableLabels: string[];
+    areaNames: string[];
+    createdAt: string;
+  }>;
   staffUsers: Array<{
     membershipId: number;
     userId?: number;
@@ -347,6 +397,62 @@ export type Drafts = {
   classBookingUpdate: Record<number, {
     status: string;
   }>;
+  diningAreaCreate: {
+    name: string;
+    displayOrder: string;
+    active: boolean;
+  };
+  diningAreaUpdate: Record<number, {
+    name: string;
+    displayOrder: string;
+    active: boolean;
+  }>;
+  restaurantTableCreate: {
+    diningAreaId: string;
+    label: string;
+    minPartySize: string;
+    maxPartySize: string;
+    active: boolean;
+  };
+  restaurantTableUpdate: Record<number, {
+    diningAreaId: string;
+    label: string;
+    minPartySize: string;
+    maxPartySize: string;
+    active: boolean;
+  }>;
+  restaurantTableCombinations: Array<{
+    primaryTableId: string;
+    secondaryTableId: string;
+  }>;
+  restaurantServicePeriodCreate: {
+    name: string;
+    dayOfWeek: string;
+    opensAt: string;
+    closesAt: string;
+    slotIntervalMinutes: string;
+    reservationDurationMinutes: string;
+    minPartySize: string;
+    maxPartySize: string;
+    bookingWindowDays: string;
+    active: boolean;
+  };
+  restaurantServicePeriodUpdate: Record<number, {
+    name: string;
+    dayOfWeek: string;
+    opensAt: string;
+    closesAt: string;
+    slotIntervalMinutes: string;
+    reservationDurationMinutes: string;
+    minPartySize: string;
+    maxPartySize: string;
+    bookingWindowDays: string;
+    active: boolean;
+  }>;
+  restaurantReservationUpdate: Record<number, {
+    status: string;
+    tableIdsText: string;
+  }>;
   providerAvailabilityUpdate: Record<number, Array<{
     dayOfWeek: string;
     opensAt: string;
@@ -379,6 +485,7 @@ export const statuses = ["ACTIVE", "INACTIVE"];
 export const bookingStatuses = ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED", "NO_SHOW"];
 export const classBookingStatuses = ["CONFIRMED", "WAITLISTED", "CANCELLED", "ATTENDED", "NO_SHOW"];
 export const classSessionStatuses = ["SCHEDULED", "CANCELLED"];
+export const restaurantReservationStatuses = ["CONFIRMED", "SEATED", "CANCELLED", "COMPLETED", "NO_SHOW"];
 export const questionTypes = ["SHORT_TEXT", "LONG_TEXT", "SINGLE_SELECT", "CHECKBOX"];
 export const widgetThemes = ["minimal", "soft", "contrast"];
 

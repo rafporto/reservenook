@@ -5,6 +5,12 @@ import com.reservenook.companybackoffice.api.CompanyBackofficeClassBookingSummar
 import com.reservenook.companybackoffice.api.CompanyBackofficeClassInstructorSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeClassSessionSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeClassTypeSummary
+import com.reservenook.companybackoffice.api.CompanyBackofficeDiningAreaSummary
+import com.reservenook.companybackoffice.api.CompanyBackofficeRestaurantFloorbookEntrySummary
+import com.reservenook.companybackoffice.api.CompanyBackofficeRestaurantReservationSummary
+import com.reservenook.companybackoffice.api.CompanyBackofficeRestaurantServicePeriodSummary
+import com.reservenook.companybackoffice.api.CompanyBackofficeRestaurantTableCombinationSummary
+import com.reservenook.companybackoffice.api.CompanyBackofficeRestaurantTableSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeBookingAuditSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeBookingNotificationTriggersSummary
 import com.reservenook.companybackoffice.api.CompanyBackofficeBookingSummary
@@ -35,6 +41,11 @@ import com.reservenook.groupclass.domain.ClassBooking
 import com.reservenook.groupclass.domain.ClassInstructor
 import com.reservenook.groupclass.domain.ClassSession
 import com.reservenook.groupclass.domain.ClassType
+import com.reservenook.restaurant.domain.DiningArea
+import com.reservenook.restaurant.domain.RestaurantReservation
+import com.reservenook.restaurant.domain.RestaurantServicePeriod
+import com.reservenook.restaurant.domain.RestaurantTable
+import com.reservenook.restaurant.domain.RestaurantTableCombination
 import com.reservenook.registration.domain.Company
 import com.reservenook.registration.domain.CompanyMembership
 
@@ -259,4 +270,71 @@ fun ClassBooking.toSummary() = CompanyBackofficeClassBookingSummary(
     waitlistPosition = waitlistPosition,
     startsAt = classSession.startsAt.toString(),
     createdAt = createdAt.toString()
+)
+
+fun DiningArea.toSummary() = CompanyBackofficeDiningAreaSummary(
+    id = requireNotNull(id),
+    name = name,
+    displayOrder = displayOrder,
+    active = active
+)
+
+fun RestaurantTable.toSummary() = CompanyBackofficeRestaurantTableSummary(
+    id = requireNotNull(id),
+    diningAreaId = requireNotNull(diningArea.id),
+    diningAreaName = diningArea.name,
+    label = label,
+    minPartySize = minPartySize,
+    maxPartySize = maxPartySize,
+    active = active
+)
+
+fun RestaurantTableCombination.toSummary() = CompanyBackofficeRestaurantTableCombinationSummary(
+    id = requireNotNull(id),
+    primaryTableId = requireNotNull(primaryTable.id),
+    primaryTableLabel = primaryTable.label,
+    secondaryTableId = requireNotNull(secondaryTable.id),
+    secondaryTableLabel = secondaryTable.label
+)
+
+fun RestaurantServicePeriod.toSummary() = CompanyBackofficeRestaurantServicePeriodSummary(
+    id = requireNotNull(id),
+    name = name,
+    dayOfWeek = dayOfWeek.name,
+    opensAt = opensAt.toString(),
+    closesAt = closesAt.toString(),
+    slotIntervalMinutes = slotIntervalMinutes,
+    reservationDurationMinutes = reservationDurationMinutes,
+    minPartySize = minPartySize,
+    maxPartySize = maxPartySize,
+    bookingWindowDays = bookingWindowDays,
+    active = active
+)
+
+fun RestaurantReservation.toSummary() = CompanyBackofficeRestaurantReservationSummary(
+    id = requireNotNull(id),
+    bookingId = requireNotNull(booking.id),
+    customerName = booking.customerContact.fullName,
+    customerEmail = booking.customerContact.email,
+    servicePeriodName = servicePeriod.name,
+    reservedAt = reservedAt.toString(),
+    reservedUntil = reservedUntil.toString(),
+    partySize = partySize,
+    status = status.name,
+    tableIds = tableAssignments.map { requireNotNull(it.restaurantTable.id) },
+    tableLabels = tableAssignments.map { it.restaurantTable.label },
+    areaNames = tableAssignments.map { it.restaurantTable.diningArea.name }.distinct(),
+    createdAt = createdAt.toString()
+)
+
+fun RestaurantReservation.toFloorbookSummary() = CompanyBackofficeRestaurantFloorbookEntrySummary(
+    reservationId = requireNotNull(id),
+    customerName = booking.customerContact.fullName,
+    customerEmail = booking.customerContact.email,
+    reservedAt = reservedAt.toString(),
+    reservedUntil = reservedUntil.toString(),
+    partySize = partySize,
+    status = status.name,
+    tableLabels = tableAssignments.map { it.restaurantTable.label },
+    areaNames = tableAssignments.map { it.restaurantTable.diningArea.name }.distinct()
 )

@@ -19,6 +19,11 @@ data class CompanyBackofficeResponse(
     val classInstructors: List<CompanyBackofficeClassInstructorSummary>,
     val classSessions: List<CompanyBackofficeClassSessionSummary>,
     val classBookings: List<CompanyBackofficeClassBookingSummary>,
+    val diningAreas: List<CompanyBackofficeDiningAreaSummary>,
+    val restaurantTables: List<CompanyBackofficeRestaurantTableSummary>,
+    val restaurantTableCombinations: List<CompanyBackofficeRestaurantTableCombinationSummary>,
+    val restaurantServicePeriods: List<CompanyBackofficeRestaurantServicePeriodSummary>,
+    val restaurantReservations: List<CompanyBackofficeRestaurantReservationSummary>,
     val staffUsers: List<CompanyBackofficeStaffUserSummary>,
     val customerQuestions: List<CompanyBackofficeCustomerQuestionSummary>,
     val widgetSettings: CompanyBackofficeWidgetSettingsSummary,
@@ -205,6 +210,73 @@ data class CompanyBackofficeClassBookingSummary(
     val waitlistPosition: Int?,
     val startsAt: String,
     val createdAt: String
+)
+
+data class CompanyBackofficeDiningAreaSummary(
+    val id: Long,
+    val name: String,
+    val displayOrder: Int,
+    val active: Boolean
+)
+
+data class CompanyBackofficeRestaurantTableSummary(
+    val id: Long,
+    val diningAreaId: Long,
+    val diningAreaName: String,
+    val label: String,
+    val minPartySize: Int,
+    val maxPartySize: Int,
+    val active: Boolean
+)
+
+data class CompanyBackofficeRestaurantTableCombinationSummary(
+    val id: Long,
+    val primaryTableId: Long,
+    val primaryTableLabel: String,
+    val secondaryTableId: Long,
+    val secondaryTableLabel: String
+)
+
+data class CompanyBackofficeRestaurantServicePeriodSummary(
+    val id: Long,
+    val name: String,
+    val dayOfWeek: String,
+    val opensAt: String,
+    val closesAt: String,
+    val slotIntervalMinutes: Int,
+    val reservationDurationMinutes: Int,
+    val minPartySize: Int,
+    val maxPartySize: Int,
+    val bookingWindowDays: Int,
+    val active: Boolean
+)
+
+data class CompanyBackofficeRestaurantReservationSummary(
+    val id: Long,
+    val bookingId: Long,
+    val customerName: String,
+    val customerEmail: String,
+    val servicePeriodName: String,
+    val reservedAt: String,
+    val reservedUntil: String,
+    val partySize: Int,
+    val status: String,
+    val tableIds: List<Long>,
+    val tableLabels: List<String>,
+    val areaNames: List<String>,
+    val createdAt: String
+)
+
+data class CompanyBackofficeRestaurantFloorbookEntrySummary(
+    val reservationId: Long,
+    val customerName: String,
+    val customerEmail: String,
+    val reservedAt: String,
+    val reservedUntil: String,
+    val partySize: Int,
+    val status: String,
+    val tableLabels: List<String>,
+    val areaNames: List<String>
 )
 
 data class CompanyBackofficeStaffUserSummary(
@@ -402,6 +474,47 @@ data class UpdateClassBookingOutcomeRequest(
     val status: String
 )
 
+data class UpsertDiningAreaRequest(
+    val name: String,
+    val displayOrder: Int,
+    val active: Boolean
+)
+
+data class UpsertRestaurantTableRequest(
+    val diningAreaId: Long,
+    val label: String,
+    val minPartySize: Int,
+    val maxPartySize: Int,
+    val active: Boolean
+)
+
+data class ReplaceRestaurantTableCombinationsRequest(
+    val entries: List<RestaurantTableCombinationEntryRequest>
+)
+
+data class RestaurantTableCombinationEntryRequest(
+    val primaryTableId: Long,
+    val secondaryTableId: Long
+)
+
+data class UpsertRestaurantServicePeriodRequest(
+    val name: String,
+    val dayOfWeek: String,
+    val opensAt: String,
+    val closesAt: String,
+    val slotIntervalMinutes: Int,
+    val reservationDurationMinutes: Int,
+    val minPartySize: Int,
+    val maxPartySize: Int,
+    val bookingWindowDays: Int,
+    val active: Boolean
+)
+
+data class UpdateRestaurantReservationOutcomeRequest(
+    val status: String,
+    val tableIds: List<Long> = emptyList()
+)
+
 data class UpdateStaffUserRequest(
     val role: String,
     val status: String
@@ -549,6 +662,55 @@ data class ClassBookingsResponse(
 data class UpdateClassBookingOutcomeResponse(
     val message: String,
     val classBooking: CompanyBackofficeClassBookingSummary
+)
+
+data class DiningAreasResponse(
+    val diningAreas: List<CompanyBackofficeDiningAreaSummary>
+)
+
+data class UpsertDiningAreaResponse(
+    val message: String,
+    val diningArea: CompanyBackofficeDiningAreaSummary
+)
+
+data class RestaurantTablesResponse(
+    val restaurantTables: List<CompanyBackofficeRestaurantTableSummary>
+)
+
+data class UpsertRestaurantTableResponse(
+    val message: String,
+    val restaurantTable: CompanyBackofficeRestaurantTableSummary
+)
+
+data class RestaurantTableCombinationsResponse(
+    val restaurantTableCombinations: List<CompanyBackofficeRestaurantTableCombinationSummary>
+)
+
+data class ReplaceRestaurantTableCombinationsResponse(
+    val message: String,
+    val restaurantTableCombinations: List<CompanyBackofficeRestaurantTableCombinationSummary>
+)
+
+data class RestaurantServicePeriodsResponse(
+    val restaurantServicePeriods: List<CompanyBackofficeRestaurantServicePeriodSummary>
+)
+
+data class UpsertRestaurantServicePeriodResponse(
+    val message: String,
+    val restaurantServicePeriod: CompanyBackofficeRestaurantServicePeriodSummary
+)
+
+data class RestaurantReservationsResponse(
+    val restaurantReservations: List<CompanyBackofficeRestaurantReservationSummary>
+)
+
+data class UpdateRestaurantReservationOutcomeResponse(
+    val message: String,
+    val restaurantReservation: CompanyBackofficeRestaurantReservationSummary
+)
+
+data class RestaurantFloorbookResponse(
+    val entries: List<CompanyBackofficeRestaurantFloorbookEntrySummary>
 )
 
 data class StaffUsersResponse(

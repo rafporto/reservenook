@@ -14,6 +14,7 @@ import { LocalizationAndNotificationPanels } from "@/features/app/company/compan
 import { CompanyOverviewPanels, ConfigurationAreasPanel } from "@/features/app/company/company-overview-panels";
 import { ProfileAndBrandingPanels } from "@/features/app/company/company-profile-panels";
 import { CustomerQuestionsAndWidgetPanels } from "@/features/app/company/company-question-widget-panels";
+import { RestaurantManagementPanels } from "@/features/app/company/company-restaurant-panels";
 import { SchedulingPanels } from "@/features/app/company/company-scheduling-panels";
 import { StaffPanels } from "@/features/app/company/company-staff-panels";
 
@@ -185,6 +186,7 @@ export function CompanyBackofficeScreen({ slug }: Props) {
           <SchedulingPanels {...panelProps} />
           <AppointmentPanels {...panelProps} />
           <ClassManagementPanels {...panelProps} />
+          <RestaurantManagementPanels {...panelProps} />
           <StaffPanels {...panelProps} />
           <CustomerQuestionsAndWidgetPanels {...panelProps} />
           <ConfigurationAreasPanel data={state.data} />

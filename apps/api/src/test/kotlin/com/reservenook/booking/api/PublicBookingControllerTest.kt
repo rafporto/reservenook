@@ -30,6 +30,15 @@ import com.reservenook.registration.application.RegistrationMailSender
 import com.reservenook.registration.domain.BusinessType
 import com.reservenook.registration.domain.Company
 import com.reservenook.registration.domain.CompanyStatus
+import com.reservenook.restaurant.domain.DiningArea
+import com.reservenook.restaurant.domain.RestaurantServicePeriod
+import com.reservenook.restaurant.domain.RestaurantTable
+import com.reservenook.restaurant.infrastructure.DiningAreaRepository
+import com.reservenook.restaurant.infrastructure.RestaurantReservationRepository
+import com.reservenook.restaurant.infrastructure.RestaurantReservationTableRepository
+import com.reservenook.restaurant.infrastructure.RestaurantServicePeriodRepository
+import com.reservenook.restaurant.infrastructure.RestaurantTableCombinationRepository
+import com.reservenook.restaurant.infrastructure.RestaurantTableRepository
 import com.reservenook.registration.infrastructure.CompanyRepository
 import com.reservenook.security.application.RequestThrottleService
 import io.mockk.justRun
@@ -61,6 +70,12 @@ class PublicBookingControllerTest(
     @Autowired private val classInstructorRepository: ClassInstructorRepository,
     @Autowired private val classSessionRepository: ClassSessionRepository,
     @Autowired private val classBookingRepository: ClassBookingRepository,
+    @Autowired private val diningAreaRepository: DiningAreaRepository,
+    @Autowired private val restaurantTableRepository: RestaurantTableRepository,
+    @Autowired private val restaurantTableCombinationRepository: RestaurantTableCombinationRepository,
+    @Autowired private val restaurantServicePeriodRepository: RestaurantServicePeriodRepository,
+    @Autowired private val restaurantReservationTableRepository: RestaurantReservationTableRepository,
+    @Autowired private val restaurantReservationRepository: RestaurantReservationRepository,
     @Autowired private val requestThrottleService: RequestThrottleService
 ) {
 
@@ -84,6 +99,12 @@ class PublicBookingControllerTest(
         classSessionRepository.deleteAll()
         classInstructorRepository.deleteAll()
         classTypeRepository.deleteAll()
+        restaurantReservationTableRepository.deleteAll()
+        restaurantReservationRepository.deleteAll()
+        restaurantTableCombinationRepository.deleteAll()
+        restaurantTableRepository.deleteAll()
+        diningAreaRepository.deleteAll()
+        restaurantServicePeriodRepository.deleteAll()
         bookingAuditEventRepository.deleteAll()
         bookingRepository.deleteAll()
         customerContactRepository.deleteAll()
@@ -396,6 +417,73 @@ class PublicBookingControllerTest(
             jsonPath("$.classBooking.status") { value("WAITLISTED") }
             jsonPath("$.classBooking.waitlistPosition") { value(1) }
         }
+    }
+
+    @Test
+    fun `public restaurant booking computes availability and stores reservation`() {
+        val company = seedPublicBookingCompany(slug = "acme-bistro", enabled = true, businessType = BusinessType.RESTAURANT)
+        val area = diningAreaRepository.save(
+            DiningArea(
+                company = company,
+                name = "Main Hall",
+                displayOrder = 0,
+                active = true
+            )
+        )
+        restaurantTableRepository.save(
+            RestaurantTable(
+                company = company,
+                diningArea = area,
+                label = "T1",
+                minPartySize = 1,
+                maxPartySize = 4,
+                active = true
+            )
+        )
+        restaurantServicePeriodRepository.save(
+            RestaurantServicePeriod(
+                company = company,
+                name = "Dinner",
+                dayOfWeek = BusinessDay.FRIDAY,
+                opensAt = LocalTime.of(18, 0),
+                closesAt = LocalTime.of(22, 0),
+                slotIntervalMinutes = 30,
+                reservationDurationMinutes = 90,
+                minPartySize = 1,
+                maxPartySize = 4,
+                bookingWindowDays = 60,
+                active = true
+            )
+        )
+
+        mockMvc.get("/api/public/companies/acme-bistro/restaurant/availability") {
+            param("date", "2026-04-10")
+            param("partySize", "2")
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.slots.length()") { value(6) }
+            jsonPath("$.slots[0].servicePeriodName") { value("Dinner") }
+        }
+
+        mockMvc.post("/api/public/companies/acme-bistro/restaurant/book") {
+            contentType = org.springframework.http.MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "fullName":"Alex Guest",
+                  "email":"alex@example.com",
+                  "phone":"+49 30 111 2222",
+                  "preferredLanguage":"en",
+                  "partySize":2,
+                  "startsAt":"2026-04-10T18:00:00Z"
+                }
+            """.trimIndent()
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.restaurantReservation.status") { value("CONFIRMED") }
+            jsonPath("$.restaurantReservation.tableLabels[0]") { value("T1") }
+        }
+
+        org.junit.jupiter.api.Assertions.assertEquals(1, restaurantReservationRepository.count())
     }
 
     private fun seedPublicBookingCompany(slug: String, enabled: Boolean, businessType: BusinessType = BusinessType.APPOINTMENT): Company =

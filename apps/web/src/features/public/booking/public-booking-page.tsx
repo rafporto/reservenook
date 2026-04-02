@@ -60,6 +60,13 @@ type PublicClassSession = {
   waitlistOpen: boolean;
 };
 
+type PublicRestaurantSlot = {
+  startsAt: string;
+  servicePeriodId: number;
+  servicePeriodName: string;
+  partySize: number;
+};
+
 const copy: Record<SupportedLocale, Record<string, string>> = {
   en: {
     loading: "Loading booking request form...",
@@ -80,8 +87,16 @@ const copy: Record<SupportedLocale, Record<string, string>> = {
     noSlots: "No appointment slots are available for the selected date.",
     loadingSlots: "Checking appointment availability...",
     loadingClasses: "Checking class availability...",
+    loadingRestaurant: "Checking table availability...",
     chooseSlot: "Choose a time slot",
     classType: "Class type",
+    partySize: "Party size",
+    reservationDate: "Reservation date",
+    availableTables: "Available reservation times",
+    noRestaurantSlots: "No restaurant tables are available for the selected date and party size.",
+    restaurantSubmit: "Reserve table",
+    restaurantSuccess: "Your restaurant reservation has been received.",
+    invalidRestaurant: "Please provide a valid full name, email address, party size, date, and reservation time.",
     availableClasses: "Upcoming classes",
     noClasses: "No class sessions are available right now.",
     classSubmit: "Book class",
@@ -114,8 +129,16 @@ const copy: Record<SupportedLocale, Record<string, string>> = {
     noSlots: "Fur das gewahlte Datum sind keine Termine verfugbar.",
     loadingSlots: "Terminverfugbarkeit wird gepruft...",
     loadingClasses: "Kursverfugbarkeit wird gepruft...",
+    loadingRestaurant: "Tischverfugbarkeit wird gepruft...",
     chooseSlot: "Zeitfenster auswahlen",
     classType: "Kurstyp",
+    partySize: "Personenzahl",
+    reservationDate: "Reservierungsdatum",
+    availableTables: "Verfugbare Reservierungszeiten",
+    noRestaurantSlots: "Fur Datum und Personenzahl sind keine Tische verfugbar.",
+    restaurantSubmit: "Tisch reservieren",
+    restaurantSuccess: "Ihre Restaurantreservierung wurde empfangen.",
+    invalidRestaurant: "Bitte geben Sie einen gultigen Namen, eine gultige E-Mail-Adresse, Personenzahl, Datum und Reservierungszeit an.",
     availableClasses: "Kommende Kurse",
     noClasses: "Derzeit sind keine Kurstermine verfugbar.",
     classSubmit: "Kurs buchen",
@@ -148,8 +171,16 @@ const copy: Record<SupportedLocale, Record<string, string>> = {
     noSlots: "Nao ha horarios disponiveis para a data selecionada.",
     loadingSlots: "A verificar disponibilidade...",
     loadingClasses: "A verificar turmas disponiveis...",
+    loadingRestaurant: "A verificar disponibilidade de mesas...",
     chooseSlot: "Escolha um horario",
     classType: "Tipo de aula",
+    partySize: "Numero de pessoas",
+    reservationDate: "Data da reserva",
+    availableTables: "Horarios disponiveis para reserva",
+    noRestaurantSlots: "Nao ha mesas disponiveis para a data e tamanho do grupo selecionados.",
+    restaurantSubmit: "Reservar mesa",
+    restaurantSuccess: "A sua reserva de restaurante foi recebida.",
+    invalidRestaurant: "Indique um nome, email, numero de pessoas, data e horario de reserva validos.",
     availableClasses: "Aulas disponiveis",
     noClasses: "Nao ha aulas disponiveis neste momento.",
     classSubmit: "Reservar aula",
@@ -185,6 +216,8 @@ export function PublicBookingPage({ locale, slug }: Props) {
   const [slots, setSlots] = useState<PublicAppointmentSlot[]>([]);
   const [loadingClasses, setLoadingClasses] = useState(false);
   const [classSessions, setClassSessions] = useState<PublicClassSession[]>([]);
+  const [loadingRestaurant, setLoadingRestaurant] = useState(false);
+  const [restaurantSlots, setRestaurantSlots] = useState<PublicRestaurantSlot[]>([]);
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -196,7 +229,10 @@ export function PublicBookingPage({ locale, slug }: Props) {
     appointmentDate: "",
     selectedSlotStartsAt: "",
     classTypeId: "",
-    selectedClassSessionId: ""
+    selectedClassSessionId: "",
+    restaurantDate: "",
+    partySize: "",
+    selectedRestaurantStartsAt: ""
   });
 
   const isAppointmentFlow = useMemo(
@@ -205,6 +241,10 @@ export function PublicBookingPage({ locale, slug }: Props) {
   );
   const isClassFlow = useMemo(
     () => config?.businessType === "CLASS" && (config.classTypes?.length ?? 0) > 0,
+    [config]
+  );
+  const isRestaurantFlow = useMemo(
+    () => config?.businessType === "RESTAURANT",
     [config]
   );
 
@@ -268,6 +308,44 @@ export function PublicBookingPage({ locale, slug }: Props) {
       active = false;
     };
   }, [form.classTypeId, isClassFlow, slug]);
+
+  useEffect(() => {
+    if (!isRestaurantFlow || !form.restaurantDate || !form.partySize) {
+      setRestaurantSlots([]);
+      return;
+    }
+    let active = true;
+    setLoadingRestaurant(true);
+    (async () => {
+      try {
+        const params = new URLSearchParams({
+          date: form.restaurantDate,
+          partySize: form.partySize
+        });
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080"}/api/public/companies/${slug}/restaurant/availability?${params.toString()}`, {
+          credentials: "include"
+        });
+        if (!active) return;
+        if (!response.ok) {
+          setRestaurantSlots([]);
+          return;
+        }
+        const payload = (await response.json()) as { slots: PublicRestaurantSlot[] };
+        setRestaurantSlots(payload.slots);
+      } catch {
+        if (active) {
+          setRestaurantSlots([]);
+        }
+      } finally {
+        if (active) {
+          setLoadingRestaurant(false);
+        }
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [form.partySize, form.restaurantDate, isRestaurantFlow, slug]);
 
   useEffect(() => {
     if (!isAppointmentFlow || !form.serviceId || !form.appointmentDate) {
@@ -356,6 +434,13 @@ export function PublicBookingPage({ locale, slug }: Props) {
               return;
             }
           }
+          if (isRestaurantFlow) {
+            const selectedSlot = restaurantSlots.find((slot) => slot.startsAt === form.selectedRestaurantStartsAt);
+            if (!form.partySize || !form.restaurantDate || selectedSlot == null) {
+              setFeedback({ type: "error", message: messages.invalidRestaurant });
+              return;
+            }
+          }
 
           setSubmitting(true);
           try {
@@ -363,6 +448,8 @@ export function PublicBookingPage({ locale, slug }: Props) {
               ? `/api/public/companies/${slug}/appointments/book`
               : isClassFlow
                 ? `/api/public/companies/${slug}/classes/book`
+              : isRestaurantFlow
+                ? `/api/public/companies/${slug}/restaurant/book`
               : `/api/public/companies/${slug}/booking-intake`;
             const body = isAppointmentFlow
               ? (() => {
@@ -384,6 +471,15 @@ export function PublicBookingPage({ locale, slug }: Props) {
                     phone: form.phone.trim() || null,
                     preferredLanguage: locale,
                     sessionId: Number(form.selectedClassSessionId)
+                  }
+              : isRestaurantFlow
+                ? {
+                    fullName: form.fullName.trim(),
+                    email: form.email.trim(),
+                    phone: form.phone.trim() || null,
+                    preferredLanguage: locale,
+                    partySize: Number(form.partySize),
+                    startsAt: form.selectedRestaurantStartsAt
                   }
               : {
                   fullName: form.fullName.trim(),
@@ -407,7 +503,7 @@ export function PublicBookingPage({ locale, slug }: Props) {
             }
             setFeedback({
               type: "success",
-              message: payload?.message ?? (isAppointmentFlow ? messages.appointmentSuccess : isClassFlow ? messages.classSuccess : messages.success)
+              message: payload?.message ?? (isAppointmentFlow ? messages.appointmentSuccess : isClassFlow ? messages.classSuccess : isRestaurantFlow ? messages.restaurantSuccess : messages.success)
             });
             setForm({
               fullName: "",
@@ -420,10 +516,14 @@ export function PublicBookingPage({ locale, slug }: Props) {
               appointmentDate: "",
               selectedSlotStartsAt: "",
               classTypeId: "",
-              selectedClassSessionId: ""
+              selectedClassSessionId: "",
+              restaurantDate: "",
+              partySize: "",
+              selectedRestaurantStartsAt: ""
             });
             setSlots([]);
             setClassSessions([]);
+            setRestaurantSlots([]);
           } catch {
             setFeedback({ type: "error", message: messages.unavailable });
           } finally {
@@ -511,6 +611,40 @@ export function PublicBookingPage({ locale, slug }: Props) {
                 </Stack>
               </Stack>
             </>
+          ) : isRestaurantFlow ? (
+            <>
+              <TextField label={messages.partySize} value={form.partySize} onChange={(event) => setForm((current) => ({
+                ...current,
+                partySize: event.target.value,
+                selectedRestaurantStartsAt: ""
+              }))} fullWidth />
+              <TextField label={messages.reservationDate} type="date" value={form.restaurantDate} onChange={(event) => setForm((current) => ({
+                ...current,
+                restaurantDate: event.target.value,
+                selectedRestaurantStartsAt: ""
+              }))} InputLabelProps={{ shrink: true }} fullWidth />
+              <Stack spacing={1}>
+                <Typography variant="subtitle1">{messages.availableTables}</Typography>
+                {loadingRestaurant ? <Typography color="text.secondary">{messages.loadingRestaurant}</Typography> : null}
+                {!loadingRestaurant && form.restaurantDate && form.partySize && restaurantSlots.length === 0 ? (
+                  <Typography color="text.secondary">{messages.noRestaurantSlots}</Typography>
+                ) : null}
+                <Stack direction="row" flexWrap="wrap" gap={1}>
+                  {restaurantSlots.map((slot) => (
+                    <Button
+                      key={`${slot.servicePeriodId}-${slot.startsAt}`}
+                      type="button"
+                      variant={form.selectedRestaurantStartsAt === slot.startsAt ? "contained" : "outlined"}
+                      onClick={() => setForm((current) => ({ ...current, selectedRestaurantStartsAt: slot.startsAt }))}
+                    >
+                      {new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }).format(new Date(slot.startsAt))}
+                      {" · "}
+                      {slot.servicePeriodName}
+                    </Button>
+                  ))}
+                </Stack>
+              </Stack>
+            </>
           ) : (
             <>
               <TextField label={messages.summary} value={form.requestSummary} onChange={(event) => setForm((current) => ({ ...current, requestSummary: event.target.value }))} fullWidth />
@@ -524,8 +658,8 @@ export function PublicBookingPage({ locale, slug }: Props) {
             </>
           )}
 
-          <Button type="submit" variant="contained" disabled={submitting || (isAppointmentFlow && loadingSlots) || (isClassFlow && loadingClasses)}>
-            {submitting ? messages.submitting : (isAppointmentFlow ? messages.appointmentSubmit : isClassFlow ? messages.classSubmit : (config.ctaLabel || messages.submit))}
+          <Button type="submit" variant="contained" disabled={submitting || (isAppointmentFlow && loadingSlots) || (isClassFlow && loadingClasses) || (isRestaurantFlow && loadingRestaurant)}>
+            {submitting ? messages.submitting : (isAppointmentFlow ? messages.appointmentSubmit : isClassFlow ? messages.classSubmit : isRestaurantFlow ? messages.restaurantSubmit : (config.ctaLabel || messages.submit))}
           </Button>
         </Stack>
       </Stack>
