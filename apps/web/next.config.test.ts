@@ -8,6 +8,10 @@ describe("next.config security headers", () => {
 
     expect(rules).toEqual([
       {
+        source: "/widget/:path*",
+        headers: buildSecurityHeaders(false, true)
+      },
+      {
         source: "/:path*",
         headers: buildSecurityHeaders(false)
       }

@@ -7,6 +7,9 @@ import type { SupportedLocale } from "@/lib/i18n/locales";
 type Props = {
   locale: SupportedLocale;
   slug: string;
+  widgetToken?: string;
+  embedded?: boolean;
+  themeVariant?: string;
 };
 
 type PublicBookingConfig = {
@@ -206,7 +209,7 @@ function formatSlotLabel(slot: PublicAppointmentSlot, locale: SupportedLocale) {
   }).format(new Date(slot.startsAt))} - ${slot.providerName}`;
 }
 
-export function PublicBookingPage({ locale, slug }: Props) {
+export function PublicBookingPage({ locale, slug, widgetToken, embedded = false, themeVariant = "minimal" }: Props) {
   const messages = copy[locale];
   const [config, setConfig] = useState<PublicBookingConfig | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "unavailable">("loading");
@@ -253,7 +256,8 @@ export function PublicBookingPage({ locale, slug }: Props) {
     (async () => {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080"}/api/public/companies/${slug}/booking-intake-config`, {
-          credentials: "include"
+          credentials: "include",
+          headers: widgetToken ? { "X-ReserveNook-Widget-Token": widgetToken } : undefined
         });
         if (!active) return;
         if (!response.ok) {
@@ -272,7 +276,7 @@ export function PublicBookingPage({ locale, slug }: Props) {
     return () => {
       active = false;
     };
-  }, [slug]);
+  }, [slug, widgetToken]);
 
   useEffect(() => {
     if (!isClassFlow || !form.classTypeId) {
@@ -285,7 +289,8 @@ export function PublicBookingPage({ locale, slug }: Props) {
       try {
         const params = new URLSearchParams({ classTypeId: form.classTypeId });
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080"}/api/public/companies/${slug}/classes/availability?${params.toString()}`, {
-          credentials: "include"
+          credentials: "include",
+          headers: widgetToken ? { "X-ReserveNook-Widget-Token": widgetToken } : undefined
         });
         if (!active) return;
         if (!response.ok) {
@@ -307,7 +312,7 @@ export function PublicBookingPage({ locale, slug }: Props) {
     return () => {
       active = false;
     };
-  }, [form.classTypeId, isClassFlow, slug]);
+  }, [form.classTypeId, isClassFlow, slug, widgetToken]);
 
   useEffect(() => {
     if (!isRestaurantFlow || !form.restaurantDate || !form.partySize) {
@@ -323,7 +328,8 @@ export function PublicBookingPage({ locale, slug }: Props) {
           partySize: form.partySize
         });
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080"}/api/public/companies/${slug}/restaurant/availability?${params.toString()}`, {
-          credentials: "include"
+          credentials: "include",
+          headers: widgetToken ? { "X-ReserveNook-Widget-Token": widgetToken } : undefined
         });
         if (!active) return;
         if (!response.ok) {
@@ -345,7 +351,7 @@ export function PublicBookingPage({ locale, slug }: Props) {
     return () => {
       active = false;
     };
-  }, [form.partySize, form.restaurantDate, isRestaurantFlow, slug]);
+  }, [form.partySize, form.restaurantDate, isRestaurantFlow, slug, widgetToken]);
 
   useEffect(() => {
     if (!isAppointmentFlow || !form.serviceId || !form.appointmentDate) {
@@ -362,7 +368,8 @@ export function PublicBookingPage({ locale, slug }: Props) {
           date: form.appointmentDate
         });
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080"}/api/public/companies/${slug}/appointments/availability?${params.toString()}`, {
-          credentials: "include"
+          credentials: "include",
+          headers: widgetToken ? { "X-ReserveNook-Widget-Token": widgetToken } : undefined
         });
         if (!active) return;
         if (!response.ok) {
@@ -384,7 +391,7 @@ export function PublicBookingPage({ locale, slug }: Props) {
     return () => {
       active = false;
     };
-  }, [form.appointmentDate, form.serviceId, isAppointmentFlow, slug]);
+  }, [form.appointmentDate, form.serviceId, isAppointmentFlow, slug, widgetToken]);
 
   if (state === "loading") {
     return <Typography color="text.secondary">{messages.loading}</Typography>;
@@ -398,12 +405,17 @@ export function PublicBookingPage({ locale, slug }: Props) {
     <Paper
       elevation={0}
       sx={{
-        maxWidth: 760,
+        maxWidth: embedded ? "100%" : 760,
         mx: "auto",
-        borderRadius: 6,
+        borderRadius: embedded ? 3 : 6,
         border: "1px solid rgba(83,58,43,0.12)",
-        p: { xs: 3, md: 5 },
-        background: "linear-gradient(180deg, rgba(255,248,240,0.98) 0%, rgba(250,242,233,0.94) 100%)"
+        p: embedded ? { xs: 2.5, md: 3 } : { xs: 3, md: 5 },
+        background: themeVariant === "contrast"
+          ? "linear-gradient(180deg, rgba(244,236,225,0.98) 0%, rgba(232,218,202,0.95) 100%)"
+          : themeVariant === "soft"
+            ? "linear-gradient(180deg, rgba(255,248,240,0.98) 0%, rgba(250,242,233,0.94) 100%)"
+            : "linear-gradient(180deg, rgba(255,252,249,0.98) 0%, rgba(248,244,238,0.94) 100%)",
+        boxShadow: embedded ? "none" : undefined
       }}
     >
       <Stack spacing={3}>
@@ -493,7 +505,7 @@ export function PublicBookingPage({ locale, slug }: Props) {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080"}${endpoint}`, {
               method: "POST",
               credentials: "include",
-              headers: { "Content-Type": "application/json" },
+              headers: { "Content-Type": "application/json", ...(widgetToken ? { "X-ReserveNook-Widget-Token": widgetToken } : {}) },
               body: JSON.stringify(body)
             });
             const payload = (await response.json().catch(() => null)) as { message?: string } | null;

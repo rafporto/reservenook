@@ -234,6 +234,15 @@ export type CompanyBackofficeData = {
     allowedDomains: string[];
     themeVariant: string;
   };
+  widgetUsage: {
+    bootstrapsLast7Days: number;
+    bookingsLast7Days: number;
+    recentOrigins: Array<{
+      originHost: string;
+      bootstrapCount: number;
+      bookingCount: number;
+    }>;
+  };
   viewer: { role: string; currentUserEmail: string };
   operations: {
     planType: string;

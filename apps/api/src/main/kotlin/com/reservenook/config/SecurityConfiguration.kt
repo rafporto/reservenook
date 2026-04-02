@@ -73,14 +73,21 @@ class SecurityConfiguration(
 
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
-        val configuration = CorsConfiguration()
-        configuration.allowedOrigins = listOf(frontendOrigin)
-        configuration.allowedMethods = listOf("GET", "POST", "PUT", "OPTIONS")
-        configuration.allowedHeaders = listOf("*")
-        configuration.allowCredentials = true
-
         val source = UrlBasedCorsConfigurationSource()
-        source.registerCorsConfiguration("/**", configuration)
+        val frontendConfiguration = CorsConfiguration()
+        frontendConfiguration.allowedOrigins = listOf(frontendOrigin)
+        frontendConfiguration.allowedMethods = listOf("GET", "POST", "PUT", "OPTIONS")
+        frontendConfiguration.allowedHeaders = listOf("*")
+        frontendConfiguration.allowCredentials = true
+
+        val widgetBootstrapConfiguration = CorsConfiguration()
+        widgetBootstrapConfiguration.allowedOriginPatterns = listOf("*")
+        widgetBootstrapConfiguration.allowedMethods = listOf("GET", "OPTIONS")
+        widgetBootstrapConfiguration.allowedHeaders = listOf("*")
+        widgetBootstrapConfiguration.allowCredentials = false
+
+        source.registerCorsConfiguration("/api/public/widget/**", widgetBootstrapConfiguration)
+        source.registerCorsConfiguration("/**", frontendConfiguration)
         return source
     }
 

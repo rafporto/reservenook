@@ -43,6 +43,7 @@ Core concepts:
 - CompanyBusinessHours
 - CompanyClosureCalendar
 - CompanyWidgetSettings
+- WidgetUsageEvent
 
 ### Users
 
@@ -349,3 +350,19 @@ Security and isolation rules for this module:
 - public reservation booking must recompute availability server-side and assign tables inside one transaction
 - staff floorbook reads are limited to current-tenant reservations
 - admin-only writes remain protected by recent-auth and CSRF, while staff can operate reservation outcomes only inside their own tenant
+
+## Phase 7 Embedded Widget Module
+
+The embedded-widget specialization reuses the shared public booking flows while introducing tenant-controlled embed access and usage monitoring.
+
+- `CompanyWidgetSettings` remains the tenant-owned configuration aggregate for widget enablement, allowed domains, theme variant, and embed policy
+- `WidgetToken` is a short-lived signed bootstrap credential that proves the widget was initialized for one company, one origin, and one locale
+- `WidgetUsageEvent` stores tenant-scoped operational telemetry for widget bootstrap and completed embedded bookings
+
+Security and isolation rules for this module:
+
+- widget bootstrap is allowed only for origins that match the tenant widget allow-list
+- widget bootstrap responses must not expose internal tenant settings beyond what the embed runtime needs
+- widget tokens are short-lived, company-scoped, and validated again on embedded booking requests
+- embedded booking reuses the same server-side validation, abuse throttling, and tenant isolation rules as the hosted booking flow
+- widget pages allow framing, but the rest of the web app remains non-embeddable by default

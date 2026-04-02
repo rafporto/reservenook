@@ -111,6 +111,18 @@ export function CustomerQuestionsAndWidgetPanels(props: SectionProps) {
             </TextField>
             <TextField label="Allowed domains" helperText="One host name per line" value={drafts.widget.allowedDomainsText} onChange={(event) => updateDrafts((current) => ({ ...current, widget: { ...current.widget, allowedDomainsText: event.target.value } }))} multiline minRows={4} fullWidth />
             <Button type="submit" variant="contained" disabled={saving === "widget"}>{saving === "widget" ? "Saving widget settings..." : "Save widget settings"}</Button>
+            <Paper variant="outlined" sx={{ p: 2 }}>
+              <Stack spacing={1}>
+                <Typography variant="subtitle1">Widget Usage</Typography>
+                <Typography color="text.secondary">Bootstraps in last 7 days: {data.widgetUsage.bootstrapsLast7Days}</Typography>
+                <Typography color="text.secondary">Bookings in last 7 days: {data.widgetUsage.bookingsLast7Days}</Typography>
+                {data.widgetUsage.recentOrigins.map((origin) => (
+                  <Typography key={origin.originHost} color="text.secondary">
+                    {origin.originHost}: {origin.bootstrapCount} loads · {origin.bookingCount} bookings
+                  </Typography>
+                ))}
+              </Stack>
+            </Paper>
           </Stack>
         </Paper>
       </Grid>

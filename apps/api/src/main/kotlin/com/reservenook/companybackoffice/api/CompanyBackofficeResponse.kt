@@ -27,6 +27,7 @@ data class CompanyBackofficeResponse(
     val staffUsers: List<CompanyBackofficeStaffUserSummary>,
     val customerQuestions: List<CompanyBackofficeCustomerQuestionSummary>,
     val widgetSettings: CompanyBackofficeWidgetSettingsSummary,
+    val widgetUsage: CompanyBackofficeWidgetUsageSummary,
     val viewer: CompanyBackofficeViewerSummary,
     val operations: CompanyBackofficeOperationsSummary,
     val configurationAreas: List<CompanyBackofficeAreaSummary>
@@ -305,6 +306,18 @@ data class CompanyBackofficeWidgetSettingsSummary(
     val widgetEnabled: Boolean,
     val allowedDomains: List<String>,
     val themeVariant: String
+)
+
+data class CompanyBackofficeWidgetUsageOriginSummary(
+    val originHost: String,
+    val bootstrapCount: Int,
+    val bookingCount: Int
+)
+
+data class CompanyBackofficeWidgetUsageSummary(
+    val bootstrapsLast7Days: Int,
+    val bookingsLast7Days: Int,
+    val recentOrigins: List<CompanyBackofficeWidgetUsageOriginSummary>
 )
 
 data class CompanyBackofficeViewerSummary(

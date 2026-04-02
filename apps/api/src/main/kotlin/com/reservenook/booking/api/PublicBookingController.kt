@@ -3,7 +3,11 @@ package com.reservenook.booking.api
 import com.reservenook.appointment.application.AppointmentConfigurationService
 import com.reservenook.booking.application.PublicBookingIntakeService
 import com.reservenook.groupclass.application.GroupClassConfigurationService
+import com.reservenook.registration.infrastructure.CompanyRepository
 import com.reservenook.restaurant.application.RestaurantConfigurationService
+import com.reservenook.widget.application.WidgetTokenService
+import com.reservenook.widget.application.WidgetUsageService
+import com.reservenook.widget.domain.WidgetUsageEventType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -17,7 +21,10 @@ class PublicBookingController(
     private val publicBookingIntakeService: PublicBookingIntakeService,
     private val appointmentConfigurationService: AppointmentConfigurationService,
     private val groupClassConfigurationService: GroupClassConfigurationService,
-    private val restaurantConfigurationService: RestaurantConfigurationService
+    private val restaurantConfigurationService: RestaurantConfigurationService,
+    private val widgetTokenService: WidgetTokenService,
+    private val widgetUsageService: WidgetUsageService,
+    private val companyRepository: CompanyRepository
 ) {
 
     @GetMapping("/api/public/companies/{slug}/booking-intake-config")
@@ -29,13 +36,17 @@ class PublicBookingController(
         @PathVariable slug: String,
         @RequestHeader(value = "X-Forwarded-For", required = false) forwardedFor: String?,
         @RequestHeader(value = "X-Real-IP", required = false) realIp: String?,
+        @RequestHeader(value = "X-ReserveNook-Widget-Token", required = false) widgetToken: String?,
         @RequestBody request: SubmitPublicBookingIntakeRequest,
         servletRequest: jakarta.servlet.http.HttpServletRequest
     ): SubmitPublicBookingIntakeResponse {
+        val widgetClaims = widgetTokenService.validate(slug, widgetToken)
         val clientAddress = forwardedFor?.substringBefore(",")?.trim()
             ?: realIp?.trim()
             ?: servletRequest.remoteAddr
-        return publicBookingIntakeService.submit(slug, clientAddress, request)
+        return publicBookingIntakeService.submit(slug, clientAddress, request).also {
+            recordWidgetBooking(slug, widgetClaims)
+        }
     }
 
     @GetMapping("/api/public/companies/{slug}/appointments/availability")
@@ -60,6 +71,7 @@ class PublicBookingController(
         @PathVariable slug: String,
         @RequestHeader(value = "X-Forwarded-For", required = false) forwardedFor: String?,
         @RequestHeader(value = "X-Real-IP", required = false) realIp: String?,
+        @RequestHeader(value = "X-ReserveNook-Widget-Token", required = false) widgetToken: String?,
         @RequestBody request: BookPublicAppointmentRequest,
         servletRequest: jakarta.servlet.http.HttpServletRequest
     ) = BookPublicAppointmentResponse(
@@ -74,7 +86,7 @@ class PublicBookingController(
             serviceId = request.serviceId,
             providerId = request.providerId,
             startsAtIso = request.startsAt
-        )
+        ).also { recordWidgetBooking(slug, widgetTokenService.validate(slug, widgetToken)) }
     )
 
     @GetMapping("/api/public/companies/{slug}/classes/availability")
@@ -97,6 +109,7 @@ class PublicBookingController(
         @PathVariable slug: String,
         @RequestHeader(value = "X-Forwarded-For", required = false) forwardedFor: String?,
         @RequestHeader(value = "X-Real-IP", required = false) realIp: String?,
+        @RequestHeader(value = "X-ReserveNook-Widget-Token", required = false) widgetToken: String?,
         @RequestBody request: BookPublicClassRequest,
         servletRequest: jakarta.servlet.http.HttpServletRequest
     ) = BookPublicClassResponse(
@@ -109,7 +122,7 @@ class PublicBookingController(
             email = request.email,
             phone = request.phone,
             preferredLanguage = request.preferredLanguage
-        )
+        ).also { recordWidgetBooking(slug, widgetTokenService.validate(slug, widgetToken)) }
     )
 
     @GetMapping("/api/public/companies/{slug}/restaurant/availability")
@@ -134,6 +147,7 @@ class PublicBookingController(
         @PathVariable slug: String,
         @RequestHeader(value = "X-Forwarded-For", required = false) forwardedFor: String?,
         @RequestHeader(value = "X-Real-IP", required = false) realIp: String?,
+        @RequestHeader(value = "X-ReserveNook-Widget-Token", required = false) widgetToken: String?,
         @RequestBody request: BookPublicRestaurantReservationRequest,
         servletRequest: jakarta.servlet.http.HttpServletRequest
     ) = BookPublicRestaurantReservationResponse(
@@ -147,8 +161,14 @@ class PublicBookingController(
             preferredLanguage = request.preferredLanguage,
             partySize = request.partySize,
             startsAt = request.startsAt
-        )
+        ).also { recordWidgetBooking(slug, widgetTokenService.validate(slug, widgetToken)) }
     )
+
+    private fun recordWidgetBooking(slug: String, claims: com.reservenook.widget.application.WidgetTokenClaims?) {
+        if (claims == null) return
+        val company = companyRepository.findBySlug(slug) ?: return
+        widgetUsageService.record(company, claims.originHost, WidgetUsageEventType.BOOKING_FLOW_COMPLETED)
+    }
 }
 
 data class PublicBookingIntakeConfigResponse(

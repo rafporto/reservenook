@@ -27,6 +27,7 @@ import com.reservenook.restaurant.infrastructure.RestaurantTableRepository
 import com.reservenook.registration.domain.CompanyRole
 import com.reservenook.registration.infrastructure.CompanyMembershipRepository
 import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
+import com.reservenook.widget.application.WidgetUsageService
 import org.springframework.stereotype.Service
 
 @Service
@@ -51,7 +52,8 @@ class CompanyBackofficeAccessService(
     private val restaurantTableRepository: RestaurantTableRepository,
     private val restaurantTableCombinationRepository: RestaurantTableCombinationRepository,
     private val restaurantServicePeriodRepository: RestaurantServicePeriodRepository,
-    private val restaurantReservationRepository: RestaurantReservationRepository
+    private val restaurantReservationRepository: RestaurantReservationRepository,
+    private val widgetUsageService: WidgetUsageService
 ) {
 
     fun getBackoffice(principal: AppAuthenticatedUser, requestedSlug: String): CompanyBackofficeResponse {
@@ -99,6 +101,19 @@ class CompanyBackofficeAccessService(
             staffUsers = allMemberships.sortedBy { it.createdAt }.map { it.toStaffSummary() },
             customerQuestions = companyCustomerQuestionRepository.findAllByCompanyIdOrderByDisplayOrderAsc(companyId).map { it.toSummary() },
             widgetSettings = company.toWidgetSettingsSummary(),
+            widgetUsage = widgetUsageService.buildSummary(companyId).let { summary ->
+                com.reservenook.companybackoffice.api.CompanyBackofficeWidgetUsageSummary(
+                    bootstrapsLast7Days = summary.bootstrapsLast7Days,
+                    bookingsLast7Days = summary.bookingsLast7Days,
+                    recentOrigins = summary.recentOrigins.map {
+                        com.reservenook.companybackoffice.api.CompanyBackofficeWidgetUsageOriginSummary(
+                            originHost = it.originHost,
+                            bootstrapCount = it.bootstrapCount,
+                            bookingCount = it.bookingCount
+                        )
+                    }
+                )
+            },
             viewer = CompanyBackofficeViewerSummary(
                 role = membership.role.name,
                 currentUserEmail = principal.email

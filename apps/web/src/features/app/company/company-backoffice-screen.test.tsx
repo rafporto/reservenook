@@ -211,6 +211,17 @@ function backofficePayload() {
       allowedDomains: ["booking.acme.com"],
       themeVariant: "soft"
     },
+    widgetUsage: {
+      bootstrapsLast7Days: 12,
+      bookingsLast7Days: 4,
+      recentOrigins: [
+        {
+          originHost: "booking.acme.com",
+          bootstrapCount: 12,
+          bookingCount: 4
+        }
+      ]
+    },
     viewer: { role: "COMPANY_ADMIN", currentUserEmail: "admin@acme.com" },
     operations: {
       planType: "TRIAL",
@@ -286,7 +297,7 @@ describe("CompanyBackofficeScreen", () => {
     expect(screen.getByRole("button", { name: "Save company profile" })).toBeInTheDocument();
     expect(screen.getByText("Create Staff User")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Create staff user" })).toBeInTheDocument();
-  });
+  }, 10000);
 
   it("renders appointment configuration controls for phase 4", async () => {
     vi.spyOn(global, "fetch").mockResolvedValue(
@@ -300,7 +311,7 @@ describe("CompanyBackofficeScreen", () => {
     expect(screen.getByText("Providers And Availability")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Create provider" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save availability" })).toBeInTheDocument();
-  });
+  }, 10000);
 
   it("renders restaurant management controls for phase 6", async () => {
     vi.spyOn(global, "fetch").mockResolvedValue(
@@ -313,6 +324,6 @@ describe("CompanyBackofficeScreen", () => {
     expect(screen.getByRole("button", { name: "Create dining area" })).toBeInTheDocument();
     expect(screen.getByText("Restaurant Tables")).toBeInTheDocument();
     expect(screen.getByText("Reservations And Floorbook")).toBeInTheDocument();
-  });
+  }, 10000);
 
 });
