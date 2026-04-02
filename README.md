@@ -171,7 +171,6 @@ Project decisions and planning are documented in:
 - [docs/phase-7-test-scenarios.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-7-test-scenarios.md)
 - [docs/phase-8-use-cases.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-8-use-cases.md)
 - [docs/phase-8-test-scenarios.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\phase-8-test-scenarios.md)
-- [docs/security-hardening-plan.md](C:\Users\rafael.portorodrigue\IdeaProjects\reservenook\docs\security-hardening-plan.md)
 
 ## Working Rule
 

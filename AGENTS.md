@@ -59,6 +59,28 @@ Practical expectations:
 - frontend screens should act as composition shells, with section panels, hooks, and client helpers extracted as complexity grows
 - security controls such as tenant checks, CSRF, recent-auth, throttling, and audit logging must stay explicit through the refactor
 
+## Security Baseline Rule
+
+Security hardening is part of feature delivery. It is not a later cleanup pass.
+
+Every new use case and refactor must preserve and extend the current security baseline where applicable:
+
+- tenant isolation and role checks must be enforced on the backend, not only in the UI
+- authenticated state-changing requests must keep CSRF protection
+- sensitive admin writes must keep recent-auth protection
+- public entry points must consider abuse throttling and replay safety
+- auth, recovery, admin, and lifecycle-sensitive actions must remain auditable
+- session revocation rules must be preserved when credentials or tenant access state changes
+- browser-facing routes must keep the existing defensive-header and CSP baseline
+- HSTS should remain configurable for secure deployments
+
+Practical expectations:
+
+- implement security together with the use case, not after it
+- add regression coverage for authorization, cross-tenant abuse, token misuse, CSRF, and rate-limit behavior when relevant
+- do not introduce public or admin endpoints without explicitly checking enumeration, privilege escalation, and tenant-boundary risks
+- future phases should extend the same baseline to booking, payment, customer, and other sensitive flows as they are added
+
 ## UI, Localization, and SEO Expectations
 
 Frontend implementation is not complete when it only works functionally. Every page should also be evaluated for:
