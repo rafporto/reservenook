@@ -44,16 +44,14 @@ class WidgetUsageService(
 
     fun buildSummary(companyId: Long): WidgetUsageSummary {
         val since = Instant.now().minus(7, ChronoUnit.DAYS)
-        val events = widgetUsageEventRepository.findAllByCompanyIdOrderByCreatedAtDesc(companyId)
-        val grouped = events.groupBy { it.originHost }
         return WidgetUsageSummary(
             bootstrapsLast7Days = widgetUsageEventRepository.countByCompanyIdAndEventTypeAndCreatedAtAfter(companyId, WidgetUsageEventType.BOOTSTRAP_INITIALIZED, since).toInt(),
             bookingsLast7Days = widgetUsageEventRepository.countByCompanyIdAndEventTypeAndCreatedAtAfter(companyId, WidgetUsageEventType.BOOKING_FLOW_COMPLETED, since).toInt(),
-            recentOrigins = grouped.entries.take(5).map { entry ->
+            recentOrigins = widgetUsageEventRepository.summarizeOriginsByCompanyId(companyId).take(5).map { entry ->
                 WidgetUsageOriginSummary(
-                    originHost = entry.key,
-                    bootstrapCount = entry.value.count { it.eventType == WidgetUsageEventType.BOOTSTRAP_INITIALIZED },
-                    bookingCount = entry.value.count { it.eventType == WidgetUsageEventType.BOOKING_FLOW_COMPLETED }
+                    originHost = entry.originHost,
+                    bootstrapCount = entry.bootstrapCount.toInt(),
+                    bookingCount = entry.bookingCount.toInt()
                 )
             }
         )

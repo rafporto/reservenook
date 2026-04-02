@@ -24,8 +24,10 @@ import com.reservenook.registration.infrastructure.CompanySubscriptionRepository
 import com.reservenook.registration.infrastructure.UserAccountRepository
 import com.reservenook.security.application.RequestThrottleService
 import com.reservenook.security.application.SessionSecurityAttributes
+import com.reservenook.restaurant.infrastructure.DiningAreaRepository
 import com.reservenook.restaurant.infrastructure.RestaurantReservationRepository
 import com.reservenook.restaurant.infrastructure.RestaurantReservationTableRepository
+import com.reservenook.restaurant.infrastructure.RestaurantServicePeriodRepository
 import com.reservenook.widget.infrastructure.WidgetUsageEventRepository
 import io.mockk.justRun
 import org.junit.jupiter.api.BeforeEach
@@ -58,6 +60,8 @@ class WidgetControllerTest(
     @Autowired private val bookingAuditEventRepository: BookingAuditEventRepository,
     @Autowired private val appointmentBookingRepository: AppointmentBookingRepository,
     @Autowired private val classBookingRepository: ClassBookingRepository,
+    @Autowired private val diningAreaRepository: DiningAreaRepository,
+    @Autowired private val restaurantServicePeriodRepository: RestaurantServicePeriodRepository,
     @Autowired private val restaurantReservationRepository: RestaurantReservationRepository,
     @Autowired private val restaurantReservationTableRepository: RestaurantReservationTableRepository,
     @Autowired private val requestThrottleService: RequestThrottleService,
@@ -78,6 +82,8 @@ class WidgetControllerTest(
         widgetUsageEventRepository.deleteAllInBatch()
         restaurantReservationTableRepository.deleteAllInBatch()
         restaurantReservationRepository.deleteAllInBatch()
+        restaurantServicePeriodRepository.deleteAllInBatch()
+        diningAreaRepository.deleteAllInBatch()
         classBookingRepository.deleteAllInBatch()
         appointmentBookingRepository.deleteAllInBatch()
         bookingAuditEventRepository.deleteAllInBatch()

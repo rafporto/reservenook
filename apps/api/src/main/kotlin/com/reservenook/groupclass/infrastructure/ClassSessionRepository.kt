@@ -2,6 +2,7 @@ package com.reservenook.groupclass.infrastructure
 
 import com.reservenook.groupclass.domain.ClassSession
 import java.time.Instant
+import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
 import jakarta.persistence.LockModeType
@@ -10,8 +11,10 @@ interface ClassSessionRepository : JpaRepository<ClassSession, Long> {
     fun findAllByCompanyIdOrderByStartsAtAsc(companyId: Long): List<ClassSession>
     fun findByIdAndCompanyId(id: Long, companyId: Long): ClassSession?
     fun findAllByCompanyIdAndStatusOrderByStartsAtAsc(companyId: Long, status: com.reservenook.groupclass.domain.ClassSessionStatus): List<ClassSession>
-    fun findAllByCompanySlugAndStatusAndStartsAtGreaterThanEqualOrderByStartsAtAsc(
-        companySlug: String,
+    @EntityGraph(attributePaths = ["classType", "instructor"])
+    fun findAllByCompanyIdAndClassTypeIdAndStatusAndStartsAtGreaterThanEqualOrderByStartsAtAsc(
+        companyId: Long,
+        classTypeId: Long,
         status: com.reservenook.groupclass.domain.ClassSessionStatus,
         startsAt: Instant
     ): List<ClassSession>

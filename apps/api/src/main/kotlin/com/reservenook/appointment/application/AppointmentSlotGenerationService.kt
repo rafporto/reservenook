@@ -48,14 +48,30 @@ class AppointmentSlotGenerationService(
         val service = appointmentServiceRepository.findByIdAndCompanyId(serviceId, requireNotNull(company.id))
             ?.takeIf { it.enabled }
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Appointment availability is unavailable.")
-        if (companyClosureDateRepository.findAllByCompanyIdOrderByStartsOnAsc(requireNotNull(company.id)).any { !localDate.isBefore(it.startsOn) && !localDate.isAfter(it.endsOn) }) {
+        val companyId = requireNotNull(company.id)
+        if (companyClosureDateRepository.existsByCompanyIdAndStartsOnLessThanEqualAndEndsOnGreaterThanEqual(companyId, localDate, localDate)) {
             return emptyList()
         }
-        val companyHours = companyBusinessHourRepository.findAllByCompanyIdOrderByDayOfWeekAscDisplayOrderAsc(requireNotNull(company.id))
-            .filter { it.dayOfWeek == AppointmentSupport.parseDay(localDate.dayOfWeek.name) }
-        val providers = appointmentProviderRepository.findAllByCompanyIdOrderByCreatedAtAsc(requireNotNull(company.id)).filter { it.active }
+        val businessDay = AppointmentSupport.parseDay(localDate.dayOfWeek.name)
+        val companyHours = companyBusinessHourRepository.findAllByCompanyIdAndDayOfWeekOrderByDisplayOrderAsc(companyId, businessDay)
+        val providers = appointmentProviderRepository.findAllByCompanyIdAndActiveTrueOrderByCreatedAtAsc(companyId)
+        val providerIds = providers.mapNotNull { it.id }
+        val providerAvailability = providerAvailabilityService.listForProviders(providerIds)
+        val existingBookings = appointmentBookingRepository.findAllByCompanyIdAndStartsAtBetweenAndBookingStatusInOrderByStartsAtAsc(
+            companyId,
+            dateStart(localDate),
+            dateEndExclusive(localDate),
+            setOf(BookingStatus.PENDING, BookingStatus.CONFIRMED)
+        ).groupBy { requireNotNull(it.provider.id) }
         return providers.flatMap { provider ->
-            generateSlotsForProvider(provider, service, localDate, companyHours)
+            generateSlotsForProvider(
+                provider = provider,
+                service = service,
+                date = localDate,
+                companyHours = companyHours,
+                providerAvailability = providerAvailability[requireNotNull(provider.id)].orEmpty(),
+                existing = existingBookings[requireNotNull(provider.id)].orEmpty()
+            )
         }.sortedBy { it.startsAt }
     }
 
@@ -81,15 +97,11 @@ class AppointmentSlotGenerationService(
         provider: AppointmentProvider,
         service: AppointmentService,
         date: LocalDate,
-        companyHours: List<CompanyBusinessHour>
+        companyHours: List<CompanyBusinessHour>,
+        providerAvailability: List<com.reservenook.appointment.domain.AppointmentProviderAvailability>,
+        existing: List<com.reservenook.appointment.domain.AppointmentBooking>
     ): List<PublicAppointmentSlotSummary> {
-        val availability = providerAvailabilityService.listForProvider(requireNotNull(provider.id))
-            .filter { it.dayOfWeek == AppointmentSupport.parseDay(date.dayOfWeek.name) }
-        val existing = appointmentBookingRepository.findAllByProviderIdAndStartsAtBetweenOrderByStartsAtAsc(
-            provider.id!!,
-            date.atStartOfDay().toInstant(ZoneOffset.UTC),
-            date.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)
-        ).filter { it.booking.status in setOf(BookingStatus.PENDING, BookingStatus.CONFIRMED) }
+        val availability = providerAvailability.filter { it.dayOfWeek == AppointmentSupport.parseDay(date.dayOfWeek.name) }
 
         val durationMinutes = service.durationMinutes.toLong()
         return availability.flatMap { rule ->
@@ -147,4 +159,8 @@ class AppointmentSlotGenerationService(
         companyRepository.findBySlug(slug)
             ?.takeIf { it.status == CompanyStatus.ACTIVE && it.widgetEnabled }
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Appointment booking is unavailable.")
+
+    private fun dateStart(date: LocalDate): Instant = date.atStartOfDay().toInstant(ZoneOffset.UTC)
+
+    private fun dateEndExclusive(date: LocalDate): Instant = date.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)
 }

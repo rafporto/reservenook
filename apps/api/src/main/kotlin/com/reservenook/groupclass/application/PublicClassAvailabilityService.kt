@@ -30,13 +30,24 @@ class PublicClassAvailabilityService(
         val classType = classTypeRepository.findByIdAndCompanyId(classTypeId, requireNotNull(company.id))
             ?.takeIf { it.active }
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Class availability is unavailable.")
-        return classSessionRepository.findAllByCompanySlugAndStatusAndStartsAtGreaterThanEqualOrderByStartsAtAsc(
-            slug,
+        val sessions = classSessionRepository.findAllByCompanyIdAndClassTypeIdAndStatusAndStartsAtGreaterThanEqualOrderByStartsAtAsc(
+            requireNotNull(company.id),
+            requireNotNull(classType.id),
             ClassSessionStatus.SCHEDULED,
             Instant.now()
-        ).filter { it.classType.id == classType.id }.map { session ->
-            val confirmedCount = classBookingRepository.countByClassSessionIdAndStatusIn(session.id!!, occupiableStatuses()).toInt()
-            val waitlistCount = classBookingRepository.countByClassSessionIdAndStatusIn(session.id!!, listOf(ClassBookingStatus.WAITLISTED)).toInt()
+        )
+        val sessionCounts = classBookingRepository.summarizeByClassSessionIds(sessions.mapNotNull { it.id })
+            .groupBy { it.classSessionId }
+        return sessions.map { session ->
+            val counts = sessionCounts[session.id!!].orEmpty()
+            val confirmedCount = counts
+                .filter { it.status in occupiableStatuses() }
+                .sumOf { it.total }
+                .toInt()
+            val waitlistCount = counts
+                .filter { it.status == ClassBookingStatus.WAITLISTED }
+                .sumOf { it.total }
+                .toInt()
             val remainingCapacity = (session.capacity - confirmedCount).coerceAtLeast(0)
             PublicClassSessionSummary(
                 sessionId = session.id!!,

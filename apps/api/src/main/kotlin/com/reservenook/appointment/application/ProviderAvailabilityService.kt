@@ -25,6 +25,16 @@ class ProviderAvailabilityService(
     fun listForProvider(providerId: Long): List<AppointmentProviderAvailability> =
         appointmentProviderAvailabilityRepository.findAllByProviderIdOrderByDayOfWeekAscDisplayOrderAsc(providerId)
 
+    @Transactional(readOnly = true)
+    fun listForProviders(providerIds: Collection<Long>): Map<Long, List<AppointmentProviderAvailability>> {
+        if (providerIds.isEmpty()) {
+            return emptyMap()
+        }
+        return appointmentProviderAvailabilityRepository
+            .findAllByProviderIdInOrderByProviderIdAscDayOfWeekAscDisplayOrderAsc(providerIds)
+            .groupBy { requireNotNull(it.provider.id) }
+    }
+
     @Transactional
     fun update(
         principal: AppAuthenticatedUser,
