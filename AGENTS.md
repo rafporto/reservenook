@@ -41,6 +41,24 @@ Use 2 spaces for frontend files and 4 spaces for Kotlin files. Prefer clear, des
 
 Adopt formatting and linting early and keep them automated.
 
+## SOLID Implementation Rule
+
+New code and refactors must follow SOLID principles as a delivery requirement, not as an optional cleanup.
+
+- prefer small focused services and components over multi-purpose orchestration classes
+- split backend behavior by use case when a class starts owning unrelated responsibilities
+- keep validation, policies, and state-transition rules reusable instead of duplicating them across flows
+- favor composition and narrow collaborator contracts over broad dependencies on many repositories or feature areas
+- do not grow existing god classes or god components when a new feature can be added by extending smaller collaborators
+
+Practical expectations:
+
+- controllers should stay thin
+- application services should usually own one use-case area
+- shared rules should move into validators, policies, or support objects
+- frontend screens should act as composition shells, with section panels, hooks, and client helpers extracted as complexity grows
+- security controls such as tenant checks, CSRF, recent-auth, throttling, and audit logging must stay explicit through the refactor
+
 ## UI, Localization, and SEO Expectations
 
 Frontend implementation is not complete when it only works functionally. Every page should also be evaluated for:
